@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TIPOS_ATENDIMENTO, TipoAtendimento } from '@/types/solicitacao';
+import { TIPOS_ATENDIMENTO, TipoAtendimento, CATEGORIAS, CategoriaDemanda, ASSUNTOS, Assunto, IMPACTOS, Impacto } from '@/types/solicitacao';
 import { addSolicitacao } from '@/lib/storage';
 
 const LABELS: Record<TipoAtendimento, string> = {
@@ -21,16 +21,30 @@ const SolicitacaoPage = () => {
   const [params] = useSearchParams();
   const [tipo, setTipo] = useState<TipoAtendimento | ''>('');
   const [descricao, setDescricao] = useState('');
+  const [categoria, setCategoria] = useState<CategoriaDemanda | ''>('');
+  const [assunto, setAssunto] = useState<Assunto | ''>('');
+  const [impacto, setImpacto] = useState<Impacto | ''>('');
 
   const nome = params.get('nome') || '';
   const email = params.get('email') || '';
   const secretaria = params.get('secretaria') || '';
   const setor = params.get('setor') || '';
 
+  const isValid = tipo && descricao.trim() && categoria && assunto && impacto;
+
   const handleEnviar = () => {
-    if (!tipo || !descricao.trim()) return;
-    addSolicitacao({ nome, email, secretaria, setor, tipo, descricao: descricao.trim() });
-    navigate('/confirmacao');
+    if (!isValid) return;
+    const sol = addSolicitacao({
+      nome, email, secretaria, setor,
+      tipo: tipo as TipoAtendimento,
+      descricao: descricao.trim(),
+      categoria: categoria as CategoriaDemanda,
+      assunto: assunto as Assunto,
+      impacto: impacto as Impacto,
+      prioridade: tipo === 'Urgência' ? 'Urgente' : 'Normal',
+      canal: 'Web',
+    });
+    navigate(`/confirmacao?protocolo=${sol.protocolo}`);
   };
 
   return (
@@ -47,20 +61,16 @@ const SolicitacaoPage = () => {
         <div className="w-full max-w-lg bg-card rounded-xl shadow-lg border p-8 space-y-6">
           <div>
             <h2 className="text-2xl font-bold text-foreground">Tipo de Atendimento</h2>
-            <p className="text-muted-foreground text-sm mt-1">Selecione o tipo e descreva sua solicitação</p>
+            <p className="text-muted-foreground text-sm mt-1">Preencha os detalhes da sua solicitação</p>
           </div>
 
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Tipo de atendimento</Label>
               <Select value={tipo} onValueChange={(v) => setTipo(v as TipoAtendimento)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Selecione o tipo" /></SelectTrigger>
                 <SelectContent>
-                  {TIPOS_ATENDIMENTO.map((t) => (
-                    <SelectItem key={t} value={t}>{t}</SelectItem>
-                  ))}
+                  {TIPOS_ATENDIMENTO.map((t) => (<SelectItem key={t} value={t}>{t}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
@@ -71,17 +81,46 @@ const SolicitacaoPage = () => {
                 Prazo médio de resposta: até 3 dias úteis.
               </div>
             )}
-
             {tipo === 'Urgência' && (
               <div className="flex items-center gap-2 rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
                 <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-                Essa solicitação será priorizada pela equipe técnica.
+                Essa solicitação será priorizada pela equipe técnica. SLA: 1 dia útil.
               </div>
             )}
 
+            <div className="space-y-2">
+              <Label>Categoria da Demanda</Label>
+              <Select value={categoria} onValueChange={(v) => setCategoria(v as CategoriaDemanda)}>
+                <SelectTrigger><SelectValue placeholder="Selecione a categoria" /></SelectTrigger>
+                <SelectContent>
+                  {CATEGORIAS.map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Assunto</Label>
+              <Select value={assunto} onValueChange={(v) => setAssunto(v as Assunto)}>
+                <SelectTrigger><SelectValue placeholder="Selecione o assunto" /></SelectTrigger>
+                <SelectContent>
+                  {ASSUNTOS.map((a) => (<SelectItem key={a} value={a}>{a}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Impacto</Label>
+              <Select value={impacto} onValueChange={(v) => setImpacto(v as Impacto)}>
+                <SelectTrigger><SelectValue placeholder="Selecione o impacto" /></SelectTrigger>
+                <SelectContent>
+                  {IMPACTOS.map((i) => (<SelectItem key={i} value={i}>{i}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {tipo && (
               <div className="space-y-2">
-                <Label>{LABELS[tipo]}</Label>
+                <Label>{LABELS[tipo as TipoAtendimento]}</Label>
                 <Textarea
                   placeholder="Escreva aqui..."
                   className="min-h-[150px] resize-none"
@@ -92,7 +131,7 @@ const SolicitacaoPage = () => {
             )}
           </div>
 
-          <Button className="w-full py-6 text-lg" disabled={!tipo || !descricao.trim()} onClick={handleEnviar}>
+          <Button className="w-full py-6 text-lg" disabled={!isValid} onClick={handleEnviar}>
             Enviar Solicitação
           </Button>
         </div>

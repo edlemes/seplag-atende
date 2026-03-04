@@ -8,6 +8,7 @@ import Cadastro from "./pages/Cadastro";
 import Solicitacao from "./pages/Solicitacao";
 import Confirmacao from "./pages/Confirmacao";
 import Admin from "./pages/Admin";
+import Avaliacao from "./pages/Avaliacao";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/solicitacao" element={<Solicitacao />} />
           <Route path="/confirmacao" element={<Confirmacao />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/avaliacao" element={<Avaliacao />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
