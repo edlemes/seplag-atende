@@ -1,9 +1,18 @@
-import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, Building2 } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { CheckCircle2, Building2, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 const Confirmacao = () => {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const protocolo = params.get('protocolo') || '';
+  const { toast } = useToast();
+
+  const copyProtocolo = () => {
+    navigator.clipboard.writeText(protocolo);
+    toast({ title: 'Protocolo copiado!' });
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -20,6 +29,15 @@ const Confirmacao = () => {
 
           <div className="space-y-3">
             <h2 className="text-2xl font-bold text-foreground">Solicitação registrada com sucesso!</h2>
+            {protocolo && (
+              <div className="flex items-center justify-center gap-2 bg-muted rounded-lg px-4 py-3">
+                <span className="text-sm text-muted-foreground">Protocolo:</span>
+                <span className="font-mono font-bold text-foreground">{protocolo}</span>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={copyProtocolo}>
+                  <Copy className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            )}
             <p className="text-muted-foreground leading-relaxed">
               Um e-mail de confirmação foi enviado para o endereço informado.
             </p>
