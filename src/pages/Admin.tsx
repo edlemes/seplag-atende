@@ -357,7 +357,14 @@ function SettingsManager() {
 
 const Admin = () => {
   const navigate = useNavigate();
-  const [authed, setAuthed] = useState(() => sessionStorage.getItem('admin-auth') === '1');
+  const [currentUser, setCurrentUser] = useState<Operador | null>(() => {
+    const stored = sessionStorage.getItem('admin-auth');
+    if (!stored) return null;
+    try { return JSON.parse(stored); } catch { return null; }
+  });
+  const authed = !!currentUser;
+  const isGestao = currentUser ? NIVEIS_GESTAO.includes(currentUser.nivel) : false;
+  const isLeitura = currentUser ? NIVEIS_LEITURA.includes(currentUser.nivel) : false;
   const [refresh, setRefresh] = useState(0);
   const [busca, setBusca] = useState('');
   const [filtroSecretaria, setFiltroSecretaria] = useState('all');
