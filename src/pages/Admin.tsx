@@ -808,16 +808,20 @@ const Admin = () => {
                               <span className={`text-xs font-medium ${SLA_COLORS[slaStatus]}`}>{slaStatus}</span>
                             </TableCell>
                             <TableCell>
-                              <Select value={s.status} onValueChange={(v) => handleStatusChange(s.id, v as StatusSolicitacao)}>
-                                <SelectTrigger className={`w-[130px] text-xs h-8 border ${STATUS_COLORS[s.status]}`}>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="Aberto">Aberto</SelectItem>
-                                  <SelectItem value="Em análise">Em análise</SelectItem>
-                                  <SelectItem value="Respondido">Respondido</SelectItem>
-                                </SelectContent>
-                              </Select>
+                              {isLeitura ? (
+                                <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[s.status]}`}>{s.status}</Badge>
+                              ) : (
+                                <Select value={s.status} onValueChange={(v) => handleStatusChange(s.id, v as StatusSolicitacao)}>
+                                  <SelectTrigger className={`w-[130px] text-xs h-8 border ${STATUS_COLORS[s.status]}`}>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="Aberto">Aberto</SelectItem>
+                                    <SelectItem value="Em análise">Em análise</SelectItem>
+                                    <SelectItem value="Respondido">Respondido</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              )}
                             </TableCell>
                             <TableCell>
                               <Select value={s.responsavel || ''} onValueChange={(v) => handleResponsavel(s.id, v)}>
