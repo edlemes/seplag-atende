@@ -153,14 +153,16 @@ function UsersManager() {
   const [operadores, setOperadores] = useState<Operador[]>(getOperadores());
   const [novoNome, setNovoNome] = useState('');
   const [novoEmail, setNovoEmail] = useState('');
-  const [novoNivel, setNovoNivel] = useState<NivelAcesso>('Técnico');
+  const [novoSenha, setNovoSenha] = useState('');
+  const [novoNivel, setNovoNivel] = useState<NivelAcesso>('Analista');
 
   const handleAdd = () => {
-    if (!novoNome.trim() || !novoEmail.trim()) return;
-    addOperador(novoNome.trim(), novoEmail.trim(), novoNivel);
+    if (!novoNome.trim() || !novoEmail.trim() || !novoSenha.trim()) return;
+    addOperador(novoNome.trim(), novoEmail.trim(), novoNivel, novoSenha);
     setNovoNome('');
     setNovoEmail('');
-    setNovoNivel('Técnico');
+    setNovoSenha('');
+    setNovoNivel('Analista');
     setOperadores(getOperadores());
   };
 
