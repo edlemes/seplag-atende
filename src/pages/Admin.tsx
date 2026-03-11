@@ -20,7 +20,7 @@ import { Solicitacao, StatusSolicitacao, RESPONSAVEIS } from '@/types/solicitaca
 import AdminLogin from './AdminLogin';
 import * as XLSX from 'xlsx';
 
-const COLORS = ['#2E7D32', '#66BB6A', '#FFA726', '#42A5F5', '#EF5350', '#AB47BC', '#26C6DA', '#8D6E63', '#78909C', '#D4E157'];
+const COLORS = ['#114524', '#1D843D', '#FDB913', '#42A5F5', '#EF5350', '#AB47BC', '#26C6DA', '#8D6E63', '#78909C', '#D4E157'];
 
 const STATUS_COLORS: Record<StatusSolicitacao, string> = {
   'Aberto': 'bg-chart-3/20 text-chart-3 border-chart-3/30',
