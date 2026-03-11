@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Building2, ArrowLeft, Download, FileSpreadsheet, BarChart3, CheckCircle2,
   AlertCircle, Clock, Star, TrendingUp, AlertTriangle, Target, Eye, Settings,
-  HelpCircle, Plus, Pencil, Trash2, Save, X, Users, Shield, ShieldCheck
+  HelpCircle, Plus, Pencil, Trash2, Save, X, Users, Shield, ShieldCheck, LogOut
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -25,7 +25,7 @@ import {
   getCustomOrgaos, addCustomOrgao, removeCustomOrgao,
   getCustomAssuntos, addCustomAssunto, removeCustomAssunto,
 } from '@/lib/storage';
-import { Solicitacao, StatusSolicitacao, FAQ, Operador, NivelAcesso, ASSUNTOS } from '@/types/solicitacao';
+import { Solicitacao, StatusSolicitacao, FAQ, Operador, NivelAcesso, NIVEIS_ACESSO, NIVEIS_GESTAO, NIVEIS_LEITURA, ASSUNTOS } from '@/types/solicitacao';
 import AdminLogin from './AdminLogin';
 import * as XLSX from 'xlsx';
 
