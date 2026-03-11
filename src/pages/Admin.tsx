@@ -186,7 +186,7 @@ function UsersManager() {
       <Card>
         <CardHeader><CardTitle className="text-base flex items-center gap-2"><Plus className="h-4 w-4" />Novo Operador</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label>Nome</Label>
               <Input placeholder="Nome completo" value={novoNome} onChange={(e) => setNovoNome(e.target.value)} />
@@ -196,17 +196,20 @@ function UsersManager() {
               <Input placeholder="email@seplag.mt.gov.br" value={novoEmail} onChange={(e) => setNovoEmail(e.target.value)} />
             </div>
             <div className="space-y-2">
+              <Label>Senha</Label>
+              <Input type="password" placeholder="Senha de acesso" value={novoSenha} onChange={(e) => setNovoSenha(e.target.value)} />
+            </div>
+            <div className="space-y-2">
               <Label>Nível de Acesso</Label>
               <Select value={novoNivel} onValueChange={(v) => setNovoNivel(v as NivelAcesso)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Administrador">Administrador</SelectItem>
-                  <SelectItem value="Técnico">Técnico</SelectItem>
+                  {NIVEIS_ACESSO.map((n) => (<SelectItem key={n} value={n}>{n}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
           </div>
-          <Button onClick={handleAdd} disabled={!novoNome.trim() || !novoEmail.trim()} className="gap-2">
+          <Button onClick={handleAdd} disabled={!novoNome.trim() || !novoEmail.trim() || !novoSenha.trim()} className="gap-2">
             <Plus className="h-4 w-4" /> Adicionar Operador
           </Button>
         </CardContent>
@@ -232,12 +235,11 @@ function UsersManager() {
                   <TableCell className="text-sm text-muted-foreground">{op.email}</TableCell>
                   <TableCell>
                     <Select value={op.nivel} onValueChange={(v) => handleChangeNivel(op.id, v as NivelAcesso)}>
-                      <SelectTrigger className="w-[140px] h-8 text-xs">
+                      <SelectTrigger className="w-[160px] h-8 text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Administrador">Administrador</SelectItem>
-                        <SelectItem value="Técnico">Técnico</SelectItem>
+                        {NIVEIS_ACESSO.map((n) => (<SelectItem key={n} value={n}>{n}</SelectItem>))}
                       </SelectContent>
                     </Select>
                   </TableCell>
