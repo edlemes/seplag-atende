@@ -36,9 +36,9 @@ const SLA_COLORS = {
 
 function KpiCard({ icon: Icon, label, value, color, sub }: { icon: any; label: string; value: string | number; color: string; sub?: string }) {
   return (
-    <Card>
+    <Card className="shadow-md hover:shadow-lg transition-all duration-300">
       <CardContent className="pt-5 pb-4 flex flex-col items-center text-center gap-1">
-        <Icon className={`h-5 w-5 ${color}`} />
+        <Icon className={`h-5 w-5 ${color}`} aria-hidden="true" />
         <p className="text-2xl font-bold text-foreground">{value}</p>
         <p className="text-xs text-muted-foreground">{label}</p>
         {sub && <p className="text-[10px] text-muted-foreground/70">{sub}</p>}
