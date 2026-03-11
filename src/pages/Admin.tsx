@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Building2, ArrowLeft, Download, FileSpreadsheet, BarChart3, CheckCircle2,
   AlertCircle, Clock, Star, TrendingUp, AlertTriangle, Target, Eye, Settings,
-  HelpCircle, Plus, Pencil, Trash2, Save, X
+  HelpCircle, Plus, Pencil, Trash2, Save, X, Users, Shield, ShieldCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -18,8 +18,14 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, LineChart, Line
 } from 'recharts';
-import { getSolicitacoes, updateStatus, updateSolicitacao, getSlaStatus, getTempoResposta, getFaqs, addFaq, updateFaq, deleteFaq } from '@/lib/storage';
-import { Solicitacao, StatusSolicitacao, RESPONSAVEIS, FAQ } from '@/types/solicitacao';
+import {
+  getSolicitacoes, updateStatus, updateSolicitacao, getSlaStatus, getTempoResposta,
+  getFaqs, addFaq, updateFaq, deleteFaq,
+  getOperadores, addOperador, updateOperador, deleteOperador,
+  getCustomOrgaos, addCustomOrgao, removeCustomOrgao,
+  getCustomAssuntos, addCustomAssunto, removeCustomAssunto,
+} from '@/lib/storage';
+import { Solicitacao, StatusSolicitacao, FAQ, Operador, NivelAcesso, ASSUNTOS } from '@/types/solicitacao';
 import AdminLogin from './AdminLogin';
 import * as XLSX from 'xlsx';
 
@@ -87,7 +93,6 @@ function FaqManager() {
 
   return (
     <div className="space-y-6">
-      {/* Add new FAQ */}
       <Card>
         <CardHeader><CardTitle className="text-base flex items-center gap-2"><Plus className="h-4 w-4" />Nova Pergunta</CardTitle></CardHeader>
         <CardContent className="space-y-4">
@@ -105,12 +110,11 @@ function FaqManager() {
         </CardContent>
       </Card>
 
-      {/* Existing FAQs */}
       <Card>
         <CardHeader><CardTitle className="text-base">FAQs Cadastradas ({faqs.length})</CardTitle></CardHeader>
         <CardContent>
           {faqs.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">Nenhuma FAQ cadastrada. Adicione a primeira acima.</p>
+            <p className="text-muted-foreground text-center py-8">Nenhuma FAQ cadastrada.</p>
           ) : (
             <div className="space-y-4">
               {faqs.map((faq) => (
@@ -144,6 +148,209 @@ function FaqManager() {
   );
 }
 
+// Users Manager Component
+function UsersManager() {
+  const [operadores, setOperadores] = useState<Operador[]>(getOperadores());
+  const [novoNome, setNovoNome] = useState('');
+  const [novoEmail, setNovoEmail] = useState('');
+  const [novoNivel, setNovoNivel] = useState<NivelAcesso>('Técnico');
+
+  const handleAdd = () => {
+    if (!novoNome.trim() || !novoEmail.trim()) return;
+    addOperador(novoNome.trim(), novoEmail.trim(), novoNivel);
+    setNovoNome('');
+    setNovoEmail('');
+    setNovoNivel('Técnico');
+    setOperadores(getOperadores());
+  };
+
+  const handleToggleAtivo = (op: Operador) => {
+    updateOperador(op.id, { ativo: !op.ativo });
+    setOperadores(getOperadores());
+  };
+
+  const handleChangeNivel = (id: string, nivel: NivelAcesso) => {
+    updateOperador(id, { nivel });
+    setOperadores(getOperadores());
+  };
+
+  const handleDelete = (id: string) => {
+    deleteOperador(id);
+    setOperadores(getOperadores());
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader><CardTitle className="text-base flex items-center gap-2"><Plus className="h-4 w-4" />Novo Operador</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Nome</Label>
+              <Input placeholder="Nome completo" value={novoNome} onChange={(e) => setNovoNome(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>E-mail</Label>
+              <Input placeholder="email@seplag.mt.gov.br" value={novoEmail} onChange={(e) => setNovoEmail(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Nível de Acesso</Label>
+              <Select value={novoNivel} onValueChange={(v) => setNovoNivel(v as NivelAcesso)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Administrador">Administrador</SelectItem>
+                  <SelectItem value="Técnico">Técnico</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <Button onClick={handleAdd} disabled={!novoNome.trim() || !novoEmail.trim()} className="gap-2">
+            <Plus className="h-4 w-4" /> Adicionar Operador
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="text-base">Operadores ({operadores.length})</CardTitle></CardHeader>
+        <CardContent className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>E-mail</TableHead>
+                <TableHead>Nível</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {operadores.map((op) => (
+                <TableRow key={op.id} className={!op.ativo ? 'opacity-50' : ''}>
+                  <TableCell className="font-medium">{op.nome}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{op.email}</TableCell>
+                  <TableCell>
+                    <Select value={op.nivel} onValueChange={(v) => handleChangeNivel(op.id, v as NivelAcesso)}>
+                      <SelectTrigger className="w-[140px] h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Administrador">Administrador</SelectItem>
+                        <SelectItem value="Técnico">Técnico</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={op.ativo ? 'default' : 'secondary'}
+                      className="cursor-pointer text-[10px]"
+                      onClick={() => handleToggleAtivo(op)}
+                    >
+                      {op.ativo ? 'Ativo' : 'Inativo'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Button size="sm" variant="destructive" onClick={() => handleDelete(op.id)} className="gap-1 h-7 text-xs">
+                      <Trash2 className="h-3 w-3" />Remover
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// Settings Manager Component
+function SettingsManager() {
+  const [orgaos, setOrgaos] = useState<string[]>(getCustomOrgaos());
+  const [assuntos, setAssuntos] = useState<string[]>(getCustomAssuntos());
+  const [novoOrgao, setNovoOrgao] = useState('');
+  const [novoAssunto, setNovoAssunto] = useState('');
+
+  const handleAddOrgao = () => {
+    if (!novoOrgao.trim()) return;
+    addCustomOrgao(novoOrgao.trim());
+    setNovoOrgao('');
+    setOrgaos(getCustomOrgaos());
+  };
+
+  const handleRemoveOrgao = (orgao: string) => {
+    removeCustomOrgao(orgao);
+    setOrgaos(getCustomOrgaos());
+  };
+
+  const handleAddAssunto = () => {
+    if (!novoAssunto.trim()) return;
+    addCustomAssunto(novoAssunto.trim());
+    setNovoAssunto('');
+    setAssuntos(getCustomAssuntos());
+  };
+
+  const handleRemoveAssunto = (assunto: string) => {
+    removeCustomAssunto(assunto);
+    setAssuntos(getCustomAssuntos());
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Órgãos */}
+        <Card>
+          <CardHeader><CardTitle className="text-base flex items-center gap-2"><Building2 className="h-4 w-4" />Órgãos Adicionais</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-xs text-muted-foreground">Adicione órgãos extras além da lista padrão.</p>
+            <div className="flex gap-2">
+              <Input placeholder="Ex: NOVO ÓRGÃO – Nome Completo" value={novoOrgao} onChange={(e) => setNovoOrgao(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddOrgao()} />
+              <Button onClick={handleAddOrgao} disabled={!novoOrgao.trim()} size="sm"><Plus className="h-4 w-4" /></Button>
+            </div>
+            {orgaos.length > 0 && (
+              <div className="space-y-2">
+                {orgaos.map((orgao) => (
+                  <div key={orgao} className="flex items-center justify-between border rounded-md px-3 py-2">
+                    <span className="text-sm">{orgao}</span>
+                    <Button size="sm" variant="ghost" onClick={() => handleRemoveOrgao(orgao)} className="h-7 text-destructive hover:text-destructive">
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {orgaos.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Nenhum órgão adicional cadastrado.</p>}
+          </CardContent>
+        </Card>
+
+        {/* Assuntos */}
+        <Card>
+          <CardHeader><CardTitle className="text-base flex items-center gap-2"><FileSpreadsheet className="h-4 w-4" />Assuntos Adicionais</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-xs text-muted-foreground">Assuntos padrão: {ASSUNTOS.join(', ')}.</p>
+            <div className="flex gap-2">
+              <Input placeholder="Ex: Novo Assunto" value={novoAssunto} onChange={(e) => setNovoAssunto(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddAssunto()} />
+              <Button onClick={handleAddAssunto} disabled={!novoAssunto.trim()} size="sm"><Plus className="h-4 w-4" /></Button>
+            </div>
+            {assuntos.length > 0 && (
+              <div className="space-y-2">
+                {assuntos.map((assunto) => (
+                  <div key={assunto} className="flex items-center justify-between border rounded-md px-3 py-2">
+                    <span className="text-sm">{assunto}</span>
+                    <Button size="sm" variant="ghost" onClick={() => handleRemoveAssunto(assunto)} className="h-7 text-destructive hover:text-destructive">
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {assuntos.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Nenhum assunto adicional cadastrado.</p>}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
 const Admin = () => {
   const navigate = useNavigate();
   const [authed, setAuthed] = useState(() => sessionStorage.getItem('admin-auth') === '1');
@@ -154,6 +361,7 @@ const Admin = () => {
   const [filtroPrioridade, setFiltroPrioridade] = useState('all');
 
   const solicitacoes = useMemo(() => getSolicitacoes(), [refresh]);
+  const operadores = useMemo(() => getOperadores().filter((o) => o.ativo), [refresh]);
 
   const filtered = useMemo(() => {
     return solicitacoes.filter((s) => {
@@ -363,6 +571,8 @@ const Admin = () => {
             <TabsTrigger value="executivo" className="gap-2"><Eye className="h-4 w-4" />Visão Executiva</TabsTrigger>
             <TabsTrigger value="operacional" className="gap-2"><Settings className="h-4 w-4" />Operacional</TabsTrigger>
             <TabsTrigger value="faq" className="gap-2"><HelpCircle className="h-4 w-4" />Gerenciar FAQ</TabsTrigger>
+            <TabsTrigger value="usuarios" className="gap-2"><Users className="h-4 w-4" />Usuários</TabsTrigger>
+            <TabsTrigger value="configuracoes" className="gap-2"><Settings className="h-4 w-4" />Configurações</TabsTrigger>
           </TabsList>
 
           {/* ============ VISÃO EXECUTIVA ============ */}
@@ -547,7 +757,7 @@ const Admin = () => {
                         <TableHead>Prioridade</TableHead>
                         <TableHead>SLA</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Responsável</TableHead>
+                        <TableHead>Atribuído a</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -585,11 +795,18 @@ const Admin = () => {
                             </TableCell>
                             <TableCell>
                               <Select value={s.responsavel || ''} onValueChange={(v) => handleResponsavel(s.id, v)}>
-                                <SelectTrigger className="w-[130px] text-xs h-8">
+                                <SelectTrigger className="w-[140px] text-xs h-8">
                                   <SelectValue placeholder="Atribuir" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {RESPONSAVEIS.map((r) => (<SelectItem key={r} value={r}>{r}</SelectItem>))}
+                                  {operadores.map((op) => (
+                                    <SelectItem key={op.id} value={op.nome}>
+                                      <span className="flex items-center gap-1">
+                                        {op.nivel === 'Administrador' ? <ShieldCheck className="h-3 w-3 text-primary inline" /> : <Shield className="h-3 w-3 text-muted-foreground inline" />}
+                                        {op.nome}
+                                      </span>
+                                    </SelectItem>
+                                  ))}
                                 </SelectContent>
                               </Select>
                             </TableCell>
@@ -608,6 +825,16 @@ const Admin = () => {
           {/* ============ FAQ ============ */}
           <TabsContent value="faq" className="space-y-6">
             <FaqManager />
+          </TabsContent>
+
+          {/* ============ USUÁRIOS ============ */}
+          <TabsContent value="usuarios" className="space-y-6">
+            <UsersManager />
+          </TabsContent>
+
+          {/* ============ CONFIGURAÇÕES ============ */}
+          <TabsContent value="configuracoes" className="space-y-6">
+            <SettingsManager />
           </TabsContent>
         </Tabs>
       </main>

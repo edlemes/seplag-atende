@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TIPOS_ATENDIMENTO, TipoAtendimento, CATEGORIAS, CategoriaDemanda, ASSUNTOS, Assunto, IMPACTOS, Impacto } from '@/types/solicitacao';
-import { addSolicitacao } from '@/lib/storage';
+import { addSolicitacao, getCustomAssuntos } from '@/lib/storage';
 
 const LABELS: Record<TipoAtendimento, string> = {
   'Dúvida': 'Descreva sua dúvida',
@@ -22,9 +22,10 @@ const SolicitacaoPage = () => {
   const [tipo, setTipo] = useState<TipoAtendimento | ''>('');
   const [descricao, setDescricao] = useState('');
   const [categoria, setCategoria] = useState<CategoriaDemanda | ''>('');
-  const [assunto, setAssunto] = useState<Assunto | ''>('');
+  const [assunto, setAssunto] = useState<string>('');
   const [impacto, setImpacto] = useState<Impacto | ''>('');
-
+  const customAssuntos = getCustomAssuntos();
+  const allAssuntos = [...ASSUNTOS, ...customAssuntos];
   const nome = params.get('nome') || '';
   const email = params.get('email') || '';
   const secretaria = params.get('secretaria') || '';
@@ -103,7 +104,7 @@ const SolicitacaoPage = () => {
               <Select value={assunto} onValueChange={(v) => setAssunto(v as Assunto)}>
                 <SelectTrigger><SelectValue placeholder="Selecione o assunto" /></SelectTrigger>
                 <SelectContent>
-                  {ASSUNTOS.map((a) => (<SelectItem key={a} value={a}>{a}</SelectItem>))}
+                  {allAssuntos.map((a) => (<SelectItem key={a} value={a}>{a}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>

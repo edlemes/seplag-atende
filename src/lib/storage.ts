@@ -1,7 +1,10 @@
-import { Solicitacao, Avaliacao, FAQ } from '@/types/solicitacao';
+import { Solicitacao, Avaliacao, FAQ, Operador, NivelAcesso } from '@/types/solicitacao';
 
 const STORAGE_KEY = 'seplag-solicitacoes';
 const FAQ_KEY = 'seplag-faqs';
+const OPERADORES_KEY = 'seplag-operadores';
+const SETTINGS_ORGAOS_KEY = 'seplag-settings-orgaos';
+const SETTINGS_ASSUNTOS_KEY = 'seplag-settings-assuntos';
 
 function generateProtocolo(): string {
   const now = new Date();
@@ -128,4 +131,82 @@ export function updateFaq(id: string, pergunta: string, resposta: string) {
 export function deleteFaq(id: string) {
   const faqs = getFaqs().filter((f) => f.id !== id);
   saveFaqs(faqs);
+}
+
+// ============ OPERADORES ============
+export function getOperadores(): Operador[] {
+  const data = localStorage.getItem(OPERADORES_KEY);
+  if (!data) {
+    // Seed default operators
+    const defaults: Operador[] = [
+      { id: crypto.randomUUID(), nome: 'Ana Silva', email: 'ana.silva@seplag.mt.gov.br', nivel: 'Administrador', ativo: true },
+      { id: crypto.randomUUID(), nome: 'Carlos Mendes', email: 'carlos.mendes@seplag.mt.gov.br', nivel: 'Técnico', ativo: true },
+      { id: crypto.randomUUID(), nome: 'Fernanda Lima', email: 'fernanda.lima@seplag.mt.gov.br', nivel: 'Técnico', ativo: true },
+      { id: crypto.randomUUID(), nome: 'João Santos', email: 'joao.santos@seplag.mt.gov.br', nivel: 'Técnico', ativo: true },
+      { id: crypto.randomUUID(), nome: 'Maria Oliveira', email: 'maria.oliveira@seplag.mt.gov.br', nivel: 'Administrador', ativo: true },
+    ];
+    localStorage.setItem(OPERADORES_KEY, JSON.stringify(defaults));
+    return defaults;
+  }
+  return JSON.parse(data);
+}
+
+export function addOperador(nome: string, email: string, nivel: NivelAcesso): Operador {
+  const ops = getOperadores();
+  const op: Operador = { id: crypto.randomUUID(), nome, email, nivel, ativo: true };
+  ops.push(op);
+  localStorage.setItem(OPERADORES_KEY, JSON.stringify(ops));
+  return op;
+}
+
+export function updateOperador(id: string, updates: Partial<Operador>) {
+  const ops = getOperadores();
+  const idx = ops.findIndex((o) => o.id === id);
+  if (idx !== -1) {
+    ops[idx] = { ...ops[idx], ...updates };
+    localStorage.setItem(OPERADORES_KEY, JSON.stringify(ops));
+  }
+}
+
+export function deleteOperador(id: string) {
+  const ops = getOperadores().filter((o) => o.id !== id);
+  localStorage.setItem(OPERADORES_KEY, JSON.stringify(ops));
+}
+
+// ============ SETTINGS: Custom Órgãos ============
+export function getCustomOrgaos(): string[] {
+  const data = localStorage.getItem(SETTINGS_ORGAOS_KEY);
+  return data ? JSON.parse(data) : [];
+}
+
+export function addCustomOrgao(orgao: string) {
+  const list = getCustomOrgaos();
+  if (!list.includes(orgao)) {
+    list.push(orgao);
+    localStorage.setItem(SETTINGS_ORGAOS_KEY, JSON.stringify(list));
+  }
+}
+
+export function removeCustomOrgao(orgao: string) {
+  const list = getCustomOrgaos().filter((o) => o !== orgao);
+  localStorage.setItem(SETTINGS_ORGAOS_KEY, JSON.stringify(list));
+}
+
+// ============ SETTINGS: Custom Assuntos ============
+export function getCustomAssuntos(): string[] {
+  const data = localStorage.getItem(SETTINGS_ASSUNTOS_KEY);
+  return data ? JSON.parse(data) : [];
+}
+
+export function addCustomAssunto(assunto: string) {
+  const list = getCustomAssuntos();
+  if (!list.includes(assunto)) {
+    list.push(assunto);
+    localStorage.setItem(SETTINGS_ASSUNTOS_KEY, JSON.stringify(list));
+  }
+}
+
+export function removeCustomAssunto(assunto: string) {
+  const list = getCustomAssuntos().filter((a) => a !== assunto);
+  localStorage.setItem(SETTINGS_ASSUNTOS_KEY, JSON.stringify(list));
 }
