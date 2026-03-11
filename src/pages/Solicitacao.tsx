@@ -104,7 +104,7 @@ const SolicitacaoPage = () => {
               <Select value={assunto} onValueChange={(v) => setAssunto(v as Assunto)}>
                 <SelectTrigger><SelectValue placeholder="Selecione o assunto" /></SelectTrigger>
                 <SelectContent>
-                  {ASSUNTOS.map((a) => (<SelectItem key={a} value={a}>{a}</SelectItem>))}
+                  {allAssuntos.map((a) => (<SelectItem key={a} value={a}>{a}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
