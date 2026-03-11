@@ -14,10 +14,10 @@ export const ASSUNTOS = [
 export type Assunto = typeof ASSUNTOS[number];
 
 export interface Avaliacao {
-  satisfacao: number; // 1-5
+  satisfacao: number;
   resolvido: boolean;
-  clareza: number; // 1-5
-  tempoResposta: number; // 1-5
+  clareza: number;
+  tempoResposta: number;
   comentario?: string;
   data: string;
 }
@@ -41,31 +41,80 @@ export interface Solicitacao {
   responsavel?: string;
   dataResposta?: string;
   resposta?: string;
-  slaLimite: string; // ISO date
+  slaLimite: string;
   avaliacao?: Avaliacao;
 }
 
-export const SECRETARIAS = [
-  'CASA CIVIL',
-  'GABINETE DO GOVERNADOR',
-  'PGE – Procuradoria Geral do Estado',
-  'CGE – Controladoria Geral do Estado',
-  'SEPLAG – Planejamento e Gestão',
-  'SEFAZ – Fazenda',
-  'SEDUC – Educação',
-  'SES – Saúde',
-  'SESP – Segurança Pública',
-  'SINFRA – Infraestrutura',
-  'SEMA – Meio Ambiente',
-  'SEAF – Agricultura Familiar',
-  'SEDEC – Desenvolvimento Econômico',
-  'SECOM – Comunicação',
-  'SETASC – Assistência Social',
-  'SECEL – Cultura, Esporte e Lazer',
-  'SECITECI – Ciência, Tecnologia e Inovação',
-  'DETRAN',
-  'MTI – Empresa Mato-grossense de Tecnologia da Informação',
-] as const;
+export interface OrgaoCategoria {
+  categoria: string;
+  orgaos: string[];
+}
+
+export const ORGAOS_POR_CATEGORIA: OrgaoCategoria[] = [
+  {
+    categoria: 'Secretarias',
+    orgaos: [
+      'CASA CIVIL – Casa Civil',
+      'CGE – Controladoria-Geral do Estado',
+      'PGE – Procuradoria-Geral do Estado',
+      'SEAF – Secretaria de Agricultura Familiar',
+      'SECEL – Secretaria de Cultura, Esporte e Lazer',
+      'SECITECI – Secretaria de Ciência, Tecnologia e Inovação',
+      'SECOM – Secretaria de Comunicação',
+      'SEDEC – Secretaria de Desenvolvimento Econômico',
+      'SEDUC – Secretaria de Educação',
+      'SEFAZ – Secretaria de Fazenda',
+      'SEMA – Secretaria de Meio Ambiente',
+      'SEPLAG – Secretaria de Planejamento e Gestão',
+      'SES – Secretaria de Saúde',
+      'SESP – Secretaria de Segurança Pública',
+      'SETASC – Secretaria de Assistência Social',
+      'SINFRA – Secretaria de Infraestrutura',
+    ],
+  },
+  {
+    categoria: 'Administração Indireta / Autarquias',
+    orgaos: [
+      'AGER – Agência Reguladora',
+      'DETRAN – Departamento de Trânsito',
+      'INDEA – Instituto de Defesa Agropecuária',
+      'INTERMAT – Instituto de Terras',
+      'IPEM – Instituto de Pesos e Medidas',
+      'JUCEMAT – Junta Comercial',
+      'MTPREV – Previdência do Estado',
+      'MT SAÚDE – Instituto de Saúde dos Servidores',
+      'UNEMAT – Universidade do Estado',
+    ],
+  },
+  {
+    categoria: 'Fundações e Empresas',
+    orgaos: [
+      'FAPEMAT – Fundação de Amparo à Pesquisa',
+      'FUNAC – Fundação Nova Chance',
+      'CEASA – Central de Abastecimento',
+      'DESENVOLVE MT – Agência de Fomento',
+      'EMPAER – Empresa de Pesquisa Agropecuária',
+      'METAMAT – Companhia Matogrossense de Mineração',
+      'MT GÁS – Companhia de Gás',
+      'MTI – Empresa de Tecnologia da Informação',
+      'MT PAR – Empresa de Participações',
+    ],
+  },
+  {
+    categoria: 'Segurança e Outros',
+    orgaos: [
+      'CBM – Corpo de Bombeiros Militar',
+      'PJC – Polícia Judiciária Civil',
+      'PM – Polícia Militar',
+      'POLITEC – Perícia Oficial e Identificação Técnica',
+      'MPMT – Ministério Público',
+      'TJMT – Tribunal de Justiça',
+    ],
+  },
+];
+
+// Flat list for backward compatibility
+export const SECRETARIAS = ORGAOS_POR_CATEGORIA.flatMap((c) => c.orgaos);
 
 export const TIPOS_ATENDIMENTO: TipoAtendimento[] = [
   'Dúvida', 'Questionamento', 'Pergunta', 'Sugestão', 'Urgência',
@@ -83,3 +132,9 @@ export const CANAIS: CanalEntrada[] = ['Web', 'E-mail', 'Telefone', 'Presencial'
 export const RESPONSAVEIS = [
   'Ana Silva', 'Carlos Mendes', 'Fernanda Lima', 'João Santos', 'Maria Oliveira',
 ];
+
+export interface FAQ {
+  id: string;
+  pergunta: string;
+  resposta: string;
+}

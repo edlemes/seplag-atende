@@ -1,9 +1,12 @@
 import { useNavigate } from 'react-router-dom';
-import { Building2, FileText, BarChart3 } from 'lucide-react';
+import { Building2, FileText, BarChart3, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { getFaqs } from '@/lib/storage';
 
 const Home = () => {
   const navigate = useNavigate();
+  const faqs = getFaqs();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -17,8 +20,8 @@ const Home = () => {
       </header>
 
       {/* Hero */}
-      <main className="flex-1 flex items-center justify-center px-4">
-        <div className="max-w-2xl mx-auto text-center space-y-8">
+      <main className="flex-1 px-4">
+        <div className="max-w-2xl mx-auto text-center space-y-8 py-16">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary mb-4">
               <FileText className="h-4 w-4" />
@@ -67,6 +70,28 @@ const Home = () => {
             ))}
           </div>
         </div>
+
+        {/* FAQ Section */}
+        {faqs.length > 0 && (
+          <div className="max-w-2xl mx-auto pb-16">
+            <div className="flex items-center gap-2 mb-6">
+              <HelpCircle className="h-6 w-6 text-primary" />
+              <h3 className="text-2xl font-bold text-foreground">Perguntas Frequentes</h3>
+            </div>
+            <div className="bg-card rounded-xl shadow-md border p-6">
+              <Accordion type="single" collapsible>
+                {faqs.map((faq) => (
+                  <AccordionItem key={faq.id} value={faq.id}>
+                    <AccordionTrigger className="text-left">{faq.pergunta}</AccordionTrigger>
+                    <AccordionContent className="text-muted-foreground whitespace-pre-wrap">
+                      {faq.resposta}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Footer */}
