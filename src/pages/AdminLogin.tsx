@@ -3,19 +3,21 @@ import { Building2, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { authenticateOperador } from '@/lib/storage';
+import { Operador } from '@/types/solicitacao';
 
-const ADMIN_PASSWORD = 'seplag2024';
-
-const AdminLogin = ({ onAuth }: { onAuth: () => void }) => {
+const AdminLogin = ({ onAuth }: { onAuth: (op: Operador) => void }) => {
+  const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
-  const [erro, setErro] = useState(false);
+  const [erro, setErro] = useState('');
 
   const handleLogin = () => {
-    if (senha === ADMIN_PASSWORD) {
-      sessionStorage.setItem('admin-auth', '1');
-      onAuth();
+    const op = authenticateOperador(email.trim(), senha);
+    if (op) {
+      sessionStorage.setItem('admin-auth', JSON.stringify({ id: op.id, nome: op.nome, nivel: op.nivel }));
+      onAuth(op);
     } else {
-      setErro(true);
+      setErro('E-mail ou senha incorretos, ou usuário inativo.');
     }
   };
 
@@ -32,20 +34,40 @@ const AdminLogin = ({ onAuth }: { onAuth: () => void }) => {
               <Lock className="h-7 w-7 text-primary" />
             </div>
             <h2 className="text-xl font-bold text-foreground">Acesso Restrito</h2>
+            <p className="text-sm text-muted-foreground">Use suas credenciais de operador</p>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="senha">Senha</Label>
-            <Input
-              id="senha"
-              type="password"
-              placeholder="Digite a senha"
-              value={senha}
-              onChange={(e) => { setSenha(e.target.value); setErro(false); }}
-              onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-            />
-            {erro && <p className="text-destructive text-sm">Senha incorreta.</p>}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">E-mail</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="seu.email@seplag.mt.gov.br"
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); setErro(''); }}
+                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="senha">Senha</Label>
+              <Input
+                id="senha"
+                type="password"
+                placeholder="Digite a senha"
+                value={senha}
+                onChange={(e) => { setSenha(e.target.value); setErro(''); }}
+                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+              />
+            </div>
+            {erro && <p className="text-destructive text-sm">{erro}</p>}
           </div>
-          <Button className="w-full" onClick={handleLogin}>Entrar</Button>
+          <Button className="w-full" onClick={handleLogin} disabled={!email.trim() || !senha}>Entrar</Button>
+          <div className="text-xs text-muted-foreground text-center space-y-1">
+            <p className="font-medium">Credenciais padrão:</p>
+            <p>Admin: ana.silva@seplag.mt.gov.br / admin123</p>
+            <p>Analista: carlos.mendes@seplag.mt.gov.br / tecnico123</p>
+            <p>Estagiário: joao.santos@seplag.mt.gov.br / estagiario123</p>
+          </div>
         </div>
       </main>
     </div>

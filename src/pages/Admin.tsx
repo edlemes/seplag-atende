@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Building2, ArrowLeft, Download, FileSpreadsheet, BarChart3, CheckCircle2,
   AlertCircle, Clock, Star, TrendingUp, AlertTriangle, Target, Eye, Settings,
-  HelpCircle, Plus, Pencil, Trash2, Save, X, Users, Shield, ShieldCheck
+  HelpCircle, Plus, Pencil, Trash2, Save, X, Users, Shield, ShieldCheck, LogOut
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -25,7 +25,7 @@ import {
   getCustomOrgaos, addCustomOrgao, removeCustomOrgao,
   getCustomAssuntos, addCustomAssunto, removeCustomAssunto,
 } from '@/lib/storage';
-import { Solicitacao, StatusSolicitacao, FAQ, Operador, NivelAcesso, ASSUNTOS } from '@/types/solicitacao';
+import { Solicitacao, StatusSolicitacao, FAQ, Operador, NivelAcesso, NIVEIS_ACESSO, NIVEIS_GESTAO, NIVEIS_LEITURA, ASSUNTOS } from '@/types/solicitacao';
 import AdminLogin from './AdminLogin';
 import * as XLSX from 'xlsx';
 
@@ -153,14 +153,16 @@ function UsersManager() {
   const [operadores, setOperadores] = useState<Operador[]>(getOperadores());
   const [novoNome, setNovoNome] = useState('');
   const [novoEmail, setNovoEmail] = useState('');
-  const [novoNivel, setNovoNivel] = useState<NivelAcesso>('Técnico');
+  const [novoSenha, setNovoSenha] = useState('');
+  const [novoNivel, setNovoNivel] = useState<NivelAcesso>('Analista');
 
   const handleAdd = () => {
-    if (!novoNome.trim() || !novoEmail.trim()) return;
-    addOperador(novoNome.trim(), novoEmail.trim(), novoNivel);
+    if (!novoNome.trim() || !novoEmail.trim() || !novoSenha.trim()) return;
+    addOperador(novoNome.trim(), novoEmail.trim(), novoNivel, novoSenha);
     setNovoNome('');
     setNovoEmail('');
-    setNovoNivel('Técnico');
+    setNovoSenha('');
+    setNovoNivel('Analista');
     setOperadores(getOperadores());
   };
 
@@ -184,7 +186,7 @@ function UsersManager() {
       <Card>
         <CardHeader><CardTitle className="text-base flex items-center gap-2"><Plus className="h-4 w-4" />Novo Operador</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label>Nome</Label>
               <Input placeholder="Nome completo" value={novoNome} onChange={(e) => setNovoNome(e.target.value)} />
@@ -194,17 +196,20 @@ function UsersManager() {
               <Input placeholder="email@seplag.mt.gov.br" value={novoEmail} onChange={(e) => setNovoEmail(e.target.value)} />
             </div>
             <div className="space-y-2">
+              <Label>Senha</Label>
+              <Input type="password" placeholder="Senha de acesso" value={novoSenha} onChange={(e) => setNovoSenha(e.target.value)} />
+            </div>
+            <div className="space-y-2">
               <Label>Nível de Acesso</Label>
               <Select value={novoNivel} onValueChange={(v) => setNovoNivel(v as NivelAcesso)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Administrador">Administrador</SelectItem>
-                  <SelectItem value="Técnico">Técnico</SelectItem>
+                  {NIVEIS_ACESSO.map((n) => (<SelectItem key={n} value={n}>{n}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
           </div>
-          <Button onClick={handleAdd} disabled={!novoNome.trim() || !novoEmail.trim()} className="gap-2">
+          <Button onClick={handleAdd} disabled={!novoNome.trim() || !novoEmail.trim() || !novoSenha.trim()} className="gap-2">
             <Plus className="h-4 w-4" /> Adicionar Operador
           </Button>
         </CardContent>
@@ -230,12 +235,11 @@ function UsersManager() {
                   <TableCell className="text-sm text-muted-foreground">{op.email}</TableCell>
                   <TableCell>
                     <Select value={op.nivel} onValueChange={(v) => handleChangeNivel(op.id, v as NivelAcesso)}>
-                      <SelectTrigger className="w-[140px] h-8 text-xs">
+                      <SelectTrigger className="w-[160px] h-8 text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Administrador">Administrador</SelectItem>
-                        <SelectItem value="Técnico">Técnico</SelectItem>
+                        {NIVEIS_ACESSO.map((n) => (<SelectItem key={n} value={n}>{n}</SelectItem>))}
                       </SelectContent>
                     </Select>
                   </TableCell>
@@ -353,7 +357,14 @@ function SettingsManager() {
 
 const Admin = () => {
   const navigate = useNavigate();
-  const [authed, setAuthed] = useState(() => sessionStorage.getItem('admin-auth') === '1');
+  const [currentUser, setCurrentUser] = useState<Operador | null>(() => {
+    const stored = sessionStorage.getItem('admin-auth');
+    if (!stored) return null;
+    try { return JSON.parse(stored); } catch { return null; }
+  });
+  const authed = !!currentUser;
+  const isGestao = currentUser ? NIVEIS_GESTAO.includes(currentUser.nivel) : false;
+  const isLeitura = currentUser ? NIVEIS_LEITURA.includes(currentUser.nivel) : false;
   const [refresh, setRefresh] = useState(0);
   const [busca, setBusca] = useState('');
   const [filtroSecretaria, setFiltroSecretaria] = useState('all');
@@ -534,7 +545,12 @@ const Admin = () => {
     XLSX.writeFile(wb, `seplag-relatorio-${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
-  if (!authed) return <AdminLogin onAuth={() => setAuthed(true)} />;
+  const handleLogout = () => {
+    sessionStorage.removeItem('admin-auth');
+    setCurrentUser(null);
+  };
+
+  if (!authed) return <AdminLogin onAuth={(op) => setCurrentUser(op)} />;
 
   const secretarias = [...new Set(solicitacoes.map((s) => s.secretaria))];
 
@@ -546,10 +562,20 @@ const Admin = () => {
         </Button>
         <Building2 className="h-7 w-7 text-primary-foreground" />
         <h1 className="text-lg font-bold text-primary-foreground flex-1">Gestão do Atendimento – SEPLAG MT</h1>
-        <Button variant="secondary" size="sm" onClick={exportExcel} className="gap-2">
-          <Download className="h-4 w-4" />
-          Exportar Excel
-        </Button>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-primary-foreground/80 hidden md:inline">
+            {currentUser?.nome} ({currentUser?.nivel})
+          </span>
+          {isGestao && (
+            <Button variant="secondary" size="sm" onClick={exportExcel} className="gap-2">
+              <Download className="h-4 w-4" />
+              Exportar
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary-foreground/10" onClick={handleLogout} title="Sair">
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
       </header>
 
       <main className="flex-1 px-4 md:px-8 py-6 space-y-6 max-w-[1400px] mx-auto w-full">
@@ -566,13 +592,13 @@ const Admin = () => {
           <KpiCard icon={BarChart3} label="IAI" value={iai + '%'} color="text-primary" />
         </div>
 
-        <Tabs defaultValue="executivo" className="space-y-6">
+        <Tabs defaultValue={isGestao ? 'executivo' : 'operacional'} className="space-y-6">
           <TabsList className="flex-wrap">
-            <TabsTrigger value="executivo" className="gap-2"><Eye className="h-4 w-4" />Visão Executiva</TabsTrigger>
+            {isGestao && <TabsTrigger value="executivo" className="gap-2"><Eye className="h-4 w-4" />Visão Executiva</TabsTrigger>}
             <TabsTrigger value="operacional" className="gap-2"><Settings className="h-4 w-4" />Operacional</TabsTrigger>
-            <TabsTrigger value="faq" className="gap-2"><HelpCircle className="h-4 w-4" />Gerenciar FAQ</TabsTrigger>
-            <TabsTrigger value="usuarios" className="gap-2"><Users className="h-4 w-4" />Usuários</TabsTrigger>
-            <TabsTrigger value="configuracoes" className="gap-2"><Settings className="h-4 w-4" />Configurações</TabsTrigger>
+            {isGestao && <TabsTrigger value="faq" className="gap-2"><HelpCircle className="h-4 w-4" />Gerenciar FAQ</TabsTrigger>}
+            {isGestao && <TabsTrigger value="usuarios" className="gap-2"><Users className="h-4 w-4" />Usuários</TabsTrigger>}
+            {isGestao && <TabsTrigger value="configuracoes" className="gap-2"><Settings className="h-4 w-4" />Configurações</TabsTrigger>}
           </TabsList>
 
           {/* ============ VISÃO EXECUTIVA ============ */}
@@ -782,33 +808,41 @@ const Admin = () => {
                               <span className={`text-xs font-medium ${SLA_COLORS[slaStatus]}`}>{slaStatus}</span>
                             </TableCell>
                             <TableCell>
-                              <Select value={s.status} onValueChange={(v) => handleStatusChange(s.id, v as StatusSolicitacao)}>
-                                <SelectTrigger className={`w-[130px] text-xs h-8 border ${STATUS_COLORS[s.status]}`}>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="Aberto">Aberto</SelectItem>
-                                  <SelectItem value="Em análise">Em análise</SelectItem>
-                                  <SelectItem value="Respondido">Respondido</SelectItem>
-                                </SelectContent>
-                              </Select>
+                              {isLeitura ? (
+                                <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[s.status]}`}>{s.status}</Badge>
+                              ) : (
+                                <Select value={s.status} onValueChange={(v) => handleStatusChange(s.id, v as StatusSolicitacao)}>
+                                  <SelectTrigger className={`w-[130px] text-xs h-8 border ${STATUS_COLORS[s.status]}`}>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="Aberto">Aberto</SelectItem>
+                                    <SelectItem value="Em análise">Em análise</SelectItem>
+                                    <SelectItem value="Respondido">Respondido</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              )}
                             </TableCell>
                             <TableCell>
-                              <Select value={s.responsavel || ''} onValueChange={(v) => handleResponsavel(s.id, v)}>
-                                <SelectTrigger className="w-[140px] text-xs h-8">
-                                  <SelectValue placeholder="Atribuir" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {operadores.map((op) => (
-                                    <SelectItem key={op.id} value={op.nome}>
-                                      <span className="flex items-center gap-1">
-                                        {op.nivel === 'Administrador' ? <ShieldCheck className="h-3 w-3 text-primary inline" /> : <Shield className="h-3 w-3 text-muted-foreground inline" />}
-                                        {op.nome}
-                                      </span>
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                              {isLeitura ? (
+                                <span className="text-xs text-muted-foreground">{s.responsavel || '—'}</span>
+                              ) : (
+                                <Select value={s.responsavel || ''} onValueChange={(v) => handleResponsavel(s.id, v)}>
+                                  <SelectTrigger className="w-[140px] text-xs h-8">
+                                    <SelectValue placeholder="Atribuir" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {operadores.map((op) => (
+                                      <SelectItem key={op.id} value={op.nome}>
+                                        <span className="flex items-center gap-1">
+                                          {NIVEIS_GESTAO.includes(op.nivel) ? <ShieldCheck className="h-3 w-3 text-primary inline" /> : <Shield className="h-3 w-3 text-muted-foreground inline" />}
+                                          {op.nome}
+                                        </span>
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              )}
                             </TableCell>
                           </TableRow>
                         );
