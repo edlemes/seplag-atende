@@ -22,9 +22,10 @@ const SolicitacaoPage = () => {
   const [tipo, setTipo] = useState<TipoAtendimento | ''>('');
   const [descricao, setDescricao] = useState('');
   const [categoria, setCategoria] = useState<CategoriaDemanda | ''>('');
-  const [assunto, setAssunto] = useState<Assunto | ''>('');
+  const [assunto, setAssunto] = useState<string>('');
   const [impacto, setImpacto] = useState<Impacto | ''>('');
-
+  const customAssuntos = getCustomAssuntos();
+  const allAssuntos = [...ASSUNTOS, ...customAssuntos];
   const nome = params.get('nome') || '';
   const email = params.get('email') || '';
   const secretaria = params.get('secretaria') || '';
