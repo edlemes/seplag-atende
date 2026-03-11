@@ -545,7 +545,12 @@ const Admin = () => {
     XLSX.writeFile(wb, `seplag-relatorio-${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
-  if (!authed) return <AdminLogin onAuth={() => setAuthed(true)} />;
+  const handleLogout = () => {
+    sessionStorage.removeItem('admin-auth');
+    setCurrentUser(null);
+  };
+
+  if (!authed) return <AdminLogin onAuth={(op) => setCurrentUser(op)} />;
 
   const secretarias = [...new Set(solicitacoes.map((s) => s.secretaria))];
 
@@ -557,10 +562,20 @@ const Admin = () => {
         </Button>
         <Building2 className="h-7 w-7 text-primary-foreground" />
         <h1 className="text-lg font-bold text-primary-foreground flex-1">Gestão do Atendimento – SEPLAG MT</h1>
-        <Button variant="secondary" size="sm" onClick={exportExcel} className="gap-2">
-          <Download className="h-4 w-4" />
-          Exportar Excel
-        </Button>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-primary-foreground/80 hidden md:inline">
+            {currentUser?.nome} ({currentUser?.nivel})
+          </span>
+          {isGestao && (
+            <Button variant="secondary" size="sm" onClick={exportExcel} className="gap-2">
+              <Download className="h-4 w-4" />
+              Exportar
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary-foreground/10" onClick={handleLogout} title="Sair">
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
       </header>
 
       <main className="flex-1 px-4 md:px-8 py-6 space-y-6 max-w-[1400px] mx-auto w-full">
