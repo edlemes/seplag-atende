@@ -592,13 +592,13 @@ const Admin = () => {
           <KpiCard icon={BarChart3} label="IAI" value={iai + '%'} color="text-primary" />
         </div>
 
-        <Tabs defaultValue="executivo" className="space-y-6">
+        <Tabs defaultValue={isGestao ? 'executivo' : 'operacional'} className="space-y-6">
           <TabsList className="flex-wrap">
-            <TabsTrigger value="executivo" className="gap-2"><Eye className="h-4 w-4" />Visão Executiva</TabsTrigger>
+            {isGestao && <TabsTrigger value="executivo" className="gap-2"><Eye className="h-4 w-4" />Visão Executiva</TabsTrigger>}
             <TabsTrigger value="operacional" className="gap-2"><Settings className="h-4 w-4" />Operacional</TabsTrigger>
-            <TabsTrigger value="faq" className="gap-2"><HelpCircle className="h-4 w-4" />Gerenciar FAQ</TabsTrigger>
-            <TabsTrigger value="usuarios" className="gap-2"><Users className="h-4 w-4" />Usuários</TabsTrigger>
-            <TabsTrigger value="configuracoes" className="gap-2"><Settings className="h-4 w-4" />Configurações</TabsTrigger>
+            {isGestao && <TabsTrigger value="faq" className="gap-2"><HelpCircle className="h-4 w-4" />Gerenciar FAQ</TabsTrigger>}
+            {isGestao && <TabsTrigger value="usuarios" className="gap-2"><Users className="h-4 w-4" />Usuários</TabsTrigger>}
+            {isGestao && <TabsTrigger value="configuracoes" className="gap-2"><Settings className="h-4 w-4" />Configurações</TabsTrigger>}
           </TabsList>
 
           {/* ============ VISÃO EXECUTIVA ============ */}
