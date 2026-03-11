@@ -137,13 +137,12 @@ export function deleteFaq(id: string) {
 export function getOperadores(): Operador[] {
   const data = localStorage.getItem(OPERADORES_KEY);
   if (!data) {
-    // Seed default operators
     const defaults: Operador[] = [
-      { id: crypto.randomUUID(), nome: 'Ana Silva', email: 'ana.silva@seplag.mt.gov.br', nivel: 'Administrador', ativo: true },
-      { id: crypto.randomUUID(), nome: 'Carlos Mendes', email: 'carlos.mendes@seplag.mt.gov.br', nivel: 'Técnico', ativo: true },
-      { id: crypto.randomUUID(), nome: 'Fernanda Lima', email: 'fernanda.lima@seplag.mt.gov.br', nivel: 'Técnico', ativo: true },
-      { id: crypto.randomUUID(), nome: 'João Santos', email: 'joao.santos@seplag.mt.gov.br', nivel: 'Técnico', ativo: true },
-      { id: crypto.randomUUID(), nome: 'Maria Oliveira', email: 'maria.oliveira@seplag.mt.gov.br', nivel: 'Administrador', ativo: true },
+      { id: crypto.randomUUID(), nome: 'Ana Silva', email: 'ana.silva@seplag.mt.gov.br', senha: 'admin123', nivel: 'Administrador', ativo: true },
+      { id: crypto.randomUUID(), nome: 'Carlos Mendes', email: 'carlos.mendes@seplag.mt.gov.br', senha: 'tecnico123', nivel: 'Analista', ativo: true },
+      { id: crypto.randomUUID(), nome: 'Fernanda Lima', email: 'fernanda.lima@seplag.mt.gov.br', senha: 'tecnico123', nivel: 'Residente Técnico', ativo: true },
+      { id: crypto.randomUUID(), nome: 'João Santos', email: 'joao.santos@seplag.mt.gov.br', senha: 'estagiario123', nivel: 'Estagiário', ativo: true },
+      { id: crypto.randomUUID(), nome: 'Maria Oliveira', email: 'maria.oliveira@seplag.mt.gov.br', senha: 'admin123', nivel: 'Gerente', ativo: true },
     ];
     localStorage.setItem(OPERADORES_KEY, JSON.stringify(defaults));
     return defaults;
@@ -151,9 +150,15 @@ export function getOperadores(): Operador[] {
   return JSON.parse(data);
 }
 
-export function addOperador(nome: string, email: string, nivel: NivelAcesso): Operador {
+export function authenticateOperador(email: string, senha: string): Operador | null {
   const ops = getOperadores();
-  const op: Operador = { id: crypto.randomUUID(), nome, email, nivel, ativo: true };
+  const op = ops.find((o) => o.email === email && o.senha === senha && o.ativo);
+  return op || null;
+}
+
+export function addOperador(nome: string, email: string, nivel: NivelAcesso, senha: string): Operador {
+  const ops = getOperadores();
+  const op: Operador = { id: crypto.randomUUID(), nome, email, senha, nivel, ativo: true };
   ops.push(op);
   localStorage.setItem(OPERADORES_KEY, JSON.stringify(ops));
   return op;

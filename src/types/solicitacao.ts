@@ -139,12 +139,24 @@ export interface FAQ {
   resposta: string;
 }
 
-export type NivelAcesso = 'Administrador' | 'Técnico';
+export type NivelAcesso = 'Administrador' | 'Gerente' | 'Coordenador' | 'Analista' | 'Residente Técnico' | 'Estagiário';
+
+export const NIVEIS_ACESSO: NivelAcesso[] = [
+  'Administrador', 'Gerente', 'Coordenador', 'Analista', 'Residente Técnico', 'Estagiário',
+];
+
+/** Roles with full access to KPIs, config, FAQ, users */
+export const NIVEIS_GESTAO: NivelAcesso[] = ['Administrador', 'Gerente', 'Coordenador'];
+/** Roles that can view and respond to tickets */
+export const NIVEIS_OPERACAO: NivelAcesso[] = ['Analista', 'Residente Técnico'];
+/** Read-only role */
+export const NIVEIS_LEITURA: NivelAcesso[] = ['Estagiário'];
 
 export interface Operador {
   id: string;
   nome: string;
   email: string;
+  senha: string;
   nivel: NivelAcesso;
   ativo: boolean;
 }
