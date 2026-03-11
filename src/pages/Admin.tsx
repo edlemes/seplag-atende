@@ -20,7 +20,7 @@ import { Solicitacao, StatusSolicitacao, RESPONSAVEIS } from '@/types/solicitaca
 import AdminLogin from './AdminLogin';
 import * as XLSX from 'xlsx';
 
-const COLORS = ['#2E7D32', '#66BB6A', '#FFA726', '#42A5F5', '#EF5350', '#AB47BC', '#26C6DA', '#8D6E63', '#78909C', '#D4E157'];
+const COLORS = ['#114524', '#1D843D', '#FDB913', '#42A5F5', '#EF5350', '#AB47BC', '#26C6DA', '#8D6E63', '#78909C', '#D4E157'];
 
 const STATUS_COLORS: Record<StatusSolicitacao, string> = {
   'Aberto': 'bg-chart-3/20 text-chart-3 border-chart-3/30',
@@ -36,9 +36,9 @@ const SLA_COLORS = {
 
 function KpiCard({ icon: Icon, label, value, color, sub }: { icon: any; label: string; value: string | number; color: string; sub?: string }) {
   return (
-    <Card>
+    <Card className="shadow-md hover:shadow-lg transition-all duration-300">
       <CardContent className="pt-5 pb-4 flex flex-col items-center text-center gap-1">
-        <Icon className={`h-5 w-5 ${color}`} />
+        <Icon className={`h-5 w-5 ${color}`} aria-hidden="true" />
         <p className="text-2xl font-bold text-foreground">{value}</p>
         <p className="text-xs text-muted-foreground">{label}</p>
         {sub && <p className="text-[10px] text-muted-foreground/70">{sub}</p>}
@@ -500,7 +500,10 @@ const Admin = () => {
                             <TableCell className="text-xs">{s.tipo}</TableCell>
                             <TableCell className="text-xs">{s.categoria || '—'}</TableCell>
                             <TableCell>
-                              <Badge variant={s.prioridade === 'Urgente' ? 'destructive' : 'secondary'} className="text-[10px]">
+                              <Badge
+                                variant={s.prioridade === 'Urgente' ? 'destructive' : 'outline'}
+                                className={`text-[10px] transition-all duration-300 ${s.prioridade === 'Urgente' ? 'bg-destructive text-destructive-foreground' : 'bg-chart-4/15 text-chart-4 border-chart-4/30'}`}
+                              >
                                 {s.prioridade || 'Normal'}
                               </Badge>
                             </TableCell>
