@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Building2, ArrowLeft, Download, FileSpreadsheet, BarChart3, Users, CheckCircle2,
-  AlertCircle, Clock, Star, TrendingUp, AlertTriangle, Target, Eye, Settings
+  Building2, ArrowLeft, Download, FileSpreadsheet, BarChart3, CheckCircle2,
+  AlertCircle, Clock, Star, TrendingUp, AlertTriangle, Target, Eye, Settings,
+  HelpCircle, Plus, Pencil, Trash2, Save, X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -11,16 +12,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend, LineChart, Line, AreaChart, Area
+  PieChart, Pie, Cell, Legend, LineChart, Line
 } from 'recharts';
-import { getSolicitacoes, updateStatus, updateSolicitacao, getSlaStatus, getTempoResposta } from '@/lib/storage';
-import { Solicitacao, StatusSolicitacao, RESPONSAVEIS } from '@/types/solicitacao';
+import { getSolicitacoes, updateStatus, updateSolicitacao, getSlaStatus, getTempoResposta, getFaqs, addFaq, updateFaq, deleteFaq } from '@/lib/storage';
+import { Solicitacao, StatusSolicitacao, RESPONSAVEIS, FAQ } from '@/types/solicitacao';
 import AdminLogin from './AdminLogin';
 import * as XLSX from 'xlsx';
 
-const COLORS = ['#114524', '#1D843D', '#FDB913', '#42A5F5', '#EF5350', '#AB47BC', '#26C6DA', '#8D6E63', '#78909C', '#D4E157'];
+const COLORS = ['#004B8D', '#0067B3', '#FDB913', '#42A5F5', '#EF5350', '#AB47BC', '#26C6DA', '#8D6E63', '#78909C', '#D4E157'];
 
 const STATUS_COLORS: Record<StatusSolicitacao, string> = {
   'Aberto': 'bg-chart-3/20 text-chart-3 border-chart-3/30',
@@ -47,6 +50,100 @@ function KpiCard({ icon: Icon, label, value, color, sub }: { icon: any; label: s
   );
 }
 
+// FAQ Manager Component
+function FaqManager() {
+  const [faqs, setFaqs] = useState<FAQ[]>(getFaqs());
+  const [novaPergunta, setNovaPergunta] = useState('');
+  const [novaResposta, setNovaResposta] = useState('');
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editPergunta, setEditPergunta] = useState('');
+  const [editResposta, setEditResposta] = useState('');
+
+  const handleAdd = () => {
+    if (!novaPergunta.trim() || !novaResposta.trim()) return;
+    addFaq(novaPergunta.trim(), novaResposta.trim());
+    setNovaPergunta('');
+    setNovaResposta('');
+    setFaqs(getFaqs());
+  };
+
+  const handleEdit = (faq: FAQ) => {
+    setEditId(faq.id);
+    setEditPergunta(faq.pergunta);
+    setEditResposta(faq.resposta);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editId || !editPergunta.trim() || !editResposta.trim()) return;
+    updateFaq(editId, editPergunta.trim(), editResposta.trim());
+    setEditId(null);
+    setFaqs(getFaqs());
+  };
+
+  const handleDelete = (id: string) => {
+    deleteFaq(id);
+    setFaqs(getFaqs());
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Add new FAQ */}
+      <Card>
+        <CardHeader><CardTitle className="text-base flex items-center gap-2"><Plus className="h-4 w-4" />Nova Pergunta</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Pergunta</Label>
+            <Input placeholder="Ex: Como acompanhar meu protocolo?" value={novaPergunta} onChange={(e) => setNovaPergunta(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label>Resposta</Label>
+            <Textarea placeholder="Escreva a resposta..." value={novaResposta} onChange={(e) => setNovaResposta(e.target.value)} className="min-h-[100px]" />
+          </div>
+          <Button onClick={handleAdd} disabled={!novaPergunta.trim() || !novaResposta.trim()} className="gap-2">
+            <Plus className="h-4 w-4" /> Adicionar FAQ
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Existing FAQs */}
+      <Card>
+        <CardHeader><CardTitle className="text-base">FAQs Cadastradas ({faqs.length})</CardTitle></CardHeader>
+        <CardContent>
+          {faqs.length === 0 ? (
+            <p className="text-muted-foreground text-center py-8">Nenhuma FAQ cadastrada. Adicione a primeira acima.</p>
+          ) : (
+            <div className="space-y-4">
+              {faqs.map((faq) => (
+                <div key={faq.id} className="border rounded-lg p-4 space-y-2">
+                  {editId === faq.id ? (
+                    <>
+                      <Input value={editPergunta} onChange={(e) => setEditPergunta(e.target.value)} />
+                      <Textarea value={editResposta} onChange={(e) => setEditResposta(e.target.value)} className="min-h-[80px]" />
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={handleSaveEdit} className="gap-1"><Save className="h-3 w-3" />Salvar</Button>
+                        <Button size="sm" variant="ghost" onClick={() => setEditId(null)} className="gap-1"><X className="h-3 w-3" />Cancelar</Button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-medium text-foreground">{faq.pergunta}</p>
+                      <p className="text-sm text-muted-foreground">{faq.resposta}</p>
+                      <div className="flex gap-2 pt-1">
+                        <Button size="sm" variant="outline" onClick={() => handleEdit(faq)} className="gap-1 h-7 text-xs"><Pencil className="h-3 w-3" />Editar</Button>
+                        <Button size="sm" variant="destructive" onClick={() => handleDelete(faq.id)} className="gap-1 h-7 text-xs"><Trash2 className="h-3 w-3" />Excluir</Button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 const Admin = () => {
   const navigate = useNavigate();
   const [authed, setAuthed] = useState(() => sessionStorage.getItem('admin-auth') === '1');
@@ -58,7 +155,6 @@ const Admin = () => {
 
   const solicitacoes = useMemo(() => getSolicitacoes(), [refresh]);
 
-  // Filtered data
   const filtered = useMemo(() => {
     return solicitacoes.filter((s) => {
       if (filtroSecretaria !== 'all' && s.secretaria !== filtroSecretaria) return false;
@@ -82,8 +178,8 @@ const Admin = () => {
   const slaData = useMemo(() => {
     const naoRespondidas = solicitacoes.filter((s) => s.status !== 'Respondido');
     const dentroSla = naoRespondidas.filter((s) => getSlaStatus(s) === 'Dentro do Prazo').length;
-    const total = naoRespondidas.length || 1;
-    return ((dentroSla / total) * 100).toFixed(1);
+    const t = naoRespondidas.length || 1;
+    return ((dentroSla / t) * 100).toFixed(1);
   }, [solicitacoes]);
 
   const tempoMedioResposta = useMemo(() => {
@@ -167,7 +263,6 @@ const Admin = () => {
     return Object.entries(map).map(([name, v]) => ({ name, value: Math.round((v.sum / v.count) * 10) / 10 })).sort((a, b) => b.value - a.value);
   }, [avaliacoes]);
 
-  // Tendência semanal (recebidas x respondidas)
   const tendenciaSemanal = useMemo(() => {
     const weeks: Record<string, { recebidas: number; respondidas: number }> = {};
     solicitacoes.forEach((s) => {
@@ -193,48 +288,25 @@ const Admin = () => {
   };
 
   const exportExcel = () => {
-    // Aba 1 - Solicitações
     const dataSol = solicitacoes.map((s) => ({
-      Protocolo: s.protocolo,
-      Nome: s.nome,
-      Email: s.email,
-      Secretaria: s.secretaria,
-      Setor: s.setor,
-      Tipo: s.tipo,
-      Categoria: s.categoria || '',
-      Assunto: s.assunto || '',
-      Impacto: s.impacto || '',
-      Prioridade: s.prioridade || '',
-      Mensagem: s.descricao,
-      Data: new Date(s.data).toLocaleDateString('pt-BR'),
-      Status: s.status,
-      Responsável: s.responsavel || '',
+      Protocolo: s.protocolo, Nome: s.nome, Email: s.email, Secretaria: s.secretaria,
+      Setor: s.setor, Tipo: s.tipo, Categoria: s.categoria || '', Assunto: s.assunto || '',
+      Impacto: s.impacto || '', Prioridade: s.prioridade || '', Mensagem: s.descricao,
+      Data: new Date(s.data).toLocaleDateString('pt-BR'), Status: s.status, Responsável: s.responsavel || '',
     }));
-
-    // Aba 2 - SLA
     const dataSla = solicitacoes.map((s) => ({
-      Protocolo: s.protocolo,
-      Secretaria: s.secretaria.split(' – ')[0],
-      Tipo: s.tipo,
+      Protocolo: s.protocolo, Secretaria: s.secretaria.split(' – ')[0], Tipo: s.tipo,
       'Data Abertura': new Date(s.data).toLocaleDateString('pt-BR'),
       'SLA Limite': new Date(s.slaLimite).toLocaleDateString('pt-BR'),
       'Data Resposta': s.dataResposta ? new Date(s.dataResposta).toLocaleDateString('pt-BR') : '',
-      'Tempo (dias)': getTempoResposta(s) ?? '',
-      'Status SLA': getSlaStatus(s),
+      'Tempo (dias)': getTempoResposta(s) ?? '', 'Status SLA': getSlaStatus(s),
     }));
-
-    // Aba 3 - Avaliações
     const dataAval = avaliacoes.map((s) => ({
-      Protocolo: s.protocolo,
-      Secretaria: s.secretaria.split(' – ')[0],
-      Satisfação: s.avaliacao?.satisfacao,
-      Resolvido: s.avaliacao?.resolvido ? 'Sim' : 'Não',
-      Clareza: s.avaliacao?.clareza,
-      'Tempo Resposta': s.avaliacao?.tempoResposta,
+      Protocolo: s.protocolo, Secretaria: s.secretaria.split(' – ')[0],
+      Satisfação: s.avaliacao?.satisfacao, Resolvido: s.avaliacao?.resolvido ? 'Sim' : 'Não',
+      Clareza: s.avaliacao?.clareza, 'Tempo Resposta': s.avaliacao?.tempoResposta,
       Comentário: s.avaliacao?.comentario || '',
     }));
-
-    // Aba 4 - Resumo
     const dataResumo = [
       { Indicador: 'Total de Solicitações', Valor: total },
       { Indicador: 'Respondidas', Valor: respondidas },
@@ -287,14 +359,14 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="executivo" className="space-y-6">
-          <TabsList>
+          <TabsList className="flex-wrap">
             <TabsTrigger value="executivo" className="gap-2"><Eye className="h-4 w-4" />Visão Executiva</TabsTrigger>
             <TabsTrigger value="operacional" className="gap-2"><Settings className="h-4 w-4" />Operacional</TabsTrigger>
+            <TabsTrigger value="faq" className="gap-2"><HelpCircle className="h-4 w-4" />Gerenciar FAQ</TabsTrigger>
           </TabsList>
 
           {/* ============ VISÃO EXECUTIVA ============ */}
           <TabsContent value="executivo" className="space-y-6">
-            {/* Linha 1: Tendência + Tipos */}
             <div className="grid md:grid-cols-2 gap-6">
               <Card>
                 <CardHeader><CardTitle className="text-base">Recebidas x Respondidas (Semanal)</CardTitle></CardHeader>
@@ -307,8 +379,8 @@ const Admin = () => {
                         <YAxis />
                         <Tooltip />
                         <Legend />
-                        <Line type="monotone" dataKey="recebidas" stroke="hsl(200, 70%, 50%)" strokeWidth={2} name="Recebidas" />
-                        <Line type="monotone" dataKey="respondidas" stroke="hsl(122, 46%, 33%)" strokeWidth={2} name="Respondidas" />
+                        <Line type="monotone" dataKey="recebidas" stroke="hsl(210, 85%, 40%)" strokeWidth={2} name="Recebidas" />
+                        <Line type="monotone" dataKey="respondidas" stroke="hsl(210, 100%, 28%)" strokeWidth={2} name="Respondidas" />
                       </LineChart>
                     </ResponsiveContainer>
                   ) : <p className="text-muted-foreground text-center py-12">Nenhum dado</p>}
@@ -332,7 +404,6 @@ const Admin = () => {
               </Card>
             </div>
 
-            {/* Linha 2: Por secretaria + Status empilhado */}
             <div className="grid md:grid-cols-2 gap-6">
               <Card>
                 <CardHeader><CardTitle className="text-base">Top 10 Secretarias</CardTitle></CardHeader>
@@ -344,7 +415,7 @@ const Admin = () => {
                         <XAxis type="number" />
                         <YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 10 }} />
                         <Tooltip />
-                        <Bar dataKey="value" fill="hsl(122, 46%, 33%)" radius={[0, 4, 4, 0]} />
+                        <Bar dataKey="value" fill="hsl(210, 100%, 28%)" radius={[0, 4, 4, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   ) : <p className="text-muted-foreground text-center py-12">Nenhum dado</p>}
@@ -362,9 +433,9 @@ const Admin = () => {
                         <YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 10 }} />
                         <Tooltip />
                         <Legend />
-                        <Bar dataKey="Aberto" stackId="a" fill="hsl(36, 100%, 50%)" />
-                        <Bar dataKey="Em análise" stackId="a" fill="hsl(200, 70%, 50%)" />
-                        <Bar dataKey="Respondido" stackId="a" fill="hsl(122, 46%, 33%)" />
+                        <Bar dataKey="Aberto" stackId="a" fill="hsl(45, 97%, 54%)" />
+                        <Bar dataKey="Em análise" stackId="a" fill="hsl(210, 85%, 40%)" />
+                        <Bar dataKey="Respondido" stackId="a" fill="hsl(210, 100%, 28%)" />
                       </BarChart>
                     </ResponsiveContainer>
                   ) : <p className="text-muted-foreground text-center py-12">Nenhum dado</p>}
@@ -372,7 +443,6 @@ const Admin = () => {
               </Card>
             </div>
 
-            {/* Linha 3: Qualitativo */}
             <div className="grid md:grid-cols-3 gap-6">
               <Card>
                 <CardHeader><CardTitle className="text-base">Tempo de Resposta (dias)</CardTitle></CardHeader>
@@ -384,7 +454,7 @@ const Admin = () => {
                         <XAxis dataKey="name" />
                         <YAxis />
                         <Tooltip />
-                        <Bar dataKey="value" fill="hsl(200, 70%, 50%)" radius={[4, 4, 0, 0]} name="Qtd" />
+                        <Bar dataKey="value" fill="hsl(210, 85%, 40%)" radius={[4, 4, 0, 0]} name="Qtd" />
                       </BarChart>
                     </ResponsiveContainer>
                   ) : <p className="text-muted-foreground text-center py-12">Nenhum dado</p>}
@@ -401,7 +471,7 @@ const Admin = () => {
                         <XAxis type="number" />
                         <YAxis dataKey="name" type="category" width={90} tick={{ fontSize: 10 }} />
                         <Tooltip />
-                        <Bar dataKey="value" fill="hsl(122, 40%, 57%)" radius={[0, 4, 4, 0]} />
+                        <Bar dataKey="value" fill="hsl(210, 70%, 55%)" radius={[0, 4, 4, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   ) : <p className="text-muted-foreground text-center py-12">Nenhum dado</p>}
@@ -418,7 +488,7 @@ const Admin = () => {
                         <XAxis type="number" domain={[0, 5]} />
                         <YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 10 }} />
                         <Tooltip />
-                        <Bar dataKey="value" fill="hsl(36, 100%, 50%)" radius={[0, 4, 4, 0]} name="Média" />
+                        <Bar dataKey="value" fill="hsl(45, 97%, 54%)" radius={[0, 4, 4, 0]} name="Média" />
                       </BarChart>
                     </ResponsiveContainer>
                   ) : <p className="text-muted-foreground text-center py-12">Nenhum dado</p>}
@@ -429,16 +499,10 @@ const Admin = () => {
 
           {/* ============ OPERACIONAL ============ */}
           <TabsContent value="operacional" className="space-y-6">
-            {/* Filtros */}
             <Card>
               <CardContent className="pt-6">
                 <div className="flex flex-wrap gap-3">
-                  <Input
-                    placeholder="Buscar por protocolo, nome ou e-mail..."
-                    value={busca}
-                    onChange={(e) => setBusca(e.target.value)}
-                    className="w-64"
-                  />
+                  <Input placeholder="Buscar por protocolo, nome ou e-mail..." value={busca} onChange={(e) => setBusca(e.target.value)} className="w-64" />
                   <Select value={filtroSecretaria} onValueChange={setFiltroSecretaria}>
                     <SelectTrigger className="w-[200px]"><SelectValue placeholder="Secretaria" /></SelectTrigger>
                     <SelectContent>
@@ -468,11 +532,8 @@ const Admin = () => {
               </CardContent>
             </Card>
 
-            {/* Tabela */}
             <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Triagem de Solicitações</CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle className="text-base">Triagem de Solicitações</CardTitle></CardHeader>
               <CardContent className="overflow-x-auto">
                 {filtered.length > 0 ? (
                   <Table>
@@ -542,6 +603,11 @@ const Admin = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* ============ FAQ ============ */}
+          <TabsContent value="faq" className="space-y-6">
+            <FaqManager />
           </TabsContent>
         </Tabs>
       </main>

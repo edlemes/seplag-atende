@@ -1,6 +1,7 @@
-import { Solicitacao, Avaliacao } from '@/types/solicitacao';
+import { Solicitacao, Avaliacao, FAQ } from '@/types/solicitacao';
 
 const STORAGE_KEY = 'seplag-solicitacoes';
+const FAQ_KEY = 'seplag-faqs';
 
 function generateProtocolo(): string {
   const now = new Date();
@@ -94,5 +95,37 @@ export function getSlaStatus(s: Solicitacao): 'Dentro do Prazo' | 'Próximo do P
 export function getTempoResposta(s: Solicitacao): number | null {
   if (!s.dataResposta) return null;
   const diff = new Date(s.dataResposta).getTime() - new Date(s.data).getTime();
-  return Math.round(diff / (1000 * 60 * 60 * 24) * 10) / 10; // dias com 1 decimal
+  return Math.round(diff / (1000 * 60 * 60 * 24) * 10) / 10;
+}
+
+// FAQ helpers
+export function getFaqs(): FAQ[] {
+  const data = localStorage.getItem(FAQ_KEY);
+  return data ? JSON.parse(data) : [];
+}
+
+export function saveFaqs(faqs: FAQ[]) {
+  localStorage.setItem(FAQ_KEY, JSON.stringify(faqs));
+}
+
+export function addFaq(pergunta: string, resposta: string): FAQ {
+  const faqs = getFaqs();
+  const faq: FAQ = { id: crypto.randomUUID(), pergunta, resposta };
+  faqs.push(faq);
+  saveFaqs(faqs);
+  return faq;
+}
+
+export function updateFaq(id: string, pergunta: string, resposta: string) {
+  const faqs = getFaqs();
+  const idx = faqs.findIndex((f) => f.id === id);
+  if (idx !== -1) {
+    faqs[idx] = { ...faqs[idx], pergunta, resposta };
+    saveFaqs(faqs);
+  }
+}
+
+export function deleteFaq(id: string) {
+  const faqs = getFaqs().filter((f) => f.id !== id);
+  saveFaqs(faqs);
 }

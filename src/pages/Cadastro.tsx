@@ -4,8 +4,8 @@ import { Building2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { SECRETARIAS } from '@/types/solicitacao';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ORGAOS_POR_CATEGORIA } from '@/types/solicitacao';
 
 const Cadastro = () => {
   const navigate = useNavigate();
@@ -56,11 +56,16 @@ const Cadastro = () => {
               <Label>Secretaria / Órgão</Label>
               <Select value={form.secretaria} onValueChange={(v) => setForm({ ...form, secretaria: v })}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione a secretaria" />
+                  <SelectValue placeholder="Selecione o órgão" />
                 </SelectTrigger>
                 <SelectContent>
-                  {SECRETARIAS.map((s) => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  {ORGAOS_POR_CATEGORIA.map((cat) => (
+                    <SelectGroup key={cat.categoria}>
+                      <SelectLabel className="font-semibold text-primary">{cat.categoria}</SelectLabel>
+                      {cat.orgaos.map((orgao) => (
+                        <SelectItem key={orgao} value={orgao}>{orgao}</SelectItem>
+                      ))}
+                    </SelectGroup>
                   ))}
                 </SelectContent>
               </Select>
