@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TIPOS_ATENDIMENTO, TipoAtendimento, CATEGORIAS, CategoriaDemanda, ASSUNTOS, Assunto, IMPACTOS, Impacto } from '@/types/solicitacao';
-import { addSolicitacao } from '@/lib/storage';
+import { addSolicitacao, getCustomAssuntos } from '@/lib/storage';
 
 const LABELS: Record<TipoAtendimento, string> = {
   'Dúvida': 'Descreva sua dúvida',
