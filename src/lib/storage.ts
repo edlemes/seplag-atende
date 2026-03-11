@@ -1,7 +1,10 @@
-import { Solicitacao, Avaliacao, FAQ } from '@/types/solicitacao';
+import { Solicitacao, Avaliacao, FAQ, Operador, NivelAcesso } from '@/types/solicitacao';
 
 const STORAGE_KEY = 'seplag-solicitacoes';
 const FAQ_KEY = 'seplag-faqs';
+const OPERADORES_KEY = 'seplag-operadores';
+const SETTINGS_ORGAOS_KEY = 'seplag-settings-orgaos';
+const SETTINGS_ASSUNTOS_KEY = 'seplag-settings-assuntos';
 
 function generateProtocolo(): string {
   const now = new Date();

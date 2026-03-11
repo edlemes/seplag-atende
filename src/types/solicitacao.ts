@@ -138,3 +138,13 @@ export interface FAQ {
   pergunta: string;
   resposta: string;
 }
+
+export type NivelAcesso = 'Administrador' | 'Técnico';
+
+export interface Operador {
+  id: string;
+  nome: string;
+  email: string;
+  nivel: NivelAcesso;
+  ativo: boolean;
+}
