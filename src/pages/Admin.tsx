@@ -824,21 +824,25 @@ const Admin = () => {
                               )}
                             </TableCell>
                             <TableCell>
-                              <Select value={s.responsavel || ''} onValueChange={(v) => handleResponsavel(s.id, v)}>
-                                <SelectTrigger className="w-[140px] text-xs h-8">
-                                  <SelectValue placeholder="Atribuir" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {operadores.map((op) => (
-                                    <SelectItem key={op.id} value={op.nome}>
-                                      <span className="flex items-center gap-1">
-                                        {op.nivel === 'Administrador' ? <ShieldCheck className="h-3 w-3 text-primary inline" /> : <Shield className="h-3 w-3 text-muted-foreground inline" />}
-                                        {op.nome}
-                                      </span>
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                              {isLeitura ? (
+                                <span className="text-xs text-muted-foreground">{s.responsavel || '—'}</span>
+                              ) : (
+                                <Select value={s.responsavel || ''} onValueChange={(v) => handleResponsavel(s.id, v)}>
+                                  <SelectTrigger className="w-[140px] text-xs h-8">
+                                    <SelectValue placeholder="Atribuir" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {operadores.map((op) => (
+                                      <SelectItem key={op.id} value={op.nome}>
+                                        <span className="flex items-center gap-1">
+                                          {NIVEIS_GESTAO.includes(op.nivel) ? <ShieldCheck className="h-3 w-3 text-primary inline" /> : <Shield className="h-3 w-3 text-muted-foreground inline" />}
+                                          {op.nome}
+                                        </span>
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              )}
                             </TableCell>
                           </TableRow>
                         );
