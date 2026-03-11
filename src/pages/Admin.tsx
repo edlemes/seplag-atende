@@ -500,7 +500,10 @@ const Admin = () => {
                             <TableCell className="text-xs">{s.tipo}</TableCell>
                             <TableCell className="text-xs">{s.categoria || '—'}</TableCell>
                             <TableCell>
-                              <Badge variant={s.prioridade === 'Urgente' ? 'destructive' : 'secondary'} className="text-[10px]">
+                              <Badge
+                                variant={s.prioridade === 'Urgente' ? 'destructive' : 'outline'}
+                                className={`text-[10px] transition-all duration-300 ${s.prioridade === 'Urgente' ? 'bg-destructive text-destructive-foreground' : 'bg-chart-4/15 text-chart-4 border-chart-4/30'}`}
+                              >
                                 {s.prioridade || 'Normal'}
                               </Badge>
                             </TableCell>

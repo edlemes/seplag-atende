@@ -38,7 +38,7 @@ const Home = () => {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button
               size="lg"
-              className="text-lg px-10 py-6 shadow-lg"
+              className="text-lg px-10 py-6 shadow-lg hover:shadow-xl active:scale-[0.98] transition-all duration-300"
               onClick={() => navigate('/cadastro')}
             >
               Acessar Sistema
@@ -46,10 +46,10 @@ const Home = () => {
             <Button
               variant="outline"
               size="lg"
-              className="text-lg px-10 py-6 border-primary/30 text-primary hover:bg-primary/5"
+              className="text-lg px-10 py-6 border-primary/30 text-primary hover:bg-primary/5 active:scale-[0.98] transition-all duration-300"
               onClick={() => navigate('/admin')}
             >
-              <BarChart3 className="h-5 w-5 mr-2" />
+              <BarChart3 className="h-5 w-5 mr-2" aria-hidden="true" />
               Painel Administrativo
             </Button>
           </div>
