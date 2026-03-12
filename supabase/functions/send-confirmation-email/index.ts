@@ -270,7 +270,7 @@ serve(async (req) => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "SEPLAG Atende <onboarding@resend.dev>",
+        from: "SEPLAG <atendimento@seplag.mt.gov.br>",
         to: [body.to],
         subject: `Confirmação de Solicitação – Protocolo ${body.protocolo}`,
         html,
