@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TIPOS_ATENDIMENTO, TipoAtendimento, CATEGORIAS, CategoriaDemanda, ASSUNTOS, Assunto, IMPACTOS, Impacto } from '@/types/solicitacao';
 import { addSolicitacao, getCustomAssuntos } from '@/lib/storage';
+import { supabase } from '@/integrations/supabase/client';
 
 const LABELS: Record<TipoAtendimento, string> = {
   'Dúvida': 'Descreva sua dúvida',
@@ -33,19 +34,51 @@ const SolicitacaoPage = () => {
 
   const isValid = tipo && descricao.trim() && categoria && assunto && impacto;
 
-  const handleEnviar = () => {
-    if (!isValid) return;
-    const sol = addSolicitacao({
-      nome, email, secretaria, setor,
-      tipo: tipo as TipoAtendimento,
-      descricao: descricao.trim(),
-      categoria: categoria as CategoriaDemanda,
-      assunto: assunto as Assunto,
-      impacto: impacto as Impacto,
-      prioridade: tipo === 'Urgência' ? 'Urgente' : 'Normal',
-      canal: 'Web',
-    });
-    navigate(`/confirmacao?protocolo=${sol.protocolo}`);
+  const [enviando, setEnviando] = useState(false);
+  const telefone = params.get('telefone') || '';
+
+  const handleEnviar = async () => {
+    if (!isValid || enviando) return;
+    setEnviando(true);
+    try {
+      const sol = addSolicitacao({
+        nome, email, secretaria, setor,
+        tipo: tipo as TipoAtendimento,
+        descricao: descricao.trim(),
+        categoria: categoria as CategoriaDemanda,
+        assunto: assunto as Assunto,
+        impacto: impacto as Impacto,
+        prioridade: tipo === 'Urgência' ? 'Urgente' : 'Normal',
+        canal: 'Web',
+      });
+
+      // Send confirmation email via edge function
+      try {
+        await supabase.functions.invoke('send-confirmation-email', {
+          body: {
+            to: email,
+            nome,
+            protocolo: sol.protocolo,
+            tipo: sol.tipo,
+            categoria: sol.categoria,
+            assunto: sol.assunto,
+            impacto: sol.impacto,
+            descricao: sol.descricao,
+            secretaria,
+            setor,
+            prioridade: sol.prioridade,
+            slaLimite: sol.slaLimite,
+            data: sol.data,
+          },
+        });
+      } catch (emailErr) {
+        console.error('Erro ao enviar e-mail:', emailErr);
+      }
+
+      navigate(`/confirmacao?protocolo=${sol.protocolo}`);
+    } finally {
+      setEnviando(false);
+    }
   };
 
   return (
@@ -132,8 +165,8 @@ const SolicitacaoPage = () => {
             )}
           </div>
 
-          <Button className="w-full py-6 text-lg" disabled={!isValid} onClick={handleEnviar}>
-            Enviar Solicitação
+          <Button className="w-full py-6 text-lg" disabled={!isValid || enviando} onClick={handleEnviar}>
+            {enviando ? 'Enviando...' : 'Enviar Solicitação'}
           </Button>
         </div>
       </main>
