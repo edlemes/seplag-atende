@@ -165,8 +165,8 @@ const SolicitacaoPage = () => {
             )}
           </div>
 
-          <Button className="w-full py-6 text-lg" disabled={!isValid} onClick={handleEnviar}>
-            Enviar Solicitação
+          <Button className="w-full py-6 text-lg" disabled={!isValid || enviando} onClick={handleEnviar}>
+            {enviando ? 'Enviando...' : 'Enviar Solicitação'}
           </Button>
         </div>
       </main>
