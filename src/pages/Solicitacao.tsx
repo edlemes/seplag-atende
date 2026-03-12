@@ -34,19 +34,51 @@ const SolicitacaoPage = () => {
 
   const isValid = tipo && descricao.trim() && categoria && assunto && impacto;
 
-  const handleEnviar = () => {
-    if (!isValid) return;
-    const sol = addSolicitacao({
-      nome, email, secretaria, setor,
-      tipo: tipo as TipoAtendimento,
-      descricao: descricao.trim(),
-      categoria: categoria as CategoriaDemanda,
-      assunto: assunto as Assunto,
-      impacto: impacto as Impacto,
-      prioridade: tipo === 'Urgência' ? 'Urgente' : 'Normal',
-      canal: 'Web',
-    });
-    navigate(`/confirmacao?protocolo=${sol.protocolo}`);
+  const [enviando, setEnviando] = useState(false);
+  const telefone = params.get('telefone') || '';
+
+  const handleEnviar = async () => {
+    if (!isValid || enviando) return;
+    setEnviando(true);
+    try {
+      const sol = addSolicitacao({
+        nome, email, secretaria, setor,
+        tipo: tipo as TipoAtendimento,
+        descricao: descricao.trim(),
+        categoria: categoria as CategoriaDemanda,
+        assunto: assunto as Assunto,
+        impacto: impacto as Impacto,
+        prioridade: tipo === 'Urgência' ? 'Urgente' : 'Normal',
+        canal: 'Web',
+      });
+
+      // Send confirmation email via edge function
+      try {
+        await supabase.functions.invoke('send-confirmation-email', {
+          body: {
+            to: email,
+            nome,
+            protocolo: sol.protocolo,
+            tipo: sol.tipo,
+            categoria: sol.categoria,
+            assunto: sol.assunto,
+            impacto: sol.impacto,
+            descricao: sol.descricao,
+            secretaria,
+            setor,
+            prioridade: sol.prioridade,
+            slaLimite: sol.slaLimite,
+            data: sol.data,
+          },
+        });
+      } catch (emailErr) {
+        console.error('Erro ao enviar e-mail:', emailErr);
+      }
+
+      navigate(`/confirmacao?protocolo=${sol.protocolo}`);
+    } finally {
+      setEnviando(false);
+    }
   };
 
   return (
