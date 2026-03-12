@@ -556,25 +556,62 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <header className="institutional-gradient px-6 py-4 flex items-center gap-3 shadow-lg">
-        <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary-foreground/10" onClick={() => navigate('/')}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <Building2 className="h-7 w-7 text-primary-foreground" />
-        <h1 className="text-lg font-bold text-primary-foreground flex-1">Gestão do Atendimento – SEPLAG MT</h1>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-primary-foreground/80 hidden md:inline">
-            {currentUser?.nome} ({currentUser?.nivel})
-          </span>
-          {isGestao && (
-            <Button variant="secondary" size="sm" onClick={exportExcel} className="gap-2">
-              <Download className="h-4 w-4" />
-              Exportar
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-[hsl(210,100%,28%/0.92)] border-b border-primary-foreground/10 px-6 py-3 shadow-[0_4px_30px_rgba(0,0,0,0.15)]">
+        <div className="flex items-center justify-between">
+          {/* Left side — Navigation */}
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 transition-all duration-300 gap-2"
+              onClick={() => navigate('/')}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden sm:inline text-sm">Voltar ao Portal</span>
             </Button>
-          )}
-          <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary-foreground/10" onClick={handleLogout} title="Sair">
-            <LogOut className="h-4 w-4" />
-          </Button>
+            <div className="h-6 w-px bg-primary-foreground/20 hidden sm:block" />
+            <div className="flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-primary-foreground" />
+              <h1 className="text-sm md:text-base font-semibold text-primary-foreground tracking-tight">
+                Gestão do Atendimento
+              </h1>
+            </div>
+          </div>
+
+          {/* Right side — User info + Actions */}
+          <div className="flex items-center gap-2 md:gap-3">
+            {isGestao && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={exportExcel}
+                className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 transition-all duration-300 gap-2"
+              >
+                <Download className="h-4 w-4" />
+                <span className="hidden md:inline text-sm">Exportar</span>
+              </Button>
+            )}
+            <div className="h-6 w-px bg-primary-foreground/20 hidden md:block" />
+            <div className="flex items-center gap-2 bg-primary-foreground/10 rounded-full pl-1.5 pr-3 py-1 transition-all duration-300">
+              <div className="h-7 w-7 rounded-full bg-primary-foreground/20 flex items-center justify-center">
+                <Shield className="h-3.5 w-3.5 text-primary-foreground" />
+              </div>
+              <div className="hidden md:flex flex-col">
+                <span className="text-xs font-medium text-primary-foreground leading-tight">{currentUser?.nome}</span>
+                <span className="text-[10px] text-primary-foreground/60 leading-tight">{currentUser?.nivel}</span>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-primary-foreground/70 hover:text-destructive-foreground hover:bg-destructive/80 transition-all duration-300 gap-2 rounded-full"
+              onClick={handleLogout}
+              title="Sair do sistema"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="hidden sm:inline text-sm">Sair</span>
+            </Button>
+          </div>
         </div>
       </header>
 
