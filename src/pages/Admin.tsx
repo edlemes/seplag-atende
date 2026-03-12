@@ -25,7 +25,7 @@ import {
   getCustomOrgaos, addCustomOrgao, removeCustomOrgao,
   getCustomAssuntos, addCustomAssunto, removeCustomAssunto,
 } from '@/lib/storage';
-import { Solicitacao, StatusSolicitacao, FAQ, Operador, NivelAcesso, NIVEIS_ACESSO, NIVEIS_GESTAO, NIVEIS_LEITURA, ASSUNTOS } from '@/types/solicitacao';
+import { Solicitacao, StatusSolicitacao, FAQ, Operador, NivelAcesso, NIVEIS_ACESSO, NIVEIS_GESTAO, NIVEIS_OPERACAO, NIVEIS_LEITURA, ASSUNTOS } from '@/types/solicitacao';
 import AdminLogin from './AdminLogin';
 import * as XLSX from 'xlsx';
 
