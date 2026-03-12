@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TIPOS_ATENDIMENTO, TipoAtendimento, CATEGORIAS, CategoriaDemanda, ASSUNTOS, Assunto, IMPACTOS, Impacto } from '@/types/solicitacao';
 import { addSolicitacao, getCustomAssuntos } from '@/lib/storage';
+import { supabase } from '@/integrations/supabase/client';
 
 const LABELS: Record<TipoAtendimento, string> = {
   'Dúvida': 'Descreva sua dúvida',
