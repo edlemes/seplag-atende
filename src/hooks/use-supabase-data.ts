@@ -230,7 +230,7 @@ export async function addOperadorDb(nome: string, email: string, nivel: NivelAce
 
   const { data, error } = await supabase
     .from('operadores')
-    .insert({ nome, email, senha, nivel, ativo: true } as any)
+    .insert({ nome, email: normalizedEmail, senha, nivel, ativo: true } as any)
     .select()
     .single();
   if (error) throw error;
