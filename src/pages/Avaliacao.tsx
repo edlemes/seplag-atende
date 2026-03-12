@@ -1,19 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Building2, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { addAvaliacao, getSolicitacaoByProtocolo } from '@/lib/storage';
+import { Skeleton } from '@/components/ui/skeleton';
+import { getSolicitacaoByProtocoloDb, addAvaliacaoDb } from '@/hooks/use-supabase-data';
 import { useToast } from '@/hooks/use-toast';
+import { Solicitacao } from '@/types/solicitacao';
 
 const StarRating = ({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) => (
   <div className="space-y-2">
     <Label>{label}</Label>
-    <div className="flex gap-1">
+    <div className="flex gap-1" role="radiogroup" aria-label={label}>
       {[1, 2, 3, 4, 5].map((n) => (
-        <button key={n} type="button" onClick={() => onChange(n)} className="p-1 transition-colors">
+        <button key={n} type="button" onClick={() => onChange(n)} className="p-1 transition-colors" aria-label={`${n} de 5 estrelas`} aria-pressed={n <= value}>
           <Star className={`h-7 w-7 ${n <= value ? 'fill-chart-3 text-chart-3' : 'text-muted-foreground/30'}`} />
         </button>
       ))}
@@ -27,13 +29,36 @@ const AvaliacaoPage = () => {
   const protocolo = params.get('protocolo') || '';
   const { toast } = useToast();
 
-  const sol = getSolicitacaoByProtocolo(protocolo);
-
+  const [sol, setSol] = useState<Solicitacao | null>(null);
+  const [loading, setLoading] = useState(true);
   const [satisfacao, setSatisfacao] = useState(0);
   const [clareza, setClareza] = useState(0);
   const [tempoResposta, setTempoResposta] = useState(0);
   const [resolvido, setResolvido] = useState<string>('');
   const [comentario, setComentario] = useState('');
+  const [enviando, setEnviando] = useState(false);
+
+  useEffect(() => {
+    async function load() {
+      const data = await getSolicitacaoByProtocoloDb(protocolo);
+      setSol(data);
+      setLoading(false);
+    }
+    load();
+  }, [protocolo]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-full max-w-lg space-y-4 p-8">
+          <Skeleton className="h-8 w-48 mx-auto" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-32 w-full" />
+        </div>
+      </div>
+    );
+  }
 
   if (!sol) {
     return (
@@ -60,28 +85,35 @@ const AvaliacaoPage = () => {
 
   const isValid = satisfacao > 0 && clareza > 0 && tempoResposta > 0 && resolvido;
 
-  const handleSubmit = () => {
-    if (!isValid) return;
-    addAvaliacao(sol.id, {
-      satisfacao,
-      resolvido: resolvido === 'sim',
-      clareza,
-      tempoResposta,
-      comentario: comentario.trim() || undefined,
-      data: new Date().toISOString(),
-    });
-    toast({ title: 'Avaliação enviada!', description: 'Obrigado pelo seu feedback.' });
-    navigate('/');
+  const handleSubmit = async () => {
+    if (!isValid || enviando) return;
+    setEnviando(true);
+    try {
+      await addAvaliacaoDb(sol.id, {
+        satisfacao,
+        resolvido: resolvido === 'sim',
+        clareza,
+        tempoResposta,
+        comentario: comentario.trim() || undefined,
+        data: new Date().toISOString(),
+      });
+      toast({ title: 'Avaliação enviada!', description: 'Obrigado pelo seu feedback.' });
+      navigate('/');
+    } catch {
+      toast({ title: 'Erro ao enviar avaliação', variant: 'destructive' });
+    } finally {
+      setEnviando(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="institutional-gradient px-6 py-4 flex items-center gap-3 shadow-lg">
-        <Building2 className="h-7 w-7 text-primary-foreground" />
+      <header className="institutional-gradient px-6 py-4 flex items-center gap-3 shadow-lg" role="banner">
+        <Building2 className="h-7 w-7 text-primary-foreground" aria-hidden="true" />
         <h1 className="text-lg font-bold text-primary-foreground">Avaliar Atendimento</h1>
       </header>
 
-      <main className="flex-1 flex items-center justify-center px-4 py-12">
+      <main className="flex-1 flex items-center justify-center px-4 py-12" role="main">
         <div className="w-full max-w-lg bg-card rounded-xl shadow-lg border p-8 space-y-6">
           <div>
             <h2 className="text-2xl font-bold text-foreground">Avalie o Atendimento</h2>
@@ -108,8 +140,9 @@ const AvaliacaoPage = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>Comentário (opcional)</Label>
+              <Label htmlFor="comentario">Comentário (opcional)</Label>
               <Textarea
+                id="comentario"
                 placeholder="Deixe um comentário sobre o atendimento..."
                 className="min-h-[100px] resize-none"
                 value={comentario}
@@ -118,8 +151,8 @@ const AvaliacaoPage = () => {
             </div>
           </div>
 
-          <Button className="w-full py-6 text-lg" disabled={!isValid} onClick={handleSubmit}>
-            Enviar Avaliação
+          <Button className="w-full py-6 text-lg" disabled={!isValid || enviando} onClick={handleSubmit} aria-label="Enviar avaliação do atendimento">
+            {enviando ? 'Enviando...' : 'Enviar Avaliação'}
           </Button>
         </div>
       </main>

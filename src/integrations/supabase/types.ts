@@ -14,7 +14,165 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      custom_assuntos: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      custom_orgaos: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      faqs: {
+        Row: {
+          created_at: string
+          id: string
+          pergunta: string
+          resposta: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          pergunta: string
+          resposta: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          pergunta?: string
+          resposta?: string
+        }
+        Relationships: []
+      }
+      operadores: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          email: string
+          id: string
+          nivel: string
+          nome: string
+          senha: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          email: string
+          id?: string
+          nivel?: string
+          nome: string
+          senha: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          email?: string
+          id?: string
+          nivel?: string
+          nome?: string
+          senha?: string
+        }
+        Relationships: []
+      }
+      solicitacoes: {
+        Row: {
+          assunto: string
+          avaliacao: Json | null
+          canal: string
+          categoria: string
+          created_at: string
+          data: string
+          data_resposta: string | null
+          descricao: string
+          email: string
+          id: string
+          impacto: string
+          nome: string
+          prioridade: string
+          protocolo: string
+          responsavel: string | null
+          resposta: string | null
+          secretaria: string
+          setor: string
+          sla_limite: string
+          status: string
+          tipo: string
+        }
+        Insert: {
+          assunto: string
+          avaliacao?: Json | null
+          canal?: string
+          categoria: string
+          created_at?: string
+          data?: string
+          data_resposta?: string | null
+          descricao: string
+          email: string
+          id?: string
+          impacto: string
+          nome: string
+          prioridade?: string
+          protocolo: string
+          responsavel?: string | null
+          resposta?: string | null
+          secretaria: string
+          setor: string
+          sla_limite: string
+          status?: string
+          tipo: string
+        }
+        Update: {
+          assunto?: string
+          avaliacao?: Json | null
+          canal?: string
+          categoria?: string
+          created_at?: string
+          data?: string
+          data_resposta?: string | null
+          descricao?: string
+          email?: string
+          id?: string
+          impacto?: string
+          nome?: string
+          prioridade?: string
+          protocolo?: string
+          responsavel?: string | null
+          resposta?: string | null
+          secretaria?: string
+          setor?: string
+          sla_limite?: string
+          status?: string
+          tipo?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

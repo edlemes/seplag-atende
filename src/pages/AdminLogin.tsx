@@ -4,7 +4,7 @@ import { Building2, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { authenticateOperador, ensureMasterUser } from '@/lib/storage';
+import { authenticateOperadorDb } from '@/hooks/use-supabase-data';
 import { Operador } from '@/types/solicitacao';
 
 const AdminLogin = ({ onAuth }: { onAuth: (op: Operador) => void }) => {
@@ -13,17 +13,24 @@ const AdminLogin = ({ onAuth }: { onAuth: (op: Operador) => void }) => {
   const [senha, setSenha] = useState('');
   const [showSenha, setShowSenha] = useState(false);
   const [erro, setErro] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  // Garante que o usuário mestre exista ao abrir a tela
-  useState(() => { ensureMasterUser(); });
-
-  const handleLogin = () => {
-    const op = authenticateOperador(email.trim(), senha);
-    if (op) {
-      sessionStorage.setItem('admin-auth', JSON.stringify({ id: op.id, nome: op.nome, nivel: op.nivel }));
-      onAuth(op);
-    } else {
-      setErro('E-mail ou senha incorretos, ou usuário inativo.');
+  const handleLogin = async () => {
+    if (!email.trim() || !senha) return;
+    setLoading(true);
+    setErro('');
+    try {
+      const op = await authenticateOperadorDb(email.trim(), senha);
+      if (op) {
+        sessionStorage.setItem('admin-auth', JSON.stringify({ id: op.id, nome: op.nome, nivel: op.nivel }));
+        onAuth(op);
+      } else {
+        setErro('E-mail ou senha incorretos, ou usuário inativo.');
+      }
+    } catch {
+      setErro('Erro ao conectar. Tente novamente.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -35,19 +42,20 @@ const AdminLogin = ({ onAuth }: { onAuth: (op: Operador) => void }) => {
           size="sm"
           className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 transition-all duration-300 gap-2"
           onClick={() => navigate('/')}
+          aria-label="Voltar ao portal principal"
         >
           <ArrowLeft className="h-4 w-4" />
           <span className="hidden sm:inline text-sm">Voltar</span>
         </Button>
         <div className="h-6 w-px bg-primary-foreground/20" />
-        <Building2 className="h-6 w-6 text-primary-foreground" />
+        <Building2 className="h-6 w-6 text-primary-foreground" aria-hidden="true" />
         <h1 className="text-lg font-bold text-primary-foreground">Painel Administrativo – SEPLAG MT</h1>
       </header>
       <main className="flex-1 flex items-center justify-center px-4">
-        <div className="w-full max-w-sm bg-card rounded-xl shadow-lg border p-8 space-y-6">
+        <div className="w-full max-w-sm bg-card rounded-xl shadow-lg border p-8 space-y-6" role="form" aria-label="Formulário de login administrativo">
           <div className="text-center space-y-2">
             <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-              <Lock className="h-7 w-7 text-primary" />
+              <Lock className="h-7 w-7 text-primary" aria-hidden="true" />
             </div>
             <h2 className="text-xl font-bold text-foreground">Acesso Restrito</h2>
             <p className="text-sm text-muted-foreground">Use suas credenciais de operador</p>
@@ -62,6 +70,8 @@ const AdminLogin = ({ onAuth }: { onAuth: (op: Operador) => void }) => {
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setErro(''); }}
                 onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                aria-required="true"
+                autoComplete="email"
               />
             </div>
             <div className="space-y-2">
@@ -75,6 +85,8 @@ const AdminLogin = ({ onAuth }: { onAuth: (op: Operador) => void }) => {
                   onChange={(e) => { setSenha(e.target.value); setErro(''); }}
                   onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
                   className="pr-10"
+                  aria-required="true"
+                  autoComplete="current-password"
                 />
                 <button
                   type="button"
@@ -86,9 +98,11 @@ const AdminLogin = ({ onAuth }: { onAuth: (op: Operador) => void }) => {
                 </button>
               </div>
             </div>
-            {erro && <p className="text-destructive text-sm">{erro}</p>}
+            {erro && <p className="text-destructive text-sm" role="alert">{erro}</p>}
           </div>
-          <Button className="w-full" onClick={handleLogin} disabled={!email.trim() || !senha}>Entrar</Button>
+          <Button className="w-full" onClick={handleLogin} disabled={!email.trim() || !senha || loading}>
+            {loading ? 'Entrando...' : 'Entrar'}
+          </Button>
         </div>
       </main>
     </div>

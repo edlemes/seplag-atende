@@ -14,17 +14,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, LineChart, Line
 } from 'recharts';
 import {
-  getSolicitacoes, updateStatus, updateSolicitacao, getSlaStatus, getTempoResposta,
-  getFaqs, addFaq, updateFaq, deleteFaq,
-  getOperadores, addOperador, updateOperador, deleteOperador,
-  getCustomOrgaos, addCustomOrgao, removeCustomOrgao,
-  getCustomAssuntos, addCustomAssunto, removeCustomAssunto,
-} from '@/lib/storage';
+  useSolicitacoes, updateStatusDb, updateSolicitacaoDb, getSlaStatus, getTempoResposta,
+  useFaqs, addFaqDb, updateFaqDb, deleteFaqDb,
+  useOperadores, addOperadorDb, updateOperadorDb, deleteOperadorDb,
+  useCustomOrgaos, addCustomOrgaoDb, removeCustomOrgaoDb,
+  useCustomAssuntos, addCustomAssuntoDb, removeCustomAssuntoDb,
+} from '@/hooks/use-supabase-data';
 import { Solicitacao, StatusSolicitacao, FAQ, Operador, NivelAcesso, NIVEIS_ACESSO, NIVEIS_GESTAO, NIVEIS_OPERACAO, NIVEIS_LEITURA, ASSUNTOS } from '@/types/solicitacao';
 import AdminLogin from './AdminLogin';
 import * as XLSX from 'xlsx';
@@ -56,21 +57,45 @@ function KpiCard({ icon: Icon, label, value, color, sub }: { icon: any; label: s
   );
 }
 
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-6 p-6">
+      <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-3">
+        {Array.from({ length: 9 }).map((_, i) => (
+          <Card key={i}><CardContent className="pt-5 pb-4 flex flex-col items-center gap-2">
+            <Skeleton className="h-5 w-5 rounded-full" />
+            <Skeleton className="h-8 w-16" />
+            <Skeleton className="h-3 w-12" />
+          </CardContent></Card>
+        ))}
+      </div>
+      <div className="grid md:grid-cols-2 gap-6">
+        <Card><CardContent className="pt-6"><Skeleton className="h-[280px] w-full" /></CardContent></Card>
+        <Card><CardContent className="pt-6"><Skeleton className="h-[280px] w-full" /></CardContent></Card>
+      </div>
+    </div>
+  );
+}
+
 // FAQ Manager Component
 function FaqManager() {
-  const [faqs, setFaqs] = useState<FAQ[]>(getFaqs());
+  const { faqs, loading, refresh } = useFaqs();
   const [novaPergunta, setNovaPergunta] = useState('');
   const [novaResposta, setNovaResposta] = useState('');
   const [editId, setEditId] = useState<string | null>(null);
   const [editPergunta, setEditPergunta] = useState('');
   const [editResposta, setEditResposta] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  const handleAdd = () => {
-    if (!novaPergunta.trim() || !novaResposta.trim()) return;
-    addFaq(novaPergunta.trim(), novaResposta.trim());
-    setNovaPergunta('');
-    setNovaResposta('');
-    setFaqs(getFaqs());
+  const handleAdd = async () => {
+    if (!novaPergunta.trim() || !novaResposta.trim() || saving) return;
+    setSaving(true);
+    try {
+      await addFaqDb(novaPergunta.trim(), novaResposta.trim());
+      setNovaPergunta('');
+      setNovaResposta('');
+      refresh();
+    } finally { setSaving(false); }
   };
 
   const handleEdit = (faq: FAQ) => {
@@ -79,33 +104,41 @@ function FaqManager() {
     setEditResposta(faq.resposta);
   };
 
-  const handleSaveEdit = () => {
-    if (!editId || !editPergunta.trim() || !editResposta.trim()) return;
-    updateFaq(editId, editPergunta.trim(), editResposta.trim());
-    setEditId(null);
-    setFaqs(getFaqs());
+  const handleSaveEdit = async () => {
+    if (!editId || !editPergunta.trim() || !editResposta.trim() || saving) return;
+    setSaving(true);
+    try {
+      await updateFaqDb(editId, editPergunta.trim(), editResposta.trim());
+      setEditId(null);
+      refresh();
+    } finally { setSaving(false); }
   };
 
-  const handleDelete = (id: string) => {
-    deleteFaq(id);
-    setFaqs(getFaqs());
+  const handleDelete = async (id: string) => {
+    setSaving(true);
+    try {
+      await deleteFaqDb(id);
+      refresh();
+    } finally { setSaving(false); }
   };
+
+  if (loading) return <div className="space-y-4">{[1,2,3].map(i => <Skeleton key={i} className="h-24 w-full" />)}</div>;
 
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader><CardTitle className="text-base flex items-center gap-2"><Plus className="h-4 w-4" />Nova Pergunta</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base flex items-center gap-2"><Plus className="h-4 w-4" aria-hidden="true" />Nova Pergunta</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>Pergunta</Label>
-            <Input placeholder="Ex: Como acompanhar meu protocolo?" value={novaPergunta} onChange={(e) => setNovaPergunta(e.target.value)} />
+            <Label htmlFor="faq-pergunta">Pergunta</Label>
+            <Input id="faq-pergunta" placeholder="Ex: Como acompanhar meu protocolo?" value={novaPergunta} onChange={(e) => setNovaPergunta(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label>Resposta</Label>
-            <Textarea placeholder="Escreva a resposta..." value={novaResposta} onChange={(e) => setNovaResposta(e.target.value)} className="min-h-[100px]" />
+            <Label htmlFor="faq-resposta">Resposta</Label>
+            <Textarea id="faq-resposta" placeholder="Escreva a resposta..." value={novaResposta} onChange={(e) => setNovaResposta(e.target.value)} className="min-h-[100px]" />
           </div>
-          <Button onClick={handleAdd} disabled={!novaPergunta.trim() || !novaResposta.trim()} className="gap-2">
-            <Plus className="h-4 w-4" /> Adicionar FAQ
+          <Button onClick={handleAdd} disabled={!novaPergunta.trim() || !novaResposta.trim() || saving} className="gap-2">
+            <Plus className="h-4 w-4" aria-hidden="true" /> {saving ? 'Salvando...' : 'Adicionar FAQ'}
           </Button>
         </CardContent>
       </Card>
@@ -121,10 +154,10 @@ function FaqManager() {
                 <div key={faq.id} className="border rounded-lg p-4 space-y-2">
                   {editId === faq.id ? (
                     <>
-                      <Input value={editPergunta} onChange={(e) => setEditPergunta(e.target.value)} />
-                      <Textarea value={editResposta} onChange={(e) => setEditResposta(e.target.value)} className="min-h-[80px]" />
+                      <Input value={editPergunta} onChange={(e) => setEditPergunta(e.target.value)} aria-label="Editar pergunta" />
+                      <Textarea value={editResposta} onChange={(e) => setEditResposta(e.target.value)} className="min-h-[80px]" aria-label="Editar resposta" />
                       <div className="flex gap-2">
-                        <Button size="sm" onClick={handleSaveEdit} className="gap-1"><Save className="h-3 w-3" />Salvar</Button>
+                        <Button size="sm" onClick={handleSaveEdit} disabled={saving} className="gap-1"><Save className="h-3 w-3" />Salvar</Button>
                         <Button size="sm" variant="ghost" onClick={() => setEditId(null)} className="gap-1"><X className="h-3 w-3" />Cancelar</Button>
                       </div>
                     </>
@@ -134,7 +167,7 @@ function FaqManager() {
                       <p className="text-sm text-muted-foreground">{faq.resposta}</p>
                       <div className="flex gap-2 pt-1">
                         <Button size="sm" variant="outline" onClick={() => handleEdit(faq)} className="gap-1 h-7 text-xs"><Pencil className="h-3 w-3" />Editar</Button>
-                        <Button size="sm" variant="destructive" onClick={() => handleDelete(faq.id)} className="gap-1 h-7 text-xs"><Trash2 className="h-3 w-3" />Excluir</Button>
+                        <Button size="sm" variant="destructive" onClick={() => handleDelete(faq.id)} disabled={saving} className="gap-1 h-7 text-xs"><Trash2 className="h-3 w-3" />Excluir</Button>
                       </div>
                     </>
                   )}
@@ -150,7 +183,7 @@ function FaqManager() {
 
 // Users Manager Component
 function UsersManager() {
-  const [operadores, setOperadores] = useState<Operador[]>(getOperadores());
+  const { operadores, loading, refresh } = useOperadores();
   const [novoNome, setNovoNome] = useState('');
   const [novoEmail, setNovoEmail] = useState('');
   const [novoSenha, setNovoSenha] = useState('');
@@ -161,6 +194,7 @@ function UsersManager() {
   const [resetSenhaId, setResetSenhaId] = useState<string | null>(null);
   const [novaSenhaReset, setNovaSenhaReset] = useState('');
   const [confirmSenhaReset, setConfirmSenhaReset] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const generateDefaultPassword = (nivel: NivelAcesso): string => {
     const prefixMap: Record<NivelAcesso, string> = {
@@ -174,33 +208,38 @@ function UsersManager() {
     return `${prefixMap[nivel]}${String(Math.floor(Math.random() * 9000) + 1000)}`;
   };
 
-  const handleAdd = () => {
-    if (!novoNome.trim() || !novoEmail.trim()) return;
-    const senha = novoSenha.trim() || generateDefaultPassword(novoNivel);
-    addOperador(novoNome.trim(), novoEmail.trim(), novoNivel, senha);
-    alert(`Operador criado com sucesso!\n\nNome: ${novoNome.trim()}\nE-mail: ${novoEmail.trim()}\nNível: ${novoNivel}\nSenha: ${senha}\n\nGuarde essas credenciais!`);
-    setNovoNome('');
-    setNovoEmail('');
-    setNovoSenha('');
-    setNovoNivel('Analista');
-    setOperadores(getOperadores());
+  const handleAdd = async () => {
+    if (!novoNome.trim() || !novoEmail.trim() || saving) return;
+    setSaving(true);
+    try {
+      const senha = novoSenha.trim() || generateDefaultPassword(novoNivel);
+      await addOperadorDb(novoNome.trim(), novoEmail.trim(), novoNivel, senha);
+      alert(`Operador criado com sucesso!\n\nNome: ${novoNome.trim()}\nE-mail: ${novoEmail.trim()}\nNível: ${novoNivel}\nSenha: ${senha}\n\nGuarde essas credenciais!`);
+      setNovoNome('');
+      setNovoEmail('');
+      setNovoSenha('');
+      setNovoNivel('Analista');
+      refresh();
+    } catch (err: any) {
+      alert('Erro ao criar operador: ' + (err.message || 'Tente novamente'));
+    } finally { setSaving(false); }
   };
 
-  const handleToggleAtivo = (op: Operador) => {
-    updateOperador(op.id, { ativo: !op.ativo });
-    setOperadores(getOperadores());
+  const handleToggleAtivo = async (op: Operador) => {
+    await updateOperadorDb(op.id, { ativo: !op.ativo });
+    refresh();
   };
 
-  const handleChangeNivel = (id: string, nivel: NivelAcesso) => {
-    updateOperador(id, { nivel });
-    setOperadores(getOperadores());
+  const handleChangeNivel = async (id: string, nivel: NivelAcesso) => {
+    await updateOperadorDb(id, { nivel });
+    refresh();
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     const op = operadores.find(o => o.id === id);
     if (op && window.confirm(`Tem certeza que deseja remover "${op.nome}"?`)) {
-      deleteOperador(id);
-      setOperadores(getOperadores());
+      await deleteOperadorDb(id);
+      refresh();
     }
   };
 
@@ -210,14 +249,17 @@ function UsersManager() {
     setEditEmail(op.email);
   };
 
-  const handleSaveEdit = () => {
-    if (!editId || !editNome.trim() || !editEmail.trim()) return;
-    updateOperador(editId, { nome: editNome.trim(), email: editEmail.trim() });
-    setEditId(null);
-    setOperadores(getOperadores());
+  const handleSaveEdit = async () => {
+    if (!editId || !editNome.trim() || !editEmail.trim() || saving) return;
+    setSaving(true);
+    try {
+      await updateOperadorDb(editId, { nome: editNome.trim(), email: editEmail.trim() });
+      setEditId(null);
+      refresh();
+    } finally { setSaving(false); }
   };
 
-  const handleResetSenha = () => {
+  const handleResetSenha = async () => {
     if (!resetSenhaId || !novaSenhaReset.trim()) return;
     if (novaSenhaReset !== confirmSenhaReset) {
       alert('As senhas não coincidem!');
@@ -227,45 +269,47 @@ function UsersManager() {
       alert('A senha deve ter pelo menos 6 caracteres.');
       return;
     }
-    updateOperador(resetSenhaId, { senha: novaSenhaReset });
+    await updateOperadorDb(resetSenhaId, { senha: novaSenhaReset });
     const op = operadores.find(o => o.id === resetSenhaId);
     alert(`Senha de "${op?.nome}" redefinida com sucesso!`);
     setResetSenhaId(null);
     setNovaSenhaReset('');
     setConfirmSenhaReset('');
-    setOperadores(getOperadores());
+    refresh();
   };
+
+  if (loading) return <div className="space-y-4">{[1,2,3].map(i => <Skeleton key={i} className="h-16 w-full" />)}</div>;
 
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader><CardTitle className="text-base flex items-center gap-2"><Plus className="h-4 w-4" />Novo Operador</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base flex items-center gap-2"><Plus className="h-4 w-4" aria-hidden="true" />Novo Operador</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <Label>Nome</Label>
-              <Input placeholder="Nome completo" value={novoNome} onChange={(e) => setNovoNome(e.target.value)} />
+              <Label htmlFor="op-nome">Nome</Label>
+              <Input id="op-nome" placeholder="Nome completo" value={novoNome} onChange={(e) => setNovoNome(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>E-mail</Label>
-              <Input placeholder="email@seplag.mt.gov.br" value={novoEmail} onChange={(e) => setNovoEmail(e.target.value)} />
+              <Label htmlFor="op-email">E-mail</Label>
+              <Input id="op-email" placeholder="email@seplag.mt.gov.br" value={novoEmail} onChange={(e) => setNovoEmail(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Senha <span className="text-muted-foreground text-[10px]">(auto se vazio)</span></Label>
-              <Input type="password" placeholder="Senha de acesso" value={novoSenha} onChange={(e) => setNovoSenha(e.target.value)} />
+              <Label htmlFor="op-senha">Senha <span className="text-muted-foreground text-[10px]">(auto se vazio)</span></Label>
+              <Input id="op-senha" type="password" placeholder="Senha de acesso" value={novoSenha} onChange={(e) => setNovoSenha(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Nível de Acesso</Label>
+              <Label htmlFor="op-nivel">Nível de Acesso</Label>
               <Select value={novoNivel} onValueChange={(v) => setNovoNivel(v as NivelAcesso)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="op-nivel"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {NIVEIS_ACESSO.map((n) => (<SelectItem key={n} value={n}>{n}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
           </div>
-          <Button onClick={handleAdd} disabled={!novoNome.trim() || !novoEmail.trim()} className="gap-2">
-            <Plus className="h-4 w-4" /> Adicionar Operador
+          <Button onClick={handleAdd} disabled={!novoNome.trim() || !novoEmail.trim() || saving} className="gap-2">
+            <Plus className="h-4 w-4" aria-hidden="true" /> {saving ? 'Salvando...' : 'Adicionar Operador'}
           </Button>
         </CardContent>
       </Card>
@@ -275,19 +319,19 @@ function UsersManager() {
         <Card className="border-chart-3/50 bg-chart-3/5">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <Shield className="h-4 w-4" />
+              <Shield className="h-4 w-4" aria-hidden="true" />
               Redefinir Senha — {operadores.find(o => o.id === resetSenhaId)?.nome}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Nova Senha</Label>
-                <Input type="password" placeholder="Mínimo 6 caracteres" value={novaSenhaReset} onChange={(e) => setNovaSenhaReset(e.target.value)} />
+                <Label htmlFor="reset-nova">Nova Senha</Label>
+                <Input id="reset-nova" type="password" placeholder="Mínimo 6 caracteres" value={novaSenhaReset} onChange={(e) => setNovaSenhaReset(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label>Confirmar Senha</Label>
-                <Input type="password" placeholder="Repita a senha" value={confirmSenhaReset} onChange={(e) => setConfirmSenhaReset(e.target.value)} />
+                <Label htmlFor="reset-confirm">Confirmar Senha</Label>
+                <Input id="reset-confirm" type="password" placeholder="Repita a senha" value={confirmSenhaReset} onChange={(e) => setConfirmSenhaReset(e.target.value)} />
               </div>
             </div>
             <div className="flex gap-2">
@@ -320,17 +364,17 @@ function UsersManager() {
                 <TableRow key={op.id} className={!op.ativo ? 'opacity-50' : ''}>
                   <TableCell className="font-medium">
                     {editId === op.id ? (
-                      <Input value={editNome} onChange={(e) => setEditNome(e.target.value)} className="h-8 text-sm" />
+                      <Input value={editNome} onChange={(e) => setEditNome(e.target.value)} className="h-8 text-sm" aria-label="Editar nome" />
                     ) : op.nome}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {editId === op.id ? (
-                      <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="h-8 text-sm" />
+                      <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="h-8 text-sm" aria-label="Editar e-mail" />
                     ) : op.email}
                   </TableCell>
                   <TableCell>
                     <Select value={op.nivel} onValueChange={(v) => handleChangeNivel(op.id, v as NivelAcesso)}>
-                      <SelectTrigger className="w-[160px] h-8 text-xs">
+                      <SelectTrigger className="w-[160px] h-8 text-xs" aria-label={`Nível de acesso de ${op.nome}`}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -343,6 +387,8 @@ function UsersManager() {
                       variant={op.ativo ? 'default' : 'secondary'}
                       className="cursor-pointer text-[10px]"
                       onClick={() => handleToggleAtivo(op)}
+                      role="button"
+                      aria-label={`Alternar status de ${op.nome}: ${op.ativo ? 'Ativo' : 'Inativo'}`}
                     >
                       {op.ativo ? 'Ativo' : 'Inativo'}
                     </Badge>
@@ -351,7 +397,7 @@ function UsersManager() {
                     <div className="flex gap-1 flex-wrap">
                       {editId === op.id ? (
                         <>
-                          <Button size="sm" onClick={handleSaveEdit} className="gap-1 h-7 text-xs">
+                          <Button size="sm" onClick={handleSaveEdit} disabled={saving} className="gap-1 h-7 text-xs">
                             <Save className="h-3 w-3" />Salvar
                           </Button>
                           <Button size="sm" variant="ghost" onClick={() => setEditId(null)} className="gap-1 h-7 text-xs">
@@ -360,13 +406,13 @@ function UsersManager() {
                         </>
                       ) : (
                         <>
-                          <Button size="sm" variant="outline" onClick={() => handleStartEdit(op)} className="gap-1 h-7 text-xs">
+                          <Button size="sm" variant="outline" onClick={() => handleStartEdit(op)} className="gap-1 h-7 text-xs" aria-label={`Editar ${op.nome}`}>
                             <Pencil className="h-3 w-3" />Editar
                           </Button>
-                          <Button size="sm" variant="outline" onClick={() => setResetSenhaId(op.id)} className="gap-1 h-7 text-xs">
+                          <Button size="sm" variant="outline" onClick={() => setResetSenhaId(op.id)} className="gap-1 h-7 text-xs" aria-label={`Redefinir senha de ${op.nome}`}>
                             <Shield className="h-3 w-3" />Senha
                           </Button>
-                          <Button size="sm" variant="destructive" onClick={() => handleDelete(op.id)} className="gap-1 h-7 text-xs">
+                          <Button size="sm" variant="destructive" onClick={() => handleDelete(op.id)} className="gap-1 h-7 text-xs" aria-label={`Remover ${op.nome}`}>
                             <Trash2 className="h-3 w-3" />Remover
                           </Button>
                         </>
@@ -385,33 +431,40 @@ function UsersManager() {
 
 // Settings Manager Component
 function SettingsManager() {
-  const [orgaos, setOrgaos] = useState<string[]>(getCustomOrgaos());
-  const [assuntos, setAssuntos] = useState<string[]>(getCustomAssuntos());
+  const { orgaos, refresh: refreshOrgaos } = useCustomOrgaos();
+  const { assuntos, refresh: refreshAssuntos } = useCustomAssuntos();
   const [novoOrgao, setNovoOrgao] = useState('');
   const [novoAssunto, setNovoAssunto] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  const handleAddOrgao = () => {
-    if (!novoOrgao.trim()) return;
-    addCustomOrgao(novoOrgao.trim());
-    setNovoOrgao('');
-    setOrgaos(getCustomOrgaos());
+  const handleAddOrgao = async () => {
+    if (!novoOrgao.trim() || saving) return;
+    setSaving(true);
+    try {
+      await addCustomOrgaoDb(novoOrgao.trim());
+      setNovoOrgao('');
+      refreshOrgaos();
+    } finally { setSaving(false); }
   };
 
-  const handleRemoveOrgao = (orgao: string) => {
-    removeCustomOrgao(orgao);
-    setOrgaos(getCustomOrgaos());
+  const handleRemoveOrgao = async (orgao: string) => {
+    await removeCustomOrgaoDb(orgao);
+    refreshOrgaos();
   };
 
-  const handleAddAssunto = () => {
-    if (!novoAssunto.trim()) return;
-    addCustomAssunto(novoAssunto.trim());
-    setNovoAssunto('');
-    setAssuntos(getCustomAssuntos());
+  const handleAddAssunto = async () => {
+    if (!novoAssunto.trim() || saving) return;
+    setSaving(true);
+    try {
+      await addCustomAssuntoDb(novoAssunto.trim());
+      setNovoAssunto('');
+      refreshAssuntos();
+    } finally { setSaving(false); }
   };
 
-  const handleRemoveAssunto = (assunto: string) => {
-    removeCustomAssunto(assunto);
-    setAssuntos(getCustomAssuntos());
+  const handleRemoveAssunto = async (assunto: string) => {
+    await removeCustomAssuntoDb(assunto);
+    refreshAssuntos();
   };
 
   return (
@@ -419,19 +472,19 @@ function SettingsManager() {
       <div className="grid md:grid-cols-2 gap-6">
         {/* Órgãos */}
         <Card>
-          <CardHeader><CardTitle className="text-base flex items-center gap-2"><Building2 className="h-4 w-4" />Órgãos Adicionais</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base flex items-center gap-2"><Building2 className="h-4 w-4" aria-hidden="true" />Órgãos Adicionais</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <p className="text-xs text-muted-foreground">Adicione órgãos extras além da lista padrão.</p>
             <div className="flex gap-2">
-              <Input placeholder="Ex: NOVO ÓRGÃO – Nome Completo" value={novoOrgao} onChange={(e) => setNovoOrgao(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddOrgao()} />
-              <Button onClick={handleAddOrgao} disabled={!novoOrgao.trim()} size="sm"><Plus className="h-4 w-4" /></Button>
+              <Input placeholder="Ex: NOVO ÓRGÃO – Nome Completo" value={novoOrgao} onChange={(e) => setNovoOrgao(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddOrgao()} aria-label="Novo órgão" />
+              <Button onClick={handleAddOrgao} disabled={!novoOrgao.trim() || saving} size="sm" aria-label="Adicionar órgão"><Plus className="h-4 w-4" /></Button>
             </div>
             {orgaos.length > 0 && (
               <div className="space-y-2">
                 {orgaos.map((orgao) => (
                   <div key={orgao} className="flex items-center justify-between border rounded-md px-3 py-2">
                     <span className="text-sm">{orgao}</span>
-                    <Button size="sm" variant="ghost" onClick={() => handleRemoveOrgao(orgao)} className="h-7 text-destructive hover:text-destructive">
+                    <Button size="sm" variant="ghost" onClick={() => handleRemoveOrgao(orgao)} className="h-7 text-destructive hover:text-destructive" aria-label={`Remover ${orgao}`}>
                       <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
@@ -444,19 +497,19 @@ function SettingsManager() {
 
         {/* Assuntos */}
         <Card>
-          <CardHeader><CardTitle className="text-base flex items-center gap-2"><FileSpreadsheet className="h-4 w-4" />Assuntos Adicionais</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base flex items-center gap-2"><FileSpreadsheet className="h-4 w-4" aria-hidden="true" />Assuntos Adicionais</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <p className="text-xs text-muted-foreground">Assuntos padrão: {ASSUNTOS.join(', ')}.</p>
             <div className="flex gap-2">
-              <Input placeholder="Ex: Novo Assunto" value={novoAssunto} onChange={(e) => setNovoAssunto(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddAssunto()} />
-              <Button onClick={handleAddAssunto} disabled={!novoAssunto.trim()} size="sm"><Plus className="h-4 w-4" /></Button>
+              <Input placeholder="Ex: Novo Assunto" value={novoAssunto} onChange={(e) => setNovoAssunto(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddAssunto()} aria-label="Novo assunto" />
+              <Button onClick={handleAddAssunto} disabled={!novoAssunto.trim() || saving} size="sm" aria-label="Adicionar assunto"><Plus className="h-4 w-4" /></Button>
             </div>
             {assuntos.length > 0 && (
               <div className="space-y-2">
                 {assuntos.map((assunto) => (
                   <div key={assunto} className="flex items-center justify-between border rounded-md px-3 py-2">
                     <span className="text-sm">{assunto}</span>
-                    <Button size="sm" variant="ghost" onClick={() => handleRemoveAssunto(assunto)} className="h-7 text-destructive hover:text-destructive">
+                    <Button size="sm" variant="ghost" onClick={() => handleRemoveAssunto(assunto)} className="h-7 text-destructive hover:text-destructive" aria-label={`Remover ${assunto}`}>
                       <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
@@ -482,14 +535,14 @@ const Admin = () => {
   const isGestao = currentUser ? NIVEIS_GESTAO.includes(currentUser.nivel) : false;
   const isOperacao = currentUser ? NIVEIS_OPERACAO.includes(currentUser.nivel) : false;
   const isLeitura = currentUser ? NIVEIS_LEITURA.includes(currentUser.nivel) : false;
-  const [refresh, setRefresh] = useState(0);
   const [busca, setBusca] = useState('');
   const [filtroSecretaria, setFiltroSecretaria] = useState('all');
   const [filtroStatus, setFiltroStatus] = useState('all');
   const [filtroPrioridade, setFiltroPrioridade] = useState('all');
 
-  const solicitacoes = useMemo(() => getSolicitacoes(), [refresh]);
-  const operadores = useMemo(() => getOperadores().filter((o) => o.ativo), [refresh]);
+  const { solicitacoes, loading: loadingSol, refresh: refreshSol } = useSolicitacoes();
+  const { operadores, loading: loadingOps } = useOperadores();
+  const activeOperadores = useMemo(() => operadores.filter((o) => o.ativo), [operadores]);
 
   const filtered = useMemo(() => {
     return solicitacoes.filter((s) => {
@@ -613,14 +666,14 @@ const Admin = () => {
     return Object.entries(weeks).map(([name, v]) => ({ name, ...v })).slice(-8);
   }, [solicitacoes]);
 
-  const handleStatusChange = (id: string, status: StatusSolicitacao) => {
-    updateStatus(id, status);
-    setRefresh((r) => r + 1);
+  const handleStatusChange = async (id: string, status: StatusSolicitacao) => {
+    await updateStatusDb(id, status);
+    refreshSol();
   };
 
-  const handleResponsavel = (id: string, responsavel: string) => {
-    updateSolicitacao(id, { responsavel });
-    setRefresh((r) => r + 1);
+  const handleResponsavel = async (id: string, responsavel: string) => {
+    await updateSolicitacaoDb(id, { responsavel });
+    refreshSol();
   };
 
   const exportExcel = () => {
@@ -669,11 +722,13 @@ const Admin = () => {
 
   if (!authed) return <AdminLogin onAuth={(op) => setCurrentUser(op)} />;
 
+  if (loadingSol) return <LoadingSkeleton />;
+
   const secretarias = [...new Set(solicitacoes.map((s) => s.secretaria))];
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-[hsl(210,100%,28%/0.92)] border-b border-primary-foreground/10 px-6 py-3 shadow-[0_4px_30px_rgba(0,0,0,0.15)]">
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-[hsl(210,100%,28%/0.92)] border-b border-primary-foreground/10 px-6 py-3 shadow-[0_4px_30px_rgba(0,0,0,0.15)]" role="banner">
         <div className="flex items-center justify-between">
           {/* Left side — Navigation */}
           <div className="flex items-center gap-3">
@@ -682,13 +737,14 @@ const Admin = () => {
               size="sm"
               className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 transition-all duration-300 gap-2"
               onClick={() => navigate('/')}
+              aria-label="Voltar ao portal principal"
             >
               <ArrowLeft className="h-4 w-4" />
               <span className="hidden sm:inline text-sm">Voltar ao Portal</span>
             </Button>
             <div className="h-6 w-px bg-primary-foreground/20 hidden sm:block" />
             <div className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-primary-foreground" />
+              <Building2 className="h-5 w-5 text-primary-foreground" aria-hidden="true" />
               <h1 className="text-sm md:text-base font-semibold text-primary-foreground tracking-tight">
                 Gestão do Atendimento
               </h1>
@@ -703,6 +759,7 @@ const Admin = () => {
                 size="sm"
                 onClick={exportExcel}
                 className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 transition-all duration-300 gap-2"
+                aria-label="Exportar relatório em Excel"
               >
                 <Download className="h-4 w-4" />
                 <span className="hidden md:inline text-sm">Exportar</span>
@@ -711,7 +768,7 @@ const Admin = () => {
             <div className="h-6 w-px bg-primary-foreground/20 hidden md:block" />
             <div className="flex items-center gap-2 bg-primary-foreground/10 rounded-full pl-1.5 pr-3 py-1 transition-all duration-300">
               <div className="h-7 w-7 rounded-full bg-primary-foreground/20 flex items-center justify-center">
-                <Shield className="h-3.5 w-3.5 text-primary-foreground" />
+                <Shield className="h-3.5 w-3.5 text-primary-foreground" aria-hidden="true" />
               </div>
               <div className="hidden md:flex flex-col">
                 <span className="text-xs font-medium text-primary-foreground leading-tight">{currentUser?.nome}</span>
@@ -724,6 +781,7 @@ const Admin = () => {
               className="text-primary-foreground/70 hover:text-destructive-foreground hover:bg-destructive/80 transition-all duration-300 gap-2 rounded-full"
               onClick={handleLogout}
               title="Sair do sistema"
+              aria-label="Sair do sistema e voltar ao login"
             >
               <LogOut className="h-4 w-4" />
               <span className="hidden sm:inline text-sm">Sair</span>
@@ -732,9 +790,9 @@ const Admin = () => {
         </div>
       </header>
 
-      <main className="flex-1 px-4 md:px-8 py-6 space-y-6 max-w-[1400px] mx-auto w-full">
+      <main className="flex-1 px-4 md:px-8 py-6 space-y-6 max-w-[1400px] mx-auto w-full" role="main">
         {/* KPI Cards */}
-        <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-3">
+        <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-3" role="region" aria-label="Indicadores de desempenho">
           <KpiCard icon={FileSpreadsheet} label="Total" value={total} color="text-primary" />
           <KpiCard icon={AlertCircle} label="Abertas" value={abertas} color="text-chart-3" />
           <KpiCard icon={Clock} label="Em Análise" value={emAnalise} color="text-chart-4" />
@@ -747,12 +805,12 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue={isLeitura ? 'operacional' : 'executivo'} className="space-y-6">
-          <TabsList className="flex-wrap">
-            {(isGestao || isOperacao) && <TabsTrigger value="executivo" className="gap-2"><Eye className="h-4 w-4" />Visão Executiva</TabsTrigger>}
-            <TabsTrigger value="operacional" className="gap-2"><Settings className="h-4 w-4" />Operacional</TabsTrigger>
-            {isGestao && <TabsTrigger value="faq" className="gap-2"><HelpCircle className="h-4 w-4" />Gerenciar FAQ</TabsTrigger>}
-            {isGestao && <TabsTrigger value="usuarios" className="gap-2"><Users className="h-4 w-4" />Usuários</TabsTrigger>}
-            {isGestao && <TabsTrigger value="configuracoes" className="gap-2"><Settings className="h-4 w-4" />Configurações</TabsTrigger>}
+          <TabsList className="flex-wrap" aria-label="Seções do painel">
+            {(isGestao || isOperacao) && <TabsTrigger value="executivo" className="gap-2"><Eye className="h-4 w-4" aria-hidden="true" />Visão Executiva</TabsTrigger>}
+            <TabsTrigger value="operacional" className="gap-2"><Settings className="h-4 w-4" aria-hidden="true" />Operacional</TabsTrigger>
+            {isGestao && <TabsTrigger value="faq" className="gap-2"><HelpCircle className="h-4 w-4" aria-hidden="true" />Gerenciar FAQ</TabsTrigger>}
+            {isGestao && <TabsTrigger value="usuarios" className="gap-2"><Users className="h-4 w-4" aria-hidden="true" />Usuários</TabsTrigger>}
+            {isGestao && <TabsTrigger value="configuracoes" className="gap-2"><Settings className="h-4 w-4" aria-hidden="true" />Configurações</TabsTrigger>}
           </TabsList>
 
           {/* ============ VISÃO EXECUTIVA ============ */}
@@ -892,16 +950,16 @@ const Admin = () => {
             <Card>
               <CardContent className="pt-6">
                 <div className="flex flex-wrap gap-3">
-                  <Input placeholder="Buscar por protocolo, nome ou e-mail..." value={busca} onChange={(e) => setBusca(e.target.value)} className="w-64" />
+                  <Input placeholder="Buscar por protocolo, nome ou e-mail..." value={busca} onChange={(e) => setBusca(e.target.value)} className="w-64" aria-label="Buscar solicitações" />
                   <Select value={filtroSecretaria} onValueChange={setFiltroSecretaria}>
-                    <SelectTrigger className="w-[200px]"><SelectValue placeholder="Secretaria" /></SelectTrigger>
+                    <SelectTrigger className="w-[200px]" aria-label="Filtrar por secretaria"><SelectValue placeholder="Secretaria" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todas Secretarias</SelectItem>
                       {secretarias.map((s) => (<SelectItem key={s} value={s}>{s.split(' – ')[0]}</SelectItem>))}
                     </SelectContent>
                   </Select>
                   <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-                    <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="w-[150px]" aria-label="Filtrar por status"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos Status</SelectItem>
                       <SelectItem value="Aberto">Aberto</SelectItem>
@@ -910,7 +968,7 @@ const Admin = () => {
                     </SelectContent>
                   </Select>
                   <Select value={filtroPrioridade} onValueChange={setFiltroPrioridade}>
-                    <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="w-[140px]" aria-label="Filtrar por prioridade"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Prioridade</SelectItem>
                       <SelectItem value="Normal">Normal</SelectItem>
@@ -941,7 +999,7 @@ const Admin = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filtered.slice().reverse().map((s) => {
+                      {filtered.map((s) => {
                         const slaStatus = getSlaStatus(s);
                         return (
                           <TableRow key={s.id}>
@@ -966,7 +1024,7 @@ const Admin = () => {
                                 <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[s.status]}`}>{s.status}</Badge>
                               ) : (
                                 <Select value={s.status} onValueChange={(v) => handleStatusChange(s.id, v as StatusSolicitacao)}>
-                                  <SelectTrigger className={`w-[130px] text-xs h-8 border ${STATUS_COLORS[s.status]}`}>
+                                  <SelectTrigger className={`w-[130px] text-xs h-8 border ${STATUS_COLORS[s.status]}`} aria-label={`Status de ${s.protocolo}`}>
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -982,11 +1040,11 @@ const Admin = () => {
                                 <span className="text-xs text-muted-foreground">{s.responsavel || '—'}</span>
                               ) : (
                                 <Select value={s.responsavel || ''} onValueChange={(v) => handleResponsavel(s.id, v)}>
-                                  <SelectTrigger className="w-[140px] text-xs h-8">
+                                  <SelectTrigger className="w-[140px] text-xs h-8" aria-label={`Atribuir responsável a ${s.protocolo}`}>
                                     <SelectValue placeholder="Atribuir" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {operadores.map((op) => (
+                                    {activeOperadores.map((op) => (
                                       <SelectItem key={op.id} value={op.nome}>
                                         <span className="flex items-center gap-1">
                                           {NIVEIS_GESTAO.includes(op.nivel) ? <ShieldCheck className="h-3 w-3 text-primary inline" /> : <Shield className="h-3 w-3 text-muted-foreground inline" />}
