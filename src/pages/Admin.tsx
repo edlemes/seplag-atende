@@ -25,7 +25,7 @@ import {
   getCustomOrgaos, addCustomOrgao, removeCustomOrgao,
   getCustomAssuntos, addCustomAssunto, removeCustomAssunto,
 } from '@/lib/storage';
-import { Solicitacao, StatusSolicitacao, FAQ, Operador, NivelAcesso, NIVEIS_ACESSO, NIVEIS_GESTAO, NIVEIS_LEITURA, ASSUNTOS } from '@/types/solicitacao';
+import { Solicitacao, StatusSolicitacao, FAQ, Operador, NivelAcesso, NIVEIS_ACESSO, NIVEIS_GESTAO, NIVEIS_OPERACAO, NIVEIS_LEITURA, ASSUNTOS } from '@/types/solicitacao';
 import AdminLogin from './AdminLogin';
 import * as XLSX from 'xlsx';
 
@@ -364,6 +364,7 @@ const Admin = () => {
   });
   const authed = !!currentUser;
   const isGestao = currentUser ? NIVEIS_GESTAO.includes(currentUser.nivel) : false;
+  const isOperacao = currentUser ? NIVEIS_OPERACAO.includes(currentUser.nivel) : false;
   const isLeitura = currentUser ? NIVEIS_LEITURA.includes(currentUser.nivel) : false;
   const [refresh, setRefresh] = useState(0);
   const [busca, setBusca] = useState('');
@@ -629,9 +630,9 @@ const Admin = () => {
           <KpiCard icon={BarChart3} label="IAI" value={iai + '%'} color="text-primary" />
         </div>
 
-        <Tabs defaultValue={isGestao ? 'executivo' : 'operacional'} className="space-y-6">
+        <Tabs defaultValue={isLeitura ? 'operacional' : 'executivo'} className="space-y-6">
           <TabsList className="flex-wrap">
-            {isGestao && <TabsTrigger value="executivo" className="gap-2"><Eye className="h-4 w-4" />Visão Executiva</TabsTrigger>}
+            {(isGestao || isOperacao) && <TabsTrigger value="executivo" className="gap-2"><Eye className="h-4 w-4" />Visão Executiva</TabsTrigger>}
             <TabsTrigger value="operacional" className="gap-2"><Settings className="h-4 w-4" />Operacional</TabsTrigger>
             {isGestao && <TabsTrigger value="faq" className="gap-2"><HelpCircle className="h-4 w-4" />Gerenciar FAQ</TabsTrigger>}
             {isGestao && <TabsTrigger value="usuarios" className="gap-2"><Users className="h-4 w-4" />Usuários</TabsTrigger>}
@@ -845,7 +846,7 @@ const Admin = () => {
                               <span className={`text-xs font-medium ${SLA_COLORS[slaStatus]}`}>{slaStatus}</span>
                             </TableCell>
                             <TableCell>
-                              {isLeitura ? (
+                              {isLeitura || (isOperacao && s.responsavel !== currentUser?.nome) ? (
                                 <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[s.status]}`}>{s.status}</Badge>
                               ) : (
                                 <Select value={s.status} onValueChange={(v) => handleStatusChange(s.id, v as StatusSolicitacao)}>
@@ -861,7 +862,7 @@ const Admin = () => {
                               )}
                             </TableCell>
                             <TableCell>
-                              {isLeitura ? (
+                              {(isLeitura || isOperacao) ? (
                                 <span className="text-xs text-muted-foreground">{s.responsavel || '—'}</span>
                               ) : (
                                 <Select value={s.responsavel || ''} onValueChange={(v) => handleResponsavel(s.id, v)}>
