@@ -216,11 +216,12 @@ export async function authenticateOperadorDb(email: string, senha: string): Prom
 }
 
 export async function addOperadorDb(nome: string, email: string, nivel: NivelAcesso, senha: string): Promise<Operador> {
+  const normalizedEmail = email.trim().toLowerCase();
   // Check if email already exists
   const { data: existing } = await supabase
     .from('operadores')
     .select('id')
-    .eq('email', email)
+    .eq('email', normalizedEmail)
     .maybeSingle();
   
   if (existing) {
@@ -229,7 +230,7 @@ export async function addOperadorDb(nome: string, email: string, nivel: NivelAce
 
   const { data, error } = await supabase
     .from('operadores')
-    .insert({ nome, email, senha, nivel, ativo: true } as any)
+    .insert({ nome, email: normalizedEmail, senha, nivel, ativo: true } as any)
     .select()
     .single();
   if (error) throw error;
