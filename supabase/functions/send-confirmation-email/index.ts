@@ -250,6 +250,7 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  try {
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     if (!RESEND_API_KEY) {
       console.error("RESEND_API_KEY not configured");
@@ -260,7 +261,6 @@ serve(async (req) => {
     }
 
     const body: EmailRequest = await req.json();
-
     const html = buildEmailHtml(body);
 
     const res = await fetch("https://api.resend.com/emails", {
