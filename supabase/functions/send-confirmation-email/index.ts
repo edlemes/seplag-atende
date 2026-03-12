@@ -6,7 +6,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+// RESEND_API_KEY read inside handler to ensure env is loaded
 
 interface EmailRequest {
   to: string;
@@ -251,6 +251,7 @@ serve(async (req) => {
   }
 
   try {
+    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     if (!RESEND_API_KEY) {
       console.error("RESEND_API_KEY not configured");
       return new Response(
@@ -260,7 +261,6 @@ serve(async (req) => {
     }
 
     const body: EmailRequest = await req.json();
-
     const html = buildEmailHtml(body);
 
     const res = await fetch("https://api.resend.com/emails", {
