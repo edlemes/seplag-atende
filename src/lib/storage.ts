@@ -134,6 +134,17 @@ export function deleteFaq(id: string) {
 }
 
 // ============ OPERADORES ============
+const MASTER_EMAIL = 'ederresende@seplag.mt.gov.br';
+
+export function ensureMasterUser() {
+  const ops = getOperadores();
+  const exists = ops.find((o) => o.email === MASTER_EMAIL);
+  if (!exists) {
+    ops.push({ id: crypto.randomUUID(), nome: 'Eder Resende', email: MASTER_EMAIL, senha: 'admin123', nivel: 'Administrador', ativo: true });
+    localStorage.setItem(OPERADORES_KEY, JSON.stringify(ops));
+  }
+}
+
 export function getOperadores(): Operador[] {
   const data = localStorage.getItem(OPERADORES_KEY);
   if (!data) {
