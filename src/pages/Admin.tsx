@@ -155,10 +155,30 @@ function UsersManager() {
   const [novoEmail, setNovoEmail] = useState('');
   const [novoSenha, setNovoSenha] = useState('');
   const [novoNivel, setNovoNivel] = useState<NivelAcesso>('Analista');
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editNome, setEditNome] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [resetSenhaId, setResetSenhaId] = useState<string | null>(null);
+  const [novaSenhaReset, setNovaSenhaReset] = useState('');
+  const [confirmSenhaReset, setConfirmSenhaReset] = useState('');
+
+  const generateDefaultPassword = (nivel: NivelAcesso): string => {
+    const prefixMap: Record<NivelAcesso, string> = {
+      'Administrador': 'admin',
+      'Gerente': 'gerente',
+      'Coordenador': 'coord',
+      'Analista': 'analista',
+      'Residente Técnico': 'residente',
+      'Estagiário': 'estagiario',
+    };
+    return `${prefixMap[nivel]}${String(Math.floor(Math.random() * 9000) + 1000)}`;
+  };
 
   const handleAdd = () => {
-    if (!novoNome.trim() || !novoEmail.trim() || !novoSenha.trim()) return;
-    addOperador(novoNome.trim(), novoEmail.trim(), novoNivel, novoSenha);
+    if (!novoNome.trim() || !novoEmail.trim()) return;
+    const senha = novoSenha.trim() || generateDefaultPassword(novoNivel);
+    addOperador(novoNome.trim(), novoEmail.trim(), novoNivel, senha);
+    alert(`Operador criado com sucesso!\n\nNome: ${novoNome.trim()}\nE-mail: ${novoEmail.trim()}\nNível: ${novoNivel}\nSenha: ${senha}\n\nGuarde essas credenciais!`);
     setNovoNome('');
     setNovoEmail('');
     setNovoSenha('');
@@ -177,7 +197,42 @@ function UsersManager() {
   };
 
   const handleDelete = (id: string) => {
-    deleteOperador(id);
+    const op = operadores.find(o => o.id === id);
+    if (op && window.confirm(`Tem certeza que deseja remover "${op.nome}"?`)) {
+      deleteOperador(id);
+      setOperadores(getOperadores());
+    }
+  };
+
+  const handleStartEdit = (op: Operador) => {
+    setEditId(op.id);
+    setEditNome(op.nome);
+    setEditEmail(op.email);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editId || !editNome.trim() || !editEmail.trim()) return;
+    updateOperador(editId, { nome: editNome.trim(), email: editEmail.trim() });
+    setEditId(null);
+    setOperadores(getOperadores());
+  };
+
+  const handleResetSenha = () => {
+    if (!resetSenhaId || !novaSenhaReset.trim()) return;
+    if (novaSenhaReset !== confirmSenhaReset) {
+      alert('As senhas não coincidem!');
+      return;
+    }
+    if (novaSenhaReset.length < 6) {
+      alert('A senha deve ter pelo menos 6 caracteres.');
+      return;
+    }
+    updateOperador(resetSenhaId, { senha: novaSenhaReset });
+    const op = operadores.find(o => o.id === resetSenhaId);
+    alert(`Senha de "${op?.nome}" redefinida com sucesso!`);
+    setResetSenhaId(null);
+    setNovaSenhaReset('');
+    setConfirmSenhaReset('');
     setOperadores(getOperadores());
   };
 
@@ -196,7 +251,7 @@ function UsersManager() {
               <Input placeholder="email@seplag.mt.gov.br" value={novoEmail} onChange={(e) => setNovoEmail(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Senha</Label>
+              <Label>Senha <span className="text-muted-foreground text-[10px]">(auto se vazio)</span></Label>
               <Input type="password" placeholder="Senha de acesso" value={novoSenha} onChange={(e) => setNovoSenha(e.target.value)} />
             </div>
             <div className="space-y-2">
@@ -209,11 +264,43 @@ function UsersManager() {
               </Select>
             </div>
           </div>
-          <Button onClick={handleAdd} disabled={!novoNome.trim() || !novoEmail.trim() || !novoSenha.trim()} className="gap-2">
+          <Button onClick={handleAdd} disabled={!novoNome.trim() || !novoEmail.trim()} className="gap-2">
             <Plus className="h-4 w-4" /> Adicionar Operador
           </Button>
         </CardContent>
       </Card>
+
+      {/* Modal de Resetar Senha */}
+      {resetSenhaId && (
+        <Card className="border-chart-3/50 bg-chart-3/5">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Redefinir Senha — {operadores.find(o => o.id === resetSenhaId)?.nome}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Nova Senha</Label>
+                <Input type="password" placeholder="Mínimo 6 caracteres" value={novaSenhaReset} onChange={(e) => setNovaSenhaReset(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Confirmar Senha</Label>
+                <Input type="password" placeholder="Repita a senha" value={confirmSenhaReset} onChange={(e) => setConfirmSenhaReset(e.target.value)} />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleResetSenha} disabled={!novaSenhaReset.trim() || novaSenhaReset !== confirmSenhaReset} className="gap-1">
+                <Save className="h-3 w-3" /> Salvar Nova Senha
+              </Button>
+              <Button variant="ghost" onClick={() => { setResetSenhaId(null); setNovaSenhaReset(''); setConfirmSenhaReset(''); }} className="gap-1">
+                <X className="h-3 w-3" /> Cancelar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader><CardTitle className="text-base">Operadores ({operadores.length})</CardTitle></CardHeader>
@@ -231,8 +318,16 @@ function UsersManager() {
             <TableBody>
               {operadores.map((op) => (
                 <TableRow key={op.id} className={!op.ativo ? 'opacity-50' : ''}>
-                  <TableCell className="font-medium">{op.nome}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{op.email}</TableCell>
+                  <TableCell className="font-medium">
+                    {editId === op.id ? (
+                      <Input value={editNome} onChange={(e) => setEditNome(e.target.value)} className="h-8 text-sm" />
+                    ) : op.nome}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {editId === op.id ? (
+                      <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="h-8 text-sm" />
+                    ) : op.email}
+                  </TableCell>
                   <TableCell>
                     <Select value={op.nivel} onValueChange={(v) => handleChangeNivel(op.id, v as NivelAcesso)}>
                       <SelectTrigger className="w-[160px] h-8 text-xs">
@@ -253,9 +348,30 @@ function UsersManager() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Button size="sm" variant="destructive" onClick={() => handleDelete(op.id)} className="gap-1 h-7 text-xs">
-                      <Trash2 className="h-3 w-3" />Remover
-                    </Button>
+                    <div className="flex gap-1 flex-wrap">
+                      {editId === op.id ? (
+                        <>
+                          <Button size="sm" onClick={handleSaveEdit} className="gap-1 h-7 text-xs">
+                            <Save className="h-3 w-3" />Salvar
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setEditId(null)} className="gap-1 h-7 text-xs">
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button size="sm" variant="outline" onClick={() => handleStartEdit(op)} className="gap-1 h-7 text-xs">
+                            <Pencil className="h-3 w-3" />Editar
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => setResetSenhaId(op.id)} className="gap-1 h-7 text-xs">
+                            <Shield className="h-3 w-3" />Senha
+                          </Button>
+                          <Button size="sm" variant="destructive" onClick={() => handleDelete(op.id)} className="gap-1 h-7 text-xs">
+                            <Trash2 className="h-3 w-3" />Remover
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
