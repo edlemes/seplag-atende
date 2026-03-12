@@ -862,7 +862,7 @@ const Admin = () => {
                               )}
                             </TableCell>
                             <TableCell>
-                              {isLeitura ? (
+                              {(isLeitura || isOperacao) ? (
                                 <span className="text-xs text-muted-foreground">{s.responsavel || '—'}</span>
                               ) : (
                                 <Select value={s.responsavel || ''} onValueChange={(v) => handleResponsavel(s.id, v)}>
