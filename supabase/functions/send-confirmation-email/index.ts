@@ -6,7 +6,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+// RESEND_API_KEY read inside handler to ensure env is loaded
 
 interface EmailRequest {
   to: string;
