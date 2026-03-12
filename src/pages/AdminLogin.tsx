@@ -65,9 +65,6 @@ const AdminLogin = ({ onAuth }: { onAuth: (op: Operador) => void }) => {
         </div>
       </main>
     </div>
-        </div>
-      </main>
-    </div>
   );
 };
 
