@@ -630,9 +630,9 @@ const Admin = () => {
           <KpiCard icon={BarChart3} label="IAI" value={iai + '%'} color="text-primary" />
         </div>
 
-        <Tabs defaultValue={isGestao ? 'executivo' : 'operacional'} className="space-y-6">
+        <Tabs defaultValue={isLeitura ? 'operacional' : 'executivo'} className="space-y-6">
           <TabsList className="flex-wrap">
-            {isGestao && <TabsTrigger value="executivo" className="gap-2"><Eye className="h-4 w-4" />Visão Executiva</TabsTrigger>}
+            {(isGestao || isOperacao) && <TabsTrigger value="executivo" className="gap-2"><Eye className="h-4 w-4" />Visão Executiva</TabsTrigger>}
             <TabsTrigger value="operacional" className="gap-2"><Settings className="h-4 w-4" />Operacional</TabsTrigger>
             {isGestao && <TabsTrigger value="faq" className="gap-2"><HelpCircle className="h-4 w-4" />Gerenciar FAQ</TabsTrigger>}
             {isGestao && <TabsTrigger value="usuarios" className="gap-2"><Users className="h-4 w-4" />Usuários</TabsTrigger>}

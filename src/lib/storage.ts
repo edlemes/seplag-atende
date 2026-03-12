@@ -138,6 +138,7 @@ export function getOperadores(): Operador[] {
   const data = localStorage.getItem(OPERADORES_KEY);
   if (!data) {
     const defaults: Operador[] = [
+      { id: crypto.randomUUID(), nome: 'Eder Resende', email: 'ederresende@seplag.mt.gov.br', senha: 'admin123', nivel: 'Administrador', ativo: true },
       { id: crypto.randomUUID(), nome: 'Ana Silva', email: 'ana.silva@seplag.mt.gov.br', senha: 'admin123', nivel: 'Administrador', ativo: true },
       { id: crypto.randomUUID(), nome: 'Carlos Mendes', email: 'carlos.mendes@seplag.mt.gov.br', senha: 'tecnico123', nivel: 'Analista', ativo: true },
       { id: crypto.randomUUID(), nome: 'Fernanda Lima', email: 'fernanda.lima@seplag.mt.gov.br', senha: 'tecnico123', nivel: 'Residente Técnico', ativo: true },
