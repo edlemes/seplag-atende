@@ -62,11 +62,13 @@ const AdminLogin = ({ onAuth }: { onAuth: (op: Operador) => void }) => {
             {erro && <p className="text-destructive text-sm">{erro}</p>}
           </div>
           <Button className="w-full" onClick={handleLogin} disabled={!email.trim() || !senha}>Entrar</Button>
-          <div className="text-xs text-muted-foreground text-center space-y-1">
-            <p className="font-medium">Credenciais padrão:</p>
-            <p>Admin: ana.silva@seplag.mt.gov.br / admin123</p>
-            <p>Analista: carlos.mendes@seplag.mt.gov.br / tecnico123</p>
-            <p>Estagiário: joao.santos@seplag.mt.gov.br / estagiario123</p>
+          <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-xs text-muted-foreground space-y-1">
+            <p className="font-semibold text-primary text-sm">Credenciais de Homologação</p>
+            <p><strong>Administrador:</strong> ana.silva@seplag.mt.gov.br / admin123</p>
+            <p><strong>Gerente:</strong> maria.oliveira@seplag.mt.gov.br / admin123</p>
+            <p><strong>Analista:</strong> carlos.mendes@seplag.mt.gov.br / tecnico123</p>
+            <p><strong>Residente Técnico:</strong> fernanda.lima@seplag.mt.gov.br / tecnico123</p>
+            <p><strong>Estagiário:</strong> joao.santos@seplag.mt.gov.br / estagiario123</p>
           </div>
         </div>
       </main>
