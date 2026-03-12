@@ -364,6 +364,7 @@ const Admin = () => {
   });
   const authed = !!currentUser;
   const isGestao = currentUser ? NIVEIS_GESTAO.includes(currentUser.nivel) : false;
+  const isOperacao = currentUser ? NIVEIS_OPERACAO.includes(currentUser.nivel) : false;
   const isLeitura = currentUser ? NIVEIS_LEITURA.includes(currentUser.nivel) : false;
   const [refresh, setRefresh] = useState(0);
   const [busca, setBusca] = useState('');
