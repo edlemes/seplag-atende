@@ -846,7 +846,7 @@ const Admin = () => {
                               <span className={`text-xs font-medium ${SLA_COLORS[slaStatus]}`}>{slaStatus}</span>
                             </TableCell>
                             <TableCell>
-                              {isLeitura ? (
+                              {isLeitura || (isOperacao && s.responsavel !== currentUser?.nome) ? (
                                 <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[s.status]}`}>{s.status}</Badge>
                               ) : (
                                 <Select value={s.status} onValueChange={(v) => handleStatusChange(s.id, v as StatusSolicitacao)}>
