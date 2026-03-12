@@ -1,7 +1,7 @@
 import { MessageCircle } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
-const WHATSAPP_URL = 'https://wa.me/556599999999';
+const WHATSAPP_URL = 'https://wa.me/5565984320031';
 
 const WhatsAppButton = () => {
   return (
