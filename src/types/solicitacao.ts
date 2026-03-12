@@ -159,4 +159,5 @@ export interface Operador {
   senha: string;
   nivel: NivelAcesso;
   ativo: boolean;
+  avatar_url?: string;
 }

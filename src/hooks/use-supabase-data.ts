@@ -184,6 +184,7 @@ export function useOperadores() {
         senha: r.senha,
         nivel: r.nivel as NivelAcesso,
         ativo: r.ativo,
+        avatar_url: r.avatar_url || undefined,
       })));
     }
     setLoading(false);
@@ -210,10 +211,22 @@ export async function authenticateOperadorDb(email: string, senha: string): Prom
     senha: data.senha,
     nivel: data.nivel as NivelAcesso,
     ativo: data.ativo,
+    avatar_url: (data as any).avatar_url || undefined,
   };
 }
 
 export async function addOperadorDb(nome: string, email: string, nivel: NivelAcesso, senha: string): Promise<Operador> {
+  // Check if email already exists
+  const { data: existing } = await supabase
+    .from('operadores')
+    .select('id')
+    .eq('email', email)
+    .maybeSingle();
+  
+  if (existing) {
+    throw new Error('Já existe um operador com este e-mail.');
+  }
+
   const { data, error } = await supabase
     .from('operadores')
     .insert({ nome, email, senha, nivel, ativo: true } as any)
@@ -237,6 +250,32 @@ export async function deleteOperadorDb(id: string) {
     .delete()
     .eq('id', id);
   if (error) throw error;
+}
+
+// ============ AVATAR UPLOAD ============
+
+export async function uploadAvatar(operadorId: string, file: File): Promise<string> {
+  const ext = file.name.split('.').pop() || 'jpg';
+  const filePath = `${operadorId}/avatar.${ext}`;
+  
+  const { error } = await supabase.storage
+    .from('avatars')
+    .upload(filePath, file, { upsert: true });
+  
+  if (error) throw error;
+  
+  const { data } = supabase.storage
+    .from('avatars')
+    .getPublicUrl(filePath);
+  
+  return data.publicUrl + '?t=' + Date.now();
+}
+
+export function getAvatarUrl(operadorId: string): string {
+  const { data } = supabase.storage
+    .from('avatars')
+    .getPublicUrl(`${operadorId}/avatar.jpg`);
+  return data.publicUrl;
 }
 
 // ============ FAQS ============

@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import {
   Building2, ArrowLeft, Download, FileSpreadsheet, BarChart3, CheckCircle2,
   AlertCircle, Clock, Star, TrendingUp, AlertTriangle, Target, Eye, Settings,
-  HelpCircle, Plus, Pencil, Trash2, Save, X, Users, Shield, ShieldCheck, LogOut
+  HelpCircle, Plus, Pencil, Trash2, Save, X, Users, Shield, ShieldCheck, LogOut,
+  User, Camera, KeyRound
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -15,6 +16,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, LineChart, Line
@@ -25,22 +28,24 @@ import {
   useOperadores, addOperadorDb, updateOperadorDb, deleteOperadorDb,
   useCustomOrgaos, addCustomOrgaoDb, removeCustomOrgaoDb,
   useCustomAssuntos, addCustomAssuntoDb, removeCustomAssuntoDb,
+  uploadAvatar, getAvatarUrl,
 } from '@/hooks/use-supabase-data';
 import { Solicitacao, StatusSolicitacao, FAQ, Operador, NivelAcesso, NIVEIS_ACESSO, NIVEIS_GESTAO, NIVEIS_OPERACAO, NIVEIS_LEITURA, ASSUNTOS } from '@/types/solicitacao';
 import AdminLogin from './AdminLogin';
 import * as XLSX from 'xlsx';
+import { useToast } from '@/hooks/use-toast';
 
 const COLORS = ['#004B8D', '#0067B3', '#FDB913', '#42A5F5', '#EF5350', '#AB47BC', '#26C6DA', '#8D6E63', '#78909C', '#D4E157'];
 
 const STATUS_COLORS: Record<StatusSolicitacao, string> = {
-  'Aberto': 'bg-chart-3/20 text-chart-3 border-chart-3/30',
-  'Em análise': 'bg-chart-4/20 text-chart-4 border-chart-4/30',
+  'Aberto': 'bg-accent/20 text-accent-foreground border-accent/30',
+  'Em análise': 'bg-primary/10 text-primary border-primary/20',
   'Respondido': 'bg-primary/20 text-primary border-primary/30',
 };
 
 const SLA_COLORS = {
   'Dentro do Prazo': 'text-primary',
-  'Próximo do Prazo': 'text-chart-3',
+  'Próximo do Prazo': 'text-accent-foreground',
   'Atrasado': 'text-destructive',
 };
 
@@ -57,23 +62,294 @@ function KpiCard({ icon: Icon, label, value, color, sub }: { icon: any; label: s
   );
 }
 
+function AdminHeader({ currentUser, isGestao, onExport, onLogout, onOpenProfile }: {
+  currentUser: Operador;
+  isGestao: boolean;
+  onExport: () => void;
+  onLogout: () => void;
+  onOpenProfile: () => void;
+}) {
+  const navigate = useNavigate();
+  return (
+    <header className="sticky top-0 z-50 institutional-gradient border-b border-white/10 px-6 py-3 shadow-lg" role="banner">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-white/80 hover:text-white hover:bg-white/10 transition-all duration-300 gap-2"
+            onClick={() => navigate('/')}
+            aria-label="Voltar ao portal principal"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden sm:inline text-sm">Voltar ao Portal</span>
+          </Button>
+          <div className="h-6 w-px bg-white/20 hidden sm:block" />
+          <div className="flex items-center gap-2">
+            <Building2 className="h-5 w-5 text-white" aria-hidden="true" />
+            <h1 className="text-sm md:text-base font-semibold text-white tracking-tight">
+              Gestão do Atendimento
+            </h1>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 md:gap-3">
+          {isGestao && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onExport}
+              className="text-white/80 hover:text-white hover:bg-white/10 transition-all duration-300 gap-2"
+              aria-label="Exportar relatório em Excel"
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden md:inline text-sm">Exportar</span>
+            </Button>
+          )}
+          <div className="h-6 w-px bg-white/20 hidden md:block" />
+          <button
+            onClick={onOpenProfile}
+            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 rounded-full pl-1.5 pr-3 py-1 transition-all duration-300 cursor-pointer"
+            aria-label="Abrir perfil do usuário"
+          >
+            <Avatar className="h-7 w-7">
+              {currentUser.avatar_url ? (
+                <AvatarImage src={currentUser.avatar_url} alt={currentUser.nome} />
+              ) : null}
+              <AvatarFallback className="bg-white/20 text-white text-xs">
+                {currentUser.nome.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="hidden md:flex flex-col">
+              <span className="text-xs font-medium text-white leading-tight">{currentUser.nome}</span>
+              <span className="text-[10px] text-white/60 leading-tight">{currentUser.nivel}</span>
+            </div>
+          </button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-white/70 hover:text-white hover:bg-destructive/80 transition-all duration-300 gap-2 rounded-full"
+            onClick={onLogout}
+            title="Sair do sistema"
+            aria-label="Sair do sistema e voltar ao login"
+          >
+            <LogOut className="h-4 w-4" />
+            <span className="hidden sm:inline text-sm">Sair</span>
+          </Button>
+        </div>
+      </div>
+    </header>
+  );
+}
+
 function LoadingSkeleton() {
   return (
-    <div className="space-y-6 p-6">
-      <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-3">
-        {Array.from({ length: 9 }).map((_, i) => (
-          <Card key={i}><CardContent className="pt-5 pb-4 flex flex-col items-center gap-2">
-            <Skeleton className="h-5 w-5 rounded-full" />
-            <Skeleton className="h-8 w-16" />
-            <Skeleton className="h-3 w-12" />
-          </CardContent></Card>
-        ))}
-      </div>
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card><CardContent className="pt-6"><Skeleton className="h-[280px] w-full" /></CardContent></Card>
-        <Card><CardContent className="pt-6"><Skeleton className="h-[280px] w-full" /></CardContent></Card>
+    <div className="min-h-screen flex flex-col bg-background">
+      <header className="institutional-gradient px-6 py-3 shadow-lg">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-8 w-24 bg-white/20" />
+            <div className="h-6 w-px bg-white/20" />
+            <Skeleton className="h-5 w-40 bg-white/20" />
+          </div>
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-7 w-7 rounded-full bg-white/20" />
+            <Skeleton className="h-8 w-16 bg-white/20" />
+          </div>
+        </div>
+      </header>
+      <div className="space-y-6 p-6">
+        <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-3">
+          {Array.from({ length: 9 }).map((_, i) => (
+            <Card key={i}><CardContent className="pt-5 pb-4 flex flex-col items-center gap-2">
+              <Skeleton className="h-5 w-5 rounded-full" />
+              <Skeleton className="h-8 w-16" />
+              <Skeleton className="h-3 w-12" />
+            </CardContent></Card>
+          ))}
+        </div>
+        <div className="grid md:grid-cols-2 gap-6">
+          <Card><CardContent className="pt-6"><Skeleton className="h-[280px] w-full" /></CardContent></Card>
+          <Card><CardContent className="pt-6"><Skeleton className="h-[280px] w-full" /></CardContent></Card>
+        </div>
       </div>
     </div>
+  );
+}
+
+// Profile Dialog Component
+function ProfileDialog({ currentUser, open, onOpenChange, onUpdate }: {
+  currentUser: Operador;
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  onUpdate: (op: Operador) => void;
+}) {
+  const { toast } = useToast();
+  const [editNome, setEditNome] = useState(currentUser.nome);
+  const [editEmail, setEditEmail] = useState(currentUser.email);
+  const [senhaAtual, setSenhaAtual] = useState('');
+  const [novaSenha, setNovaSenha] = useState('');
+  const [confirmSenha, setConfirmSenha] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [showSenhaSection, setShowSenhaSection] = useState(false);
+
+  const handleSaveProfile = async () => {
+    if (!editNome.trim() || !editEmail.trim() || saving) return;
+    setSaving(true);
+    try {
+      await updateOperadorDb(currentUser.id, { nome: editNome.trim(), email: editEmail.trim() });
+      const updated = { ...currentUser, nome: editNome.trim(), email: editEmail.trim() };
+      sessionStorage.setItem('admin-auth', JSON.stringify(updated));
+      onUpdate(updated);
+      toast({ title: 'Perfil atualizado!', description: 'Seus dados foram salvos.' });
+    } catch {
+      toast({ title: 'Erro ao salvar', variant: 'destructive' });
+    } finally { setSaving(false); }
+  };
+
+  const handleChangeSenha = async () => {
+    if (!senhaAtual || !novaSenha || saving) return;
+    if (senhaAtual !== currentUser.senha) {
+      toast({ title: 'Senha atual incorreta', variant: 'destructive' });
+      return;
+    }
+    if (novaSenha.length < 6) {
+      toast({ title: 'A nova senha deve ter pelo menos 6 caracteres', variant: 'destructive' });
+      return;
+    }
+    if (novaSenha !== confirmSenha) {
+      toast({ title: 'As senhas não coincidem', variant: 'destructive' });
+      return;
+    }
+    setSaving(true);
+    try {
+      await updateOperadorDb(currentUser.id, { senha: novaSenha });
+      const updated = { ...currentUser, senha: novaSenha };
+      sessionStorage.setItem('admin-auth', JSON.stringify(updated));
+      onUpdate(updated);
+      setSenhaAtual('');
+      setNovaSenha('');
+      setConfirmSenha('');
+      setShowSenhaSection(false);
+      toast({ title: 'Senha alterada com sucesso!' });
+    } catch {
+      toast({ title: 'Erro ao alterar senha', variant: 'destructive' });
+    } finally { setSaving(false); }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ title: 'Imagem muito grande', description: 'Máximo 2MB', variant: 'destructive' });
+      return;
+    }
+    setUploadingAvatar(true);
+    try {
+      const url = await uploadAvatar(currentUser.id, file);
+      await updateOperadorDb(currentUser.id, { avatar_url: url } as any);
+      const updated = { ...currentUser, avatar_url: url };
+      sessionStorage.setItem('admin-auth', JSON.stringify(updated));
+      onUpdate(updated);
+      toast({ title: 'Foto atualizada!' });
+    } catch {
+      toast({ title: 'Erro ao enviar foto', variant: 'destructive' });
+    } finally { setUploadingAvatar(false); }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Meu Perfil
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-6">
+          {/* Avatar */}
+          <div className="flex flex-col items-center gap-3">
+            <div className="relative group">
+              <Avatar className="h-20 w-20">
+                {currentUser.avatar_url ? (
+                  <AvatarImage src={currentUser.avatar_url} alt={currentUser.nome} />
+                ) : null}
+                <AvatarFallback className="bg-primary/10 text-primary text-xl">
+                  {currentUser.nome.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <label className="absolute inset-0 rounded-full bg-foreground/40 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity">
+                {uploadingAvatar ? (
+                  <span className="text-white text-xs">Enviando...</span>
+                ) : (
+                  <Camera className="h-5 w-5 text-white" />
+                )}
+                <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={uploadingAvatar} />
+              </label>
+            </div>
+            <p className="text-xs text-muted-foreground">Clique na foto para alterar</p>
+          </div>
+
+          {/* Profile fields */}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="profile-nome">Nome</Label>
+              <Input id="profile-nome" value={editNome} onChange={(e) => setEditNome(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="profile-email">E-mail</Label>
+              <Input id="profile-email" type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} />
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Shield className="h-4 w-4" />
+              Nível: <Badge variant="secondary">{currentUser.nivel}</Badge>
+            </div>
+            <Button onClick={handleSaveProfile} disabled={saving || !editNome.trim() || !editEmail.trim()} className="w-full gap-2">
+              <Save className="h-4 w-4" />
+              {saving ? 'Salvando...' : 'Salvar Perfil'}
+            </Button>
+          </div>
+
+          {/* Password */}
+          <div className="border-t pt-4">
+            {!showSenhaSection ? (
+              <Button variant="outline" className="w-full gap-2" onClick={() => setShowSenhaSection(true)}>
+                <KeyRound className="h-4 w-4" />
+                Alterar Senha
+              </Button>
+            ) : (
+              <div className="space-y-3">
+                <h4 className="font-medium text-sm flex items-center gap-2">
+                  <KeyRound className="h-4 w-4" />
+                  Alterar Senha
+                </h4>
+                <div className="space-y-2">
+                  <Label htmlFor="senha-atual">Senha Atual</Label>
+                  <Input id="senha-atual" type="password" value={senhaAtual} onChange={(e) => setSenhaAtual(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="nova-senha">Nova Senha</Label>
+                  <Input id="nova-senha" type="password" placeholder="Mínimo 6 caracteres" value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-senha">Confirmar Nova Senha</Label>
+                  <Input id="confirm-senha" type="password" value={confirmSenha} onChange={(e) => setConfirmSenha(e.target.value)} />
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={handleChangeSenha} disabled={saving || !senhaAtual || !novaSenha || novaSenha !== confirmSenha} className="gap-1">
+                    <Save className="h-3 w-3" /> Salvar
+                  </Button>
+                  <Button variant="ghost" onClick={() => { setShowSenhaSection(false); setSenhaAtual(''); setNovaSenha(''); setConfirmSenha(''); }}>
+                    Cancelar
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -195,6 +471,7 @@ function UsersManager() {
   const [novaSenhaReset, setNovaSenhaReset] = useState('');
   const [confirmSenhaReset, setConfirmSenhaReset] = useState('');
   const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
 
   const generateDefaultPassword = (nivel: NivelAcesso): string => {
     const prefixMap: Record<NivelAcesso, string> = {
@@ -214,14 +491,17 @@ function UsersManager() {
     try {
       const senha = novoSenha.trim() || generateDefaultPassword(novoNivel);
       await addOperadorDb(novoNome.trim(), novoEmail.trim(), novoNivel, senha);
-      alert(`Operador criado com sucesso!\n\nNome: ${novoNome.trim()}\nE-mail: ${novoEmail.trim()}\nNível: ${novoNivel}\nSenha: ${senha}\n\nGuarde essas credenciais!`);
+      toast({
+        title: 'Operador criado com sucesso!',
+        description: `Nome: ${novoNome.trim()} | E-mail: ${novoEmail.trim()} | Nível: ${novoNivel} | Senha: ${senha}`,
+      });
       setNovoNome('');
       setNovoEmail('');
       setNovoSenha('');
       setNovoNivel('Analista');
       refresh();
     } catch (err: any) {
-      alert('Erro ao criar operador: ' + (err.message || 'Tente novamente'));
+      toast({ title: 'Erro ao criar operador', description: err.message || 'Tente novamente', variant: 'destructive' });
     } finally { setSaving(false); }
   };
 
@@ -262,16 +542,16 @@ function UsersManager() {
   const handleResetSenha = async () => {
     if (!resetSenhaId || !novaSenhaReset.trim()) return;
     if (novaSenhaReset !== confirmSenhaReset) {
-      alert('As senhas não coincidem!');
+      toast({ title: 'As senhas não coincidem!', variant: 'destructive' });
       return;
     }
     if (novaSenhaReset.length < 6) {
-      alert('A senha deve ter pelo menos 6 caracteres.');
+      toast({ title: 'A senha deve ter pelo menos 6 caracteres.', variant: 'destructive' });
       return;
     }
     await updateOperadorDb(resetSenhaId, { senha: novaSenhaReset });
     const op = operadores.find(o => o.id === resetSenhaId);
-    alert(`Senha de "${op?.nome}" redefinida com sucesso!`);
+    toast({ title: `Senha de "${op?.nome}" redefinida com sucesso!` });
     setResetSenhaId(null);
     setNovaSenhaReset('');
     setConfirmSenhaReset('');
@@ -316,7 +596,7 @@ function UsersManager() {
 
       {/* Modal de Resetar Senha */}
       {resetSenhaId && (
-        <Card className="border-chart-3/50 bg-chart-3/5">
+        <Card className="border-accent/50 bg-accent/5">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Shield className="h-4 w-4" aria-hidden="true" />
@@ -470,7 +750,6 @@ function SettingsManager() {
   return (
     <div className="space-y-6">
       <div className="grid md:grid-cols-2 gap-6">
-        {/* Órgãos */}
         <Card>
           <CardHeader><CardTitle className="text-base flex items-center gap-2"><Building2 className="h-4 w-4" aria-hidden="true" />Órgãos Adicionais</CardTitle></CardHeader>
           <CardContent className="space-y-4">
@@ -495,7 +774,6 @@ function SettingsManager() {
           </CardContent>
         </Card>
 
-        {/* Assuntos */}
         <Card>
           <CardHeader><CardTitle className="text-base flex items-center gap-2"><FileSpreadsheet className="h-4 w-4" aria-hidden="true" />Assuntos Adicionais</CardTitle></CardHeader>
           <CardContent className="space-y-4">
@@ -539,6 +817,7 @@ const Admin = () => {
   const [filtroSecretaria, setFiltroSecretaria] = useState('all');
   const [filtroStatus, setFiltroStatus] = useState('all');
   const [filtroPrioridade, setFiltroPrioridade] = useState('all');
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const { solicitacoes, loading: loadingSol, refresh: refreshSol } = useSolicitacoes();
   const { operadores, loading: loadingOps } = useOperadores();
@@ -728,79 +1007,34 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-[hsl(210,100%,28%/0.92)] border-b border-primary-foreground/10 px-6 py-3 shadow-[0_4px_30px_rgba(0,0,0,0.15)]" role="banner">
-        <div className="flex items-center justify-between">
-          {/* Left side — Navigation */}
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 transition-all duration-300 gap-2"
-              onClick={() => navigate('/')}
-              aria-label="Voltar ao portal principal"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span className="hidden sm:inline text-sm">Voltar ao Portal</span>
-            </Button>
-            <div className="h-6 w-px bg-primary-foreground/20 hidden sm:block" />
-            <div className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-primary-foreground" aria-hidden="true" />
-              <h1 className="text-sm md:text-base font-semibold text-primary-foreground tracking-tight">
-                Gestão do Atendimento
-              </h1>
-            </div>
-          </div>
+      <AdminHeader
+        currentUser={currentUser!}
+        isGestao={isGestao}
+        onExport={exportExcel}
+        onLogout={handleLogout}
+        onOpenProfile={() => setProfileOpen(true)}
+      />
 
-          {/* Right side — User info + Actions */}
-          <div className="flex items-center gap-2 md:gap-3">
-            {isGestao && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={exportExcel}
-                className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 transition-all duration-300 gap-2"
-                aria-label="Exportar relatório em Excel"
-              >
-                <Download className="h-4 w-4" />
-                <span className="hidden md:inline text-sm">Exportar</span>
-              </Button>
-            )}
-            <div className="h-6 w-px bg-primary-foreground/20 hidden md:block" />
-            <div className="flex items-center gap-2 bg-primary-foreground/10 rounded-full pl-1.5 pr-3 py-1 transition-all duration-300">
-              <div className="h-7 w-7 rounded-full bg-primary-foreground/20 flex items-center justify-center">
-                <Shield className="h-3.5 w-3.5 text-primary-foreground" aria-hidden="true" />
-              </div>
-              <div className="hidden md:flex flex-col">
-                <span className="text-xs font-medium text-primary-foreground leading-tight">{currentUser?.nome}</span>
-                <span className="text-[10px] text-primary-foreground/60 leading-tight">{currentUser?.nivel}</span>
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-primary-foreground/70 hover:text-destructive-foreground hover:bg-destructive/80 transition-all duration-300 gap-2 rounded-full"
-              onClick={handleLogout}
-              title="Sair do sistema"
-              aria-label="Sair do sistema e voltar ao login"
-            >
-              <LogOut className="h-4 w-4" />
-              <span className="hidden sm:inline text-sm">Sair</span>
-            </Button>
-          </div>
-        </div>
-      </header>
+      {currentUser && (
+        <ProfileDialog
+          currentUser={currentUser}
+          open={profileOpen}
+          onOpenChange={setProfileOpen}
+          onUpdate={setCurrentUser}
+        />
+      )}
 
       <main className="flex-1 px-4 md:px-8 py-6 space-y-6 max-w-[1400px] mx-auto w-full" role="main">
         {/* KPI Cards */}
         <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-3" role="region" aria-label="Indicadores de desempenho">
           <KpiCard icon={FileSpreadsheet} label="Total" value={total} color="text-primary" />
-          <KpiCard icon={AlertCircle} label="Abertas" value={abertas} color="text-chart-3" />
-          <KpiCard icon={Clock} label="Em Análise" value={emAnalise} color="text-chart-4" />
+          <KpiCard icon={AlertCircle} label="Abertas" value={abertas} color="text-accent-foreground" />
+          <KpiCard icon={Clock} label="Em Análise" value={emAnalise} color="text-primary" />
           <KpiCard icon={CheckCircle2} label="Respondidas" value={respondidas} color="text-primary" />
           <KpiCard icon={Target} label="% SLA" value={slaData + '%'} color="text-primary" />
-          <KpiCard icon={TrendingUp} label="Tempo Médio" value={tempoMedioResposta} color="text-chart-4" />
-          <KpiCard icon={AlertTriangle} label="Backlog" value={backlog} color="text-chart-3" />
-          <KpiCard icon={Star} label="Satisfação" value={satisfacaoMedia} color="text-chart-3" sub="/5" />
+          <KpiCard icon={TrendingUp} label="Tempo Médio" value={tempoMedioResposta} color="text-primary" />
+          <KpiCard icon={AlertTriangle} label="Backlog" value={backlog} color="text-accent-foreground" />
+          <KpiCard icon={Star} label="Satisfação" value={satisfacaoMedia} color="text-accent-foreground" sub="/5" />
           <KpiCard icon={BarChart3} label="IAI" value={iai + '%'} color="text-primary" />
         </div>
 
@@ -1011,7 +1245,7 @@ const Admin = () => {
                             <TableCell>
                               <Badge
                                 variant={s.prioridade === 'Urgente' ? 'destructive' : 'outline'}
-                                className={`text-[10px] transition-all duration-300 ${s.prioridade === 'Urgente' ? 'bg-destructive text-destructive-foreground' : 'bg-chart-4/15 text-chart-4 border-chart-4/30'}`}
+                                className="text-[10px]"
                               >
                                 {s.prioridade || 'Normal'}
                               </Badge>

@@ -20,9 +20,9 @@ const AdminLogin = ({ onAuth }: { onAuth: (op: Operador) => void }) => {
     setLoading(true);
     setErro('');
     try {
-      const op = await authenticateOperadorDb(email.trim(), senha);
+      const op = await authenticateOperadorDb(email.trim().toLowerCase(), senha);
       if (op) {
-        sessionStorage.setItem('admin-auth', JSON.stringify({ id: op.id, nome: op.nome, nivel: op.nivel }));
+        sessionStorage.setItem('admin-auth', JSON.stringify(op));
         onAuth(op);
       } else {
         setErro('E-mail ou senha incorretos, ou usuário inativo.');
@@ -35,21 +35,21 @@ const AdminLogin = ({ onAuth }: { onAuth: (op: Operador) => void }) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background">
       <header className="institutional-gradient px-6 py-4 flex items-center gap-3 shadow-lg">
         <Button
           variant="ghost"
           size="sm"
-          className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 transition-all duration-300 gap-2"
+          className="text-white/80 hover:text-white hover:bg-white/10 transition-all duration-300 gap-2"
           onClick={() => navigate('/')}
           aria-label="Voltar ao portal principal"
         >
           <ArrowLeft className="h-4 w-4" />
           <span className="hidden sm:inline text-sm">Voltar</span>
         </Button>
-        <div className="h-6 w-px bg-primary-foreground/20" />
-        <Building2 className="h-6 w-6 text-primary-foreground" aria-hidden="true" />
-        <h1 className="text-lg font-bold text-primary-foreground">Painel Administrativo – SEPLAG MT</h1>
+        <div className="h-6 w-px bg-white/20" />
+        <Building2 className="h-6 w-6 text-white" aria-hidden="true" />
+        <h1 className="text-lg font-bold text-white">Painel Administrativo – SEPLAG MT</h1>
       </header>
       <main className="flex-1 flex items-center justify-center px-4">
         <div className="w-full max-w-sm bg-card rounded-xl shadow-lg border p-8 space-y-6" role="form" aria-label="Formulário de login administrativo">
