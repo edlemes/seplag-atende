@@ -998,7 +998,6 @@ const Admin = () => {
 };
 
 export default Admin;
-                      <SelectContent>
                         <SelectItem value="all">Todas Secretarias</SelectItem>
                         {secretarias.map((s) => (<SelectItem key={s} value={s}>{s.split(' – ')[0]}</SelectItem>))}
                       </SelectContent>
