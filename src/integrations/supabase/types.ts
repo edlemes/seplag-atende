@@ -184,8 +184,11 @@ export type Database = {
           email: string
           etapas_concluidas: Json
           id: string
+          medalhas: Json
+          nivel: string
           nome: string
           pontuacao: number
+          tempo_minutos: number
         }
         Insert: {
           concluido?: boolean
@@ -194,8 +197,11 @@ export type Database = {
           email: string
           etapas_concluidas?: Json
           id?: string
+          medalhas?: Json
+          nivel?: string
           nome: string
           pontuacao?: number
+          tempo_minutos?: number
         }
         Update: {
           concluido?: boolean
@@ -204,8 +210,11 @@ export type Database = {
           email?: string
           etapas_concluidas?: Json
           id?: string
+          medalhas?: Json
+          nivel?: string
           nome?: string
           pontuacao?: number
+          tempo_minutos?: number
         }
         Relationships: []
       }
