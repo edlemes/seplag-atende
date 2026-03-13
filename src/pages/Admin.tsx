@@ -827,6 +827,7 @@ const Admin = () => {
             <OperacionalSection filtered={filtered} busca={busca} setBusca={setBusca} filtroSecretaria={filtroSecretaria} setFiltroSecretaria={setFiltroSecretaria} filtroStatus={filtroStatus} setFiltroStatus={setFiltroStatus} filtroPrioridade={filtroPrioridade} setFiltroPrioridade={setFiltroPrioridade} secretarias={secretarias} activeOperadores={activeOperadores} currentUser={currentUser!} isGestao={isGestao} isOperacao={isOperacao} isLeitura={isLeitura} onStatusChange={handleStatusChange} onResponsavel={handleResponsavel} onRefresh={refreshSol} />
           )}
 
+          {activeSection === 'aprendizagem' && <AprendizagemManager />}
           {activeSection === 'faq' && <FaqManager />}
           {activeSection === 'usuarios' && <UsersManager />}
           {activeSection === 'configuracoes' && <SettingsManager />}
