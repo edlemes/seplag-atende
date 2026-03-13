@@ -401,8 +401,6 @@ const Aprendizagem = () => {
     else toast.error('Erro ao salvar progresso.');
   };
 
-  // Track earned points per module (only correct quiz answers score)
-  const [earnedPoints, setEarnedPoints] = useState<Record<number, number>>({});
 
   const completeStep = (idx: number, quizPoints: number) => {
     if (completed.has(idx)) return;
