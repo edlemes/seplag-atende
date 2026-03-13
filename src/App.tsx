@@ -10,6 +10,7 @@ import Solicitacao from "./pages/Solicitacao";
 import Confirmacao from "./pages/Confirmacao";
 import Admin from "./pages/Admin";
 import Avaliacao from "./pages/Avaliacao";
+import Faq from "./pages/Faq";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
