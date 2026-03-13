@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BarChart3, HelpCircle, MessageSquare, ArrowRight, Target, Users, Award, BookOpen, ChevronLeft, ChevronRight, AlertTriangle, Clock, CheckCircle2, XCircle, TrendingUp } from 'lucide-react';
+import { BarChart3, HelpCircle, MessageSquare, ArrowRight, Target, Users, Award, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
