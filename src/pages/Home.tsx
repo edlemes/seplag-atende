@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Building2, FileText, BarChart3, HelpCircle, MessageSquare } from 'lucide-react';
+import { Building2, FileText, BarChart3, HelpCircle, MessageSquare, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Home = () => {
