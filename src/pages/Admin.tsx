@@ -86,6 +86,7 @@ function AdminSidebar({
   const menuItems: { key: AdminSection; label: string; icon: any; visible: boolean }[] = [
     { key: 'executivo', label: 'Visão Executiva', icon: Eye, visible: isGestao || isOperacao },
     { key: 'operacional', label: 'Operacional', icon: BarChart3, visible: true },
+    { key: 'aprendizagem', label: 'Trilha SIAD', icon: BookOpen, visible: isGestao },
     { key: 'faq', label: 'Gerenciar FAQ', icon: HelpCircle, visible: isGestao },
     { key: 'usuarios', label: 'Usuários', icon: Users, visible: isGestao },
     { key: 'configuracoes', label: 'Configurações', icon: Settings, visible: isGestao },
