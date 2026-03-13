@@ -302,6 +302,7 @@ const Aprendizagem = () => {
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
   const [rankingLoading, setRankingLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [earnedPoints, setEarnedPoints] = useState<Record<number, number>>({});
   const startTimeRef = useRef(Date.now());
 
   // Data from DB
