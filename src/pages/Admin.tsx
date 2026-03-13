@@ -4,7 +4,7 @@ import {
   Building2, ArrowLeft, Download, FileSpreadsheet, BarChart3, CheckCircle2,
   AlertCircle, Clock, Star, TrendingUp, AlertTriangle, Target, Eye, Settings,
   HelpCircle, Plus, Pencil, Trash2, Save, X, Users, Shield, ShieldCheck, LogOut,
-  User, Camera, KeyRound, Menu, ChevronLeft, MessageSquare
+  User, Camera, KeyRound, Menu, ChevronLeft, MessageSquare, BookOpen, Trophy, Award, Medal
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
