@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import {
   Building2, ArrowLeft, ArrowRight, CheckCircle2, BookOpen, Search,
   Trophy, Star, Award, Download, Zap, Medal, Crown, Lock, Sparkles,
-  Users, TrendingUp, BarChart3, Clock,
+  Users, TrendingUp, Clock, ChevronRight, FileText, Shield, Monitor,
+  HelpCircle, Target, Lightbulb, ClipboardCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -59,12 +60,19 @@ function getUnlockedAchievements(completedCount: number) {
   return ACHIEVEMENTS.filter((a) => completedCount >= a.requiredSteps);
 }
 
+const STEP_ICONS = [BookOpen, Lightbulb, ClipboardCheck, Users, Monitor, HelpCircle];
+
 const modules = [
   {
     title: 'Introdução ao SIAD',
     subtitle: 'O que é e qual seu objetivo',
     image: mod1Img,
     points: POINTS_PER_STEP[0],
+    checklist: [
+      'Entender o que é o SIAD',
+      'Conhecer o objetivo do sistema',
+      'Compreender a importância da avaliação',
+    ],
     content: [
       'O SIAD é um sistema digital utilizado pelo governo para organizar e acompanhar a avaliação anual de desempenho dos servidores públicos.',
       'Ele ajuda a tornar o processo de avaliação mais transparente, organizado e fácil de acompanhar.',
@@ -75,6 +83,11 @@ const modules = [
     subtitle: 'A evolução da gestão pública',
     image: mod2Img,
     points: POINTS_PER_STEP[1],
+    checklist: [
+      'Entender a modernização da gestão',
+      'Comparar processos antigos e atuais',
+      'Reconhecer os benefícios da digitalização',
+    ],
     content: [
       'O sistema foi criado para melhorar a gestão de desempenho e organizar o processo de avaliação dos servidores.',
       'Ele traz mais transparência e moderniza a administração pública, substituindo processos manuais em papel por uma plataforma digital eficiente.',
@@ -85,20 +98,31 @@ const modules = [
     subtitle: 'O fluxo completo em 6 fases',
     image: mod3Img,
     points: POINTS_PER_STEP[2],
-    content: [
-      '1. Planejamento – definição de metas e critérios.',
-      '2. Acompanhamento – monitoramento contínuo do trabalho.',
-      '3. Avaliação do Gestor – o gestor registra a avaliação.',
-      '4. Ciência do Servidor – o servidor toma ciência do resultado.',
-      '5. Manifestação – possibilidade de contestar ou complementar.',
-      '6. Resultado Final – consolidação e registro oficial.',
+    checklist: [
+      'Conhecer as 6 fases da avaliação',
+      'Compreender o fluxo do processo',
+      'Identificar em qual fase você está',
     ],
+    timeline: [
+      { phase: 'Planejamento', desc: 'Definição de metas e critérios de avaliação' },
+      { phase: 'Acompanhamento', desc: 'Monitoramento contínuo do desempenho' },
+      { phase: 'Avaliação do Gestor', desc: 'O gestor registra a avaliação formal' },
+      { phase: 'Ciência do Servidor', desc: 'O servidor toma ciência do resultado' },
+      { phase: 'Manifestação', desc: 'Possibilidade de contestar ou complementar' },
+      { phase: 'Consolidação', desc: 'Registro oficial do resultado final' },
+    ],
+    content: [],
   },
   {
     title: 'Quem participa do processo',
     subtitle: 'Os papéis na avaliação',
     image: mod4Img,
     points: POINTS_PER_STEP[3],
+    checklist: [
+      'Identificar os participantes',
+      'Entender o papel de cada ator',
+      'Saber quem avalia e quem é avaliado',
+    ],
     content: [
       'Servidor Avaliado – o profissional que terá seu desempenho analisado.',
       'Gestor Avaliador – responsável pela avaliação direta.',
@@ -111,6 +135,11 @@ const modules = [
     subtitle: 'Indicadores e resultados',
     image: mod5Img,
     points: POINTS_PER_STEP[4],
+    checklist: [
+      'Acessar o sistema de avaliação',
+      'Interpretar seus indicadores',
+      'Registrar manifestações',
+    ],
     content: [
       'O servidor pode acessar o sistema a qualquer momento para:',
       '• Visualizar sua avaliação atual e anteriores.',
@@ -121,9 +150,14 @@ const modules = [
   },
   {
     title: 'Central de Conhecimento',
-    subtitle: 'Dúvidas e suporte',
+    subtitle: 'FAQ inteligente e suporte',
     image: mod6Img,
     points: POINTS_PER_STEP[5],
+    checklist: [
+      'Pesquisar dúvidas frequentes',
+      'Encontrar respostas rapidamente',
+      'Saber onde buscar ajuda',
+    ],
     content: [
       'Se tiver dúvidas, o servidor pode pesquisar questões frequentes como:',
       '• Quem realiza minha avaliação?',
@@ -134,13 +168,13 @@ const modules = [
   },
 ];
 
-const faqSuggestions = [
-  'Quem realiza minha avaliação?',
-  'Posso discordar da avaliação?',
-  'Como acessar o sistema SIAD?',
-  'Quais são os prazos?',
-  'O que acontece se eu não for avaliado?',
-  'Como funciona a manifestação?',
+const faqItems = [
+  { q: 'Quem realiza minha avaliação?', a: 'A avaliação é realizada pelo seu gestor direto (chefia imediata), que acompanha seu desempenho ao longo do período avaliativo.' },
+  { q: 'Posso discordar da avaliação?', a: 'Sim. Após tomar ciência do resultado, você pode registrar uma manifestação formal no sistema dentro do prazo estabelecido.' },
+  { q: 'Como acessar o sistema SIAD?', a: 'O SIAD é acessado pelo portal de serviços do governo com suas credenciais institucionais.' },
+  { q: 'Quais são os prazos?', a: 'O calendário de avaliação é definido anualmente. Consulte a área de gestão de pessoas do seu órgão para datas específicas.' },
+  { q: 'O que acontece se eu não for avaliado?', a: 'A ausência de avaliação pode impactar processos de progressão funcional. Comunique sua chefia e a área de RH.' },
+  { q: 'Como funciona a manifestação?', a: 'A manifestação permite complementar informações ou contestar o resultado. Ela é analisada pela Comissão de Avaliação.' },
 ];
 
 interface RankingEntry {
@@ -157,27 +191,21 @@ function generateCertificate(nome: string, pontuacao: number) {
   const w = doc.internal.pageSize.getWidth();
   const h = doc.internal.pageSize.getHeight();
 
-  // Decorative border
   doc.setDrawColor(0, 60, 120);
   doc.setLineWidth(2);
   doc.rect(10, 10, w - 20, h - 20);
   doc.setLineWidth(0.5);
   doc.rect(14, 14, w - 28, h - 28);
 
-  // Corner accents
   const cornerSize = 15;
   doc.setDrawColor(0, 100, 179);
   doc.setLineWidth(1.5);
-  // top-left
   doc.line(14, 14, 14 + cornerSize, 14);
   doc.line(14, 14, 14, 14 + cornerSize);
-  // top-right
   doc.line(w - 14, 14, w - 14 - cornerSize, 14);
   doc.line(w - 14, 14, w - 14, 14 + cornerSize);
-  // bottom-left
   doc.line(14, h - 14, 14 + cornerSize, h - 14);
   doc.line(14, h - 14, 14, h - 14 - cornerSize);
-  // bottom-right
   doc.line(w - 14, h - 14, w - 14 - cornerSize, h - 14);
   doc.line(w - 14, h - 14, w - 14, h - 14 - cornerSize);
 
@@ -241,7 +269,6 @@ function RankMedal({ position }: { position: number }) {
   return <span className="text-sm font-semibold text-muted-foreground">{position + 1}º</span>;
 }
 
-// ── Ranking List ──
 function RankingList({ ranking, loading }: { ranking: RankingEntry[]; loading: boolean }) {
   if (loading) return (
     <div className="space-y-3 py-2">
@@ -261,6 +288,27 @@ function RankingList({ ranking, loading }: { ranking: RankingEntry[]; loading: b
             <p className="text-[11px] text-muted-foreground">{entry.nivel} · {entry.concluido_em ? new Date(entry.concluido_em).toLocaleDateString('pt-BR') : ''}</p>
           </div>
           <div className="flex items-center gap-1 text-sm font-bold text-amber-600"><Star className="h-3.5 w-3.5" /> {entry.pontuacao}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Timeline Component ──
+function Timeline({ items }: { items: { phase: string; desc: string }[] }) {
+  return (
+    <div className="relative pl-8 space-y-6 py-2">
+      <div className="absolute left-3 top-3 bottom-3 w-0.5 bg-gradient-to-b from-primary via-primary/60 to-primary/20 rounded-full" />
+      {items.map((item, i) => (
+        <div key={i} className="relative group">
+          <div className="absolute -left-5 top-1 w-4 h-4 rounded-full border-2 border-primary bg-card group-hover:bg-primary group-hover:scale-110 transition-all duration-300 z-10" />
+          <div className="bg-muted/40 rounded-2xl p-4 hover:bg-muted/70 transition-colors duration-300">
+            <div className="flex items-center gap-2 mb-1">
+              <Badge variant="outline" className="text-[10px] rounded-full px-2 py-0 font-semibold">Fase {i + 1}</Badge>
+              <h4 className="text-sm font-bold text-foreground">{item.phase}</h4>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+          </div>
         </div>
       ))}
     </div>
@@ -325,7 +373,6 @@ const Aprendizagem = () => {
     next.add(idx);
     setCompleted(next);
     toast.success(`+${POINTS_PER_STEP[idx]} pontos!`, { icon: <Zap className="h-4 w-4 text-amber-500" /> });
-    // Check new achievements
     const newCount = next.size;
     const newAch = ACHIEVEMENTS.find((a) => a.requiredSteps === newCount && prev < a.requiredSteps);
     if (newAch) {
@@ -340,16 +387,16 @@ const Aprendizagem = () => {
 
   const goPrev = () => { if (current > 0) setCurrent(current - 1); };
 
-  const filteredSuggestions = faqSearch.trim()
-    ? faqSuggestions.filter((s) => s.toLowerCase().includes(faqSearch.toLowerCase()))
-    : faqSuggestions;
+  const filteredFaq = faqSearch.trim()
+    ? faqItems.filter((f) => f.q.toLowerCase().includes(faqSearch.toLowerCase()) || f.a.toLowerCase().includes(faqSearch.toLowerCase()))
+    : faqItems;
 
-  // ── Enrollment ──
+  // ── Enrollment Screen ──
   if (!started) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <header className="institutional-gradient px-6 py-4 flex items-center gap-3 shadow-lg" role="banner">
-          <Building2 className="h-8 w-8 text-primary-foreground" aria-hidden="true" />
+          <Building2 className="h-8 w-8 text-primary-foreground" />
           <div>
             <h1 className="text-lg font-bold text-primary-foreground leading-tight">SEPLAG</h1>
             <p className="text-xs text-primary-foreground/80">Mato Grosso</p>
@@ -358,7 +405,6 @@ const Aprendizagem = () => {
 
         <main className="flex-1 px-4 py-12 flex items-center justify-center" role="main">
           <div className="max-w-lg w-full space-y-8">
-            {/* Hero card */}
             <Card className="rounded-3xl shadow-2xl border-0 overflow-hidden">
               <div className="institutional-gradient px-8 pt-10 pb-8 text-center">
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-foreground/20 backdrop-blur-sm mb-4">
@@ -368,13 +414,12 @@ const Aprendizagem = () => {
                 <p className="text-primary-foreground/80 text-sm">Sistema de Avaliação de Desempenho – SIAD</p>
               </div>
               <CardContent className="p-8 space-y-6">
-                {/* Level journey preview */}
+                {/* Level journey */}
                 <div className="flex items-center justify-between px-2">
-                  {LEVELS.map((lv, i) => (
+                  {LEVELS.map((lv) => (
                     <div key={lv.name} className="flex flex-col items-center gap-1">
                       <span className="text-xl">{lv.icon}</span>
                       <span className="text-[9px] text-muted-foreground font-medium">{lv.name}</span>
-                      {i < LEVELS.length - 1 && <div className="hidden" />}
                     </div>
                   ))}
                 </div>
@@ -382,7 +427,6 @@ const Aprendizagem = () => {
                   <div className="h-full w-0 rounded-full bg-gradient-to-r from-primary to-primary/60" />
                 </div>
 
-                {/* Stats */}
                 <div className="grid grid-cols-3 gap-3 text-center">
                   <div className="bg-muted/50 rounded-2xl py-3">
                     <Star className="h-5 w-5 text-amber-500 mx-auto mb-1" />
@@ -401,7 +445,6 @@ const Aprendizagem = () => {
                   </div>
                 </div>
 
-                {/* Form */}
                 <div className="space-y-3">
                   <Input placeholder="Seu nome completo" value={userName} onChange={(e) => setUserName(e.target.value)} className="rounded-xl h-12 bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-primary/30" />
                   <Input placeholder="Seu e-mail institucional" type="email" value={userEmail} onChange={(e) => setUserEmail(e.target.value)} className="rounded-xl h-12 bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-primary/30" />
@@ -415,7 +458,7 @@ const Aprendizagem = () => {
               </CardContent>
             </Card>
 
-            {/* Module preview grid */}
+            {/* Module preview */}
             <div className="grid grid-cols-3 gap-3">
               {modules.map((m, i) => (
                 <div key={i} className="relative rounded-2xl overflow-hidden aspect-[4/3] group">
@@ -448,16 +491,17 @@ const Aprendizagem = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      {/* Header */}
       <header className="institutional-gradient px-6 py-3 flex items-center gap-3 shadow-lg" role="banner">
         <Building2 className="h-7 w-7 text-primary-foreground" />
         <div className="flex-1">
           <h1 className="text-sm font-bold text-primary-foreground leading-tight">SEPLAG – Trilha SIAD</h1>
         </div>
-        <div className="flex items-center gap-3">
-          <button onClick={() => setShowAchievements(true)} className="flex items-center gap-1.5 bg-primary-foreground/20 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs text-primary-foreground font-medium hover:bg-primary-foreground/30 transition-colors">
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowAchievements(true)} className="flex items-center gap-1.5 bg-primary-foreground/15 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs text-primary-foreground font-medium hover:bg-primary-foreground/25 transition-colors">
             <Award className="h-3.5 w-3.5" /> {unlockedAchievements.length}/{ACHIEVEMENTS.length}
           </button>
-          <button onClick={() => { setShowRanking(true); fetchRanking(); }} className="flex items-center gap-1.5 bg-primary-foreground/20 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs text-primary-foreground font-medium hover:bg-primary-foreground/30 transition-colors">
+          <button onClick={() => { setShowRanking(true); fetchRanking(); }} className="flex items-center gap-1.5 bg-primary-foreground/15 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs text-primary-foreground font-medium hover:bg-primary-foreground/25 transition-colors">
             <Trophy className="h-3.5 w-3.5" /> Ranking
           </button>
           <div className="flex items-center gap-1.5 bg-amber-500/20 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs text-amber-300 font-bold">
@@ -468,7 +512,7 @@ const Aprendizagem = () => {
 
       <main className="flex-1" role="main">
         <div className="max-w-5xl mx-auto px-4 py-8">
-          {/* Top bar */}
+          {/* Back + Level */}
           <div className="flex items-center justify-between mb-6">
             <Button variant="ghost" className="gap-2 text-muted-foreground hover:text-foreground rounded-full" onClick={() => navigate('/')}>
               <ArrowLeft className="h-4 w-4" /> Portal
@@ -482,40 +526,43 @@ const Aprendizagem = () => {
             </div>
           </div>
 
-          {/* Journey Map */}
+          {/* Progress bar */}
           <div className="mb-8">
             <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
               <span className="font-medium">Progresso da Trilha</span>
-              <span className="font-bold text-primary">{Math.round(progress)}%</span>
+              <span className="font-bold text-primary">{Math.round(progress)}% concluído</span>
             </div>
-            <Progress value={progress} className="h-2.5 mb-4" />
+            <Progress value={progress} className="h-2.5 mb-6" />
 
-            {/* Module cards row */}
-            <div className="grid grid-cols-6 gap-2">
+            {/* Stepper */}
+            <div className="flex items-center justify-between relative">
+              {/* Connector line */}
+              <div className="absolute top-5 left-[5%] right-[5%] h-0.5 bg-muted z-0">
+                <div className="h-full bg-primary/60 transition-all duration-500 rounded-full" style={{ width: `${progress}%` }} />
+              </div>
+
               {modules.map((m, i) => {
                 const done = completed.has(i);
                 const active = i === current;
                 const locked = !done && i > 0 && !completed.has(i - 1) && i !== current;
+                const Icon = STEP_ICONS[i];
                 return (
                   <button
                     key={i}
                     onClick={() => !locked && setCurrent(i)}
                     disabled={locked}
-                    className={`relative rounded-xl overflow-hidden aspect-[3/2] group transition-all duration-300 ${
-                      active ? 'ring-2 ring-primary ring-offset-2 shadow-lg scale-[1.02]' : ''
-                    } ${locked ? 'opacity-40 grayscale cursor-not-allowed' : 'cursor-pointer hover:shadow-md'}`}
+                    className={`relative z-10 flex flex-col items-center gap-1.5 group transition-all duration-300 ${locked ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                   >
-                    <img src={m.image} alt={m.title} className="w-full h-full object-cover" />
-                    <div className={`absolute inset-0 flex items-end p-2 ${done ? 'bg-gradient-to-t from-emerald-900/70 to-transparent' : 'bg-gradient-to-t from-black/60 to-transparent'}`}>
-                      <div className="w-full">
-                        <div className="flex items-center justify-between">
-                          <p className="text-[9px] text-white/80 font-medium">M{i + 1}</p>
-                          {done && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />}
-                          {locked && <Lock className="h-3 w-3 text-white/60" />}
-                        </div>
-                        <p className="text-[10px] text-white font-semibold leading-tight truncate">{m.title}</p>
-                      </div>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                      done ? 'bg-primary text-primary-foreground shadow-md' :
+                      active ? 'bg-primary/10 text-primary ring-2 ring-primary ring-offset-2 shadow-lg scale-110' :
+                      'bg-muted text-muted-foreground'
+                    } ${!locked && !done && !active ? 'group-hover:bg-primary/10 group-hover:text-primary' : ''}`}>
+                      {done ? <CheckCircle2 className="h-5 w-5" /> : locked ? <Lock className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
                     </div>
+                    <span className={`text-[9px] font-medium text-center leading-tight max-w-[70px] ${active ? 'text-primary font-bold' : 'text-muted-foreground'}`}>
+                      {m.title.length > 18 ? m.title.substring(0, 16) + '…' : m.title}
+                    </span>
                   </button>
                 );
               })}
@@ -523,40 +570,106 @@ const Aprendizagem = () => {
           </div>
 
           {/* Module Content */}
-          <div className="grid lg:grid-cols-[1fr_320px] gap-6">
-            {/* Main content */}
-            <Card className="rounded-2xl shadow-lg border-0 overflow-hidden">
+          <div className="grid lg:grid-cols-[1fr_300px] gap-6">
+            {/* Main card */}
+            <Card className="rounded-3xl shadow-xl border-0 overflow-hidden">
+              {/* Image header */}
               <div className="relative">
-                <img src={mod.image} alt={mod.title} className="w-full h-52 md:h-64 object-cover" />
-                <div className="absolute top-4 right-4 flex items-center gap-2">
-                  <Badge className="bg-card/90 backdrop-blur-md text-amber-600 border-0 gap-1">
+                <img src={mod.image} alt={mod.title} className="w-full h-48 md:h-56 object-cover" />
+                <div className="absolute top-4 right-4">
+                  <Badge className="bg-card/90 backdrop-blur-md text-amber-600 border-0 gap-1 rounded-full px-3 shadow-sm">
                     <Star className="h-3 w-3" /> +{mod.points} pts
                   </Badge>
                 </div>
-                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-card to-transparent h-16" />
+                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-card via-card/80 to-transparent h-20" />
               </div>
-              <CardContent className="p-8 -mt-4 relative">
-                <Badge variant="outline" className="mb-3 rounded-full text-[10px]">Módulo {current + 1} de {modules.length}</Badge>
-                <h3 className="text-2xl font-bold text-foreground mb-1">{mod.title}</h3>
-                <p className="text-primary font-medium text-sm mb-6">{mod.subtitle}</p>
-                <div className="space-y-3">
-                  {mod.content.map((line, i) => (
-                    <p key={i} className="text-muted-foreground leading-relaxed">{line}</p>
-                  ))}
+
+              <CardContent className="p-8 md:p-10 -mt-6 relative space-y-6">
+                {/* Header */}
+                <div>
+                  <Badge variant="outline" className="mb-3 rounded-full text-[10px] font-semibold">Etapa {current + 1} de {modules.length}</Badge>
+                  <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-1">{mod.title}</h2>
+                  <p className="text-primary font-medium">{mod.subtitle}</p>
                 </div>
 
-                {/* Nav */}
-                <div className="flex items-center justify-between mt-8 pt-6 border-t">
+                {/* Checklist */}
+                {mod.checklist && (
+                  <div className="bg-primary/5 rounded-2xl p-5">
+                    <p className="text-xs font-bold text-primary mb-3 flex items-center gap-2">
+                      <Target className="h-3.5 w-3.5" /> O que você vai aprender
+                    </p>
+                    <ul className="space-y-2">
+                      {mod.checklist.map((item, i) => (
+                        <li key={i} className="flex items-start gap-2.5 text-sm text-foreground">
+                          <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Timeline for step 3 */}
+                {'timeline' in mod && mod.timeline && (
+                  <Timeline items={mod.timeline} />
+                )}
+
+                {/* Content */}
+                {mod.content.length > 0 && (
+                  <div className="space-y-3">
+                    {mod.content.map((line, i) => (
+                      <p key={i} className="text-muted-foreground leading-relaxed">{line}</p>
+                    ))}
+                  </div>
+                )}
+
+                {/* FAQ search in step 6 */}
+                {current === 5 && (
+                  <div className="space-y-4 pt-2">
+                    <div className="relative">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Pesquise sua dúvida sobre o SIAD..."
+                        value={faqSearch}
+                        onChange={(e) => setFaqSearch(e.target.value)}
+                        className="pl-11 rounded-full bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-primary/30 h-12"
+                      />
+                    </div>
+                    <div className="space-y-3">
+                      {filteredFaq.map((item, i) => (
+                        <div key={i} className="bg-muted/40 rounded-2xl p-4 hover:bg-muted/70 transition-colors">
+                          <p className="text-sm font-semibold text-foreground mb-1">{item.q}</p>
+                          <p className="text-sm text-muted-foreground leading-relaxed">{item.a}</p>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Quick links */}
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      <a href="#" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-muted text-sm text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors">
+                        <FileText className="h-3.5 w-3.5" /> Manual do Usuário
+                      </a>
+                      <a href="#" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-muted text-sm text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors">
+                        <Shield className="h-3.5 w-3.5" /> Guia do Gestor
+                      </a>
+                      <a href="#" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-muted text-sm text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors">
+                        <ClipboardCheck className="h-3.5 w-3.5" /> Fluxograma PDF
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {/* Navigation */}
+                <div className="flex items-center justify-between pt-6 border-t">
                   <Button variant="outline" className="rounded-full px-6 gap-2" onClick={goPrev} disabled={current === 0}>
-                    <ArrowLeft className="h-4 w-4" /> Anterior
+                    <ArrowLeft className="h-4 w-4" /> Voltar
                   </Button>
                   {current < modules.length - 1 ? (
-                    <Button className="rounded-full px-8 gap-2 shadow-md hover:shadow-lg transition-all" onClick={goNext}>
-                      Avançar <ArrowRight className="h-4 w-4" />
+                    <Button className="rounded-full px-8 gap-2 shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all" onClick={goNext}>
+                      Próxima Etapa <ArrowRight className="h-4 w-4" />
                     </Button>
                   ) : (
-                    <Button className="rounded-full px-8 gap-2 shadow-md hover:shadow-lg transition-all" onClick={() => completeStep(current)}>
-                      <CheckCircle2 className="h-4 w-4" /> Concluir
+                    <Button className="rounded-full px-8 gap-2 shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all" onClick={() => completeStep(current)}>
+                      <CheckCircle2 className="h-4 w-4" /> Concluir Trilha
                     </Button>
                   )}
                 </div>
@@ -575,7 +688,7 @@ const Aprendizagem = () => {
                       <p className="text-xs text-muted-foreground">{totalPoints}/100 pontos</p>
                     </div>
                   </div>
-                  {nextLevel && (
+                  {nextLevel ? (
                     <>
                       <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
                         <span>{currentLevel.name}</span>
@@ -583,8 +696,9 @@ const Aprendizagem = () => {
                       </div>
                       <Progress value={(totalPoints / nextLevel.minPts) * 100} className="h-2" />
                     </>
+                  ) : (
+                    <p className="text-xs text-primary font-semibold">Nível máximo atingido! 🎉</p>
                   )}
-                  {!nextLevel && <p className="text-xs text-primary font-semibold">Nível máximo atingido!</p>}
                 </CardContent>
               </Card>
 
@@ -604,8 +718,7 @@ const Aprendizagem = () => {
                             <p className="text-xs font-semibold text-foreground truncate">{a.name}</p>
                             <p className="text-[10px] text-muted-foreground">{a.desc}</p>
                           </div>
-                          {unlocked && <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />}
-                          {!unlocked && <Lock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
+                          {unlocked ? <CheckCircle2 className="h-4 w-4 text-primary shrink-0" /> : <Lock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
                         </div>
                       );
                     })}
@@ -618,8 +731,8 @@ const Aprendizagem = () => {
                 <CardContent className="p-5">
                   <div className="grid grid-cols-2 gap-3 text-center">
                     <div className="bg-muted/50 rounded-xl py-3">
-                      <p className="text-lg font-bold text-foreground">{completed.size}</p>
-                      <p className="text-[10px] text-muted-foreground">Módulos</p>
+                      <p className="text-lg font-bold text-foreground">{completed.size}/{modules.length}</p>
+                      <p className="text-[10px] text-muted-foreground">Etapas</p>
                     </div>
                     <div className="bg-muted/50 rounded-xl py-3">
                       <p className="text-lg font-bold text-foreground">{Math.round((Date.now() - startTimeRef.current) / 60000)}m</p>
@@ -631,65 +744,51 @@ const Aprendizagem = () => {
             </div>
           </div>
 
-          {/* Completion */}
+          {/* Completion Card */}
           {isComplete && (
-            <Card className="rounded-2xl border-0 shadow-xl mt-8 overflow-hidden">
-              <div className="institutional-gradient p-8 text-center">
-                <Award className="h-16 w-16 text-primary-foreground mx-auto mb-3" />
-                <h3 className="text-2xl font-bold text-primary-foreground mb-1">Trilha Concluída!</h3>
-                <p className="text-primary-foreground/80">
+            <Card className="rounded-3xl border-0 shadow-2xl mt-8 overflow-hidden">
+              <div className="institutional-gradient p-8 md:p-10 text-center">
+                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary-foreground/20 backdrop-blur-sm mb-4">
+                  <Award className="h-10 w-10 text-primary-foreground" />
+                </div>
+                <h3 className="text-2xl md:text-3xl font-bold text-primary-foreground mb-2">Trilha Concluída!</h3>
+                <p className="text-primary-foreground/80 text-lg">
                   Parabéns, <span className="font-semibold">{userName}</span>!
                   Você obteve <span className="font-bold">{totalPoints} pontos</span> e alcançou o nível <span className="font-bold">{currentLevel.name}</span>.
                 </p>
               </div>
-              <CardContent className="p-8">
+              <CardContent className="p-8 md:p-10 space-y-6">
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                  <Button className="rounded-full gap-2 px-6 shadow-md" onClick={() => generateCertificate(userName, totalPoints)}>
-                    <Download className="h-4 w-4" /> Baixar Certificado PDF
+                  <Button className="rounded-full gap-2 px-8 py-6 text-base shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95 transition-all" onClick={() => generateCertificate(userName, totalPoints)}>
+                    <Download className="h-5 w-5" /> Baixar Certificado PDF
                   </Button>
                   {!saved ? (
-                    <Button variant="outline" className="rounded-full gap-2 px-6" onClick={saveProgress}>
-                      <Trophy className="h-4 w-4" /> Salvar no Ranking
+                    <Button variant="outline" className="rounded-full gap-2 px-8 py-6 text-base" onClick={saveProgress}>
+                      <Trophy className="h-5 w-5" /> Salvar no Ranking
                     </Button>
                   ) : (
-                    <span className="text-sm text-primary font-medium flex items-center gap-1"><CheckCircle2 className="h-4 w-4" /> Salvo!</span>
+                    <span className="text-sm text-primary font-medium flex items-center gap-1"><CheckCircle2 className="h-5 w-5" /> Salvo com sucesso!</span>
                   )}
                 </div>
-                {/* Unlocked achievements */}
-                <div className="flex items-center justify-center gap-4 mt-6">
+                <div className="flex items-center justify-center gap-6">
                   {unlockedAchievements.map((a) => (
-                    <div key={a.id} className="flex flex-col items-center gap-1">
-                      <span className="text-2xl">{a.icon}</span>
-                      <span className="text-[9px] text-muted-foreground font-medium">{a.name}</span>
+                    <div key={a.id} className="flex flex-col items-center gap-1.5">
+                      <span className="text-3xl">{a.icon}</span>
+                      <span className="text-[10px] text-muted-foreground font-medium">{a.name}</span>
                     </div>
                   ))}
                 </div>
               </CardContent>
             </Card>
           )}
-
-          {/* FAQ Search */}
-          <div className="border-t mt-12 pt-10">
-            <h3 className="text-xl font-bold text-foreground mb-4">Dúvidas sobre o SIAD</h3>
-            <div className="relative mb-5">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Digite sua dúvida sobre o SIAD ou avaliação de desempenho..." value={faqSearch} onChange={(e) => setFaqSearch(e.target.value)} className="pl-11 rounded-full bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-primary/30 h-12" />
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {filteredSuggestions.map((s) => (
-                <button key={s} onClick={() => setFaqSearch(s)} className="px-4 py-2 rounded-full bg-muted text-sm text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all duration-300">{s}</button>
-              ))}
-            </div>
-          </div>
         </div>
       </main>
 
-      {/* Ranking */}
+      {/* Dialogs */}
       <Dialog open={showRanking} onOpenChange={setShowRanking}>
         <DialogContent className="rounded-2xl max-w-md"><DialogHeader><DialogTitle className="flex items-center gap-2"><Trophy className="h-5 w-5 text-amber-500" /> Ranking</DialogTitle></DialogHeader><RankingList ranking={ranking} loading={rankingLoading} /></DialogContent>
       </Dialog>
 
-      {/* Achievements dialog */}
       <Dialog open={showAchievements} onOpenChange={setShowAchievements}>
         <DialogContent className="rounded-2xl max-w-sm">
           <DialogHeader><DialogTitle className="flex items-center gap-2"><Award className="h-5 w-5 text-primary" /> Conquistas</DialogTitle></DialogHeader>
