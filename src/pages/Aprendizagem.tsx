@@ -391,19 +391,33 @@ const Aprendizagem = () => {
     else toast.error('Erro ao salvar progresso.');
   };
 
-  const completeStep = (idx: number) => {
+  // Track earned points per module (only correct quiz answers score)
+  const [earnedPoints, setEarnedPoints] = useState<Record<number, number>>({});
+
+  const completeStep = (idx: number, quizPoints: number) => {
     if (completed.has(idx)) return;
     const next = new Set(completed);
     next.add(idx);
     setCompleted(next);
-    toast.success(`+${modules[idx]?.pontos || 0} pontos!`, { icon: <Zap className="h-4 w-4 text-amber-500" /> });
+    setEarnedPoints(prev => ({ ...prev, [idx]: quizPoints }));
+    if (quizPoints > 0) {
+      toast.success(`+${quizPoints} pontos!`, { icon: <Zap className="h-4 w-4 text-amber-500" /> });
+    } else {
+      toast.info('Módulo concluído. Nenhum ponto ganho nesta etapa.');
+    }
   };
 
   const handleQuizComplete = (acertos: number, total: number) => {
-    if (acertos >= Math.ceil(total * 0.5)) {
-      completeStep(current);
+    const mod = modules[current];
+    // Points proportional to correct answers
+    const pts = total > 0 ? Math.round((acertos / total) * (mod?.pontos || 0)) : 0;
+    completeStep(current, pts);
+    if (acertos === total) {
+      toast.success('🎉 Perfeito! Todas corretas!');
+    } else if (acertos > 0) {
+      toast.info(`Você acertou ${acertos} de ${total}. Pode avançar!`);
     } else {
-      toast.error('Acerte pelo menos 50% para avançar.');
+      toast.warning(`Nenhum acerto. Revise o conteúdo na próxima oportunidade.`);
     }
   };
 
@@ -412,7 +426,8 @@ const Aprendizagem = () => {
       toast.error('Complete o quiz para avançar.');
       return;
     }
-    if (current < modules.length - 1) setCurrent(current + 1);
+    setCurrent(current + 1);
+    setTransitioning(true);
   };
 
   const goPrev = () => { if (current > 0) setCurrent(current - 1); };
