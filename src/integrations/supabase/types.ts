@@ -104,6 +104,77 @@ export type Database = {
         }
         Relationships: []
       }
+      quiz_perguntas: {
+        Row: {
+          created_at: string
+          id: string
+          opcoes: Json
+          pergunta: string
+          resposta_correta: number
+          trilha_conteudo_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          opcoes?: Json
+          pergunta: string
+          resposta_correta?: number
+          trilha_conteudo_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          opcoes?: Json
+          pergunta?: string
+          resposta_correta?: number
+          trilha_conteudo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_perguntas_trilha_conteudo_id_fkey"
+            columns: ["trilha_conteudo_id"]
+            isOneToOne: false
+            referencedRelation: "trilhas_conteudo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_resultados: {
+        Row: {
+          acertos: number
+          created_at: string
+          email: string
+          id: string
+          modulo_ordem: number
+          nome: string
+          pontuacao: number
+          total: number
+          trilha: string
+        }
+        Insert: {
+          acertos?: number
+          created_at?: string
+          email: string
+          id?: string
+          modulo_ordem?: number
+          nome: string
+          pontuacao?: number
+          total?: number
+          trilha?: string
+        }
+        Update: {
+          acertos?: number
+          created_at?: string
+          email?: string
+          id?: string
+          modulo_ordem?: number
+          nome?: string
+          pontuacao?: number
+          total?: number
+          trilha?: string
+        }
+        Relationships: []
+      }
       solicitacoes: {
         Row: {
           assunto: string
@@ -215,6 +286,42 @@ export type Database = {
           nome?: string
           pontuacao?: number
           tempo_minutos?: number
+        }
+        Relationships: []
+      }
+      trilhas_conteudo: {
+        Row: {
+          checklist: Json
+          conteudo: string
+          created_at: string
+          id: string
+          modulo_ordem: number
+          pontos: number
+          subtitulo: string
+          titulo: string
+          trilha: string
+        }
+        Insert: {
+          checklist?: Json
+          conteudo?: string
+          created_at?: string
+          id?: string
+          modulo_ordem?: number
+          pontos?: number
+          subtitulo?: string
+          titulo: string
+          trilha?: string
+        }
+        Update: {
+          checklist?: Json
+          conteudo?: string
+          created_at?: string
+          id?: string
+          modulo_ordem?: number
+          pontos?: number
+          subtitulo?: string
+          titulo?: string
+          trilha?: string
         }
         Relationships: []
       }
