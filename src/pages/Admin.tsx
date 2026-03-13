@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Building2, ArrowLeft, Download, FileSpreadsheet, BarChart3, CheckCircle2,
   AlertCircle, Clock, Star, TrendingUp, AlertTriangle, Target, Eye, Settings,
