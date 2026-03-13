@@ -91,10 +91,10 @@ const Home = () => {
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
       <header className="institutional-gradient px-6 py-4 flex items-center gap-3 shadow-lg" role="banner">
-        <Building2 className="h-8 w-8 text-primary-foreground" aria-hidden="true" />
+        <img src="/images/logo-seplag-alt.jpg" alt="SEPLAG" className="h-8 w-auto rounded" />
         <div>
-          <h1 className="text-lg font-bold text-primary-foreground leading-tight">SEPLAG</h1>
-          <p className="text-xs text-primary-foreground/80">Mato Grosso</p>
+          <h1 className="text-lg font-bold text-primary-foreground leading-tight">Central de Atendimento às Setoriais</h1>
+          <p className="text-xs text-primary-foreground/80">SEPLAG – Mato Grosso</p>
         </div>
         <div className="ml-auto flex gap-2">
           <Button variant="ghost" size="sm" className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 text-xs" onClick={() => navigate('/faq')}>
