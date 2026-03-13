@@ -182,14 +182,15 @@ const Home = () => {
         {/* ─── System Cards ─── */}
         <section className="max-w-6xl mx-auto px-4 py-20 space-y-12">
           {/* Logo + Title */}
-          <div className="text-center space-y-5">
-            <p className="text-[11px] font-semibold tracking-[0.2em] text-primary uppercase">
+          <div className="text-center space-y-6">
+            <p className="text-xs md:text-sm font-bold tracking-[0.25em] text-primary uppercase">
               Central de Atendimento às Setoriais
             </p>
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground tracking-tight leading-[1.08]">
-              Capacitação Digital<br />do Servidor
+            <h2 className="text-3xl md:text-5xl lg:text-6xl font-extrabold text-foreground tracking-tight leading-[1.08]">
+              Capacitação Digital<br />
+              <span className="bg-gradient-to-r from-primary to-[hsl(199,89%,48%)] bg-clip-text text-transparent">do Servidor</span>
             </h2>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto font-light leading-relaxed">
+            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               Aprenda sobre os sistemas estaduais de forma interativa, com quizzes, pontuação e certificado de conclusão.
             </p>
           </div>
