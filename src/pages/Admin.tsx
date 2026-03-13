@@ -87,7 +87,7 @@ function AdminSidebar({
   const menuItems: { key: AdminSection; label: string; icon: any; visible: boolean }[] = [
     { key: 'executivo', label: 'Visão Executiva', icon: Eye, visible: isGestao || isOperacao },
     { key: 'operacional', label: 'Operacional', icon: BarChart3, visible: true },
-    { key: 'aprendizagem', label: 'Trilha SIAD', icon: BookOpen, visible: isGestao },
+    { key: 'aprendizagem', label: 'Gestão de Trilhas', icon: BookOpen, visible: isGestao },
     { key: 'faq', label: 'Gerenciar FAQ', icon: HelpCircle, visible: isGestao },
     { key: 'usuarios', label: 'Usuários', icon: Users, visible: isGestao },
     { key: 'configuracoes', label: 'Configurações', icon: Settings, visible: isGestao },
@@ -292,18 +292,35 @@ function ProfileDialog({ currentUser, open, onOpenChange, onUpdate }: {
   );
 }
 
-// ─── Aprendizagem Manager (Learning Analytics) ───
+// ─── Aprendizagem Manager (Learning Analytics + CRUD) ───
 function AprendizagemManager() {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'analytics' | 'conteudo' | 'quizzes'>('analytics');
+  const [trilhas, setTrilhas] = useState<any[]>([]);
+  const [quizzes, setQuizzes] = useState<any[]>([]);
+  const [selectedTrilha, setSelectedTrilha] = useState('SIAD');
+  const [editingContent, setEditingContent] = useState<string | null>(null);
+  const [editFields, setEditFields] = useState({ titulo: '', subtitulo: '', conteudo: '', pontos: 15 });
+  const [newQuiz, setNewQuiz] = useState({ pergunta: '', opcoes: ['', '', '', ''], resposta_correta: 0 });
+  const [editingQuiz, setEditingQuiz] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
 
-  useEffect(() => {
-    (async () => {
-      const { data: rows } = await supabase.from('trilha_progresso').select('*').order('pontuacao', { ascending: false });
-      setData(rows || []);
-      setLoading(false);
-    })();
-  }, []);
+  const fetchAll = async () => {
+    setLoading(true);
+    const [{ data: rows }, { data: content }, { data: qz }] = await Promise.all([
+      supabase.from('trilha_progresso').select('*').order('pontuacao', { ascending: false }),
+      supabase.from('trilhas_conteudo').select('*').order('trilha, modulo_ordem'),
+      supabase.from('quiz_perguntas').select('*, trilhas_conteudo(trilha, titulo, modulo_ordem)').order('created_at'),
+    ]);
+    setData(rows || []);
+    setTrilhas(content || []);
+    setQuizzes(qz || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchAll(); }, []);
 
   const totalServidores = data.length;
   const concluidos = data.filter((d: any) => d.concluido).length;
@@ -319,122 +336,303 @@ function AprendizagemManager() {
   }, {});
   const nivelChartData = Object.entries(nivelDist).map(([name, value]) => ({ name, value }));
 
+  const filteredContent = trilhas.filter((t: any) => t.trilha === selectedTrilha);
+  const filteredQuizzes = quizzes.filter((q: any) => q.trilhas_conteudo?.trilha === selectedTrilha);
+
+  const handleSaveContent = async (id: string) => {
+    setSaving(true);
+    await supabase.from('trilhas_conteudo').update({
+      titulo: editFields.titulo, subtitulo: editFields.subtitulo,
+      conteudo: editFields.conteudo, pontos: editFields.pontos,
+    }).eq('id', id);
+    setEditingContent(null);
+    toast({ title: 'Conteúdo atualizado!' });
+    fetchAll();
+    setSaving(false);
+  };
+
+  const handleDeleteQuiz = async (id: string) => {
+    await supabase.from('quiz_perguntas').delete().eq('id', id);
+    toast({ title: 'Pergunta removida!' });
+    fetchAll();
+  };
+
+  const handleAddQuiz = async (conteudoId: string) => {
+    if (!newQuiz.pergunta.trim() || newQuiz.opcoes.some(o => !o.trim())) {
+      toast({ title: 'Preencha todos os campos', variant: 'destructive' });
+      return;
+    }
+    setSaving(true);
+    await supabase.from('quiz_perguntas').insert({
+      trilha_conteudo_id: conteudoId,
+      pergunta: newQuiz.pergunta.trim(),
+      opcoes: newQuiz.opcoes.map(o => o.trim()),
+      resposta_correta: newQuiz.resposta_correta,
+    });
+    setNewQuiz({ pergunta: '', opcoes: ['', '', '', ''], resposta_correta: 0 });
+    toast({ title: 'Pergunta adicionada!' });
+    fetchAll();
+    setSaving(false);
+  };
+
+  const handleUpdateQuiz = async (id: string) => {
+    setSaving(true);
+    await supabase.from('quiz_perguntas').update({
+      pergunta: newQuiz.pergunta.trim(),
+      opcoes: newQuiz.opcoes.map(o => o.trim()),
+      resposta_correta: newQuiz.resposta_correta,
+    }).eq('id', id);
+    setEditingQuiz(null);
+    toast({ title: 'Pergunta atualizada!' });
+    fetchAll();
+    setSaving(false);
+  };
+
   if (loading) return <div className="space-y-4">{[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}</div>;
 
   return (
     <div className="space-y-6">
-      {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <Card className="border-0 shadow-sm"><CardContent className="pt-5 pb-4 text-center">
-          <Users className="h-5 w-5 text-primary mx-auto mb-1" />
-          <p className="text-2xl font-bold text-foreground">{totalServidores}</p>
-          <p className="text-[11px] text-muted-foreground">Servidores Ativos</p>
-        </CardContent></Card>
-        <Card className="border-0 shadow-sm"><CardContent className="pt-5 pb-4 text-center">
-          <CheckCircle2 className="h-5 w-5 text-emerald-600 mx-auto mb-1" />
-          <p className="text-2xl font-bold text-foreground">{taxaConclusao}%</p>
-          <p className="text-[11px] text-muted-foreground">Taxa Conclusão</p>
-        </CardContent></Card>
-        <Card className="border-0 shadow-sm"><CardContent className="pt-5 pb-4 text-center">
-          <Star className="h-5 w-5 text-amber-500 mx-auto mb-1" />
-          <p className="text-2xl font-bold text-foreground">{pontuacaoMedia}</p>
-          <p className="text-[11px] text-muted-foreground">Pontuação Média</p>
-        </CardContent></Card>
-        <Card className="border-0 shadow-sm"><CardContent className="pt-5 pb-4 text-center">
-          <Clock className="h-5 w-5 text-blue-600 mx-auto mb-1" />
-          <p className="text-2xl font-bold text-foreground">{tempoMedio}min</p>
-          <p className="text-[11px] text-muted-foreground">Tempo Médio</p>
-        </CardContent></Card>
-        <Card className="border-0 shadow-sm"><CardContent className="pt-5 pb-4 text-center">
-          <Award className="h-5 w-5 text-primary mx-auto mb-1" />
-          <p className="text-2xl font-bold text-foreground">{totalMedalhas}</p>
-          <p className="text-[11px] text-muted-foreground">Medalhas</p>
-        </CardContent></Card>
-        <Card className="border-0 shadow-sm"><CardContent className="pt-5 pb-4 text-center">
-          <TrendingUp className="h-5 w-5 text-emerald-600 mx-auto mb-1" />
-          <p className="text-2xl font-bold text-foreground">{concluidos}</p>
-          <p className="text-[11px] text-muted-foreground">Concluídos</p>
-        </CardContent></Card>
+      {/* Tab switcher */}
+      <div className="flex gap-2">
+        {(['analytics', 'conteudo', 'quizzes'] as const).map((tab) => (
+          <Button key={tab} variant={activeTab === tab ? 'default' : 'outline'} size="sm" className="rounded-full text-xs" onClick={() => setActiveTab(tab)}>
+            {tab === 'analytics' ? 'Métricas' : tab === 'conteudo' ? 'Conteúdo' : 'Quizzes'}
+          </Button>
+        ))}
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Distribution by level */}
-        <Card className="border-0 shadow-sm">
-          <CardHeader><CardTitle className="text-base text-foreground">Distribuição por Nível</CardTitle></CardHeader>
-          <CardContent>
-            {nivelChartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie data={nivelChartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={35} label>
-                    {nivelChartData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip /><Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : <p className="text-muted-foreground text-center py-12">Nenhum dado</p>}
-          </CardContent>
-        </Card>
+      {/* Trilha selector for content/quizzes */}
+      {activeTab !== 'analytics' && (
+        <div className="flex gap-2">
+          {['SIAD', 'SIEP', 'Banco de Talentos'].map((t) => (
+            <Badge key={t} variant={selectedTrilha === t ? 'default' : 'outline'} className="cursor-pointer rounded-full px-3 py-1 text-xs" onClick={() => setSelectedTrilha(t)}>
+              {t}
+            </Badge>
+          ))}
+        </div>
+      )}
 
-        {/* Ranking */}
-        <Card className="border-0 shadow-sm">
-          <CardHeader><CardTitle className="text-base text-foreground flex items-center gap-2"><Trophy className="h-4 w-4 text-amber-500" /> Top Servidores</CardTitle></CardHeader>
-          <CardContent>
-            <div className="space-y-2 max-h-[300px] overflow-y-auto">
-              {data.filter((d: any) => d.concluido).slice(0, 10).map((entry: any, i: number) => (
-                <div key={entry.id} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl ${i === 0 ? 'bg-amber-500/10' : 'hover:bg-muted/50'}`}>
-                  <span className="w-6 text-center text-sm font-bold text-muted-foreground">
-                    {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}º`}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground truncate">{entry.nome}</p>
-                    <p className="text-[10px] text-muted-foreground">{entry.nivel} · {entry.tempo_minutos || 0}min · {entry.concluido_em ? new Date(entry.concluido_em).toLocaleDateString('pt-BR') : ''}</p>
-                  </div>
-                  <div className="flex items-center gap-1 text-sm font-bold text-amber-600">
-                    <Star className="h-3.5 w-3.5" /> {entry.pontuacao}
-                  </div>
+      {activeTab === 'analytics' && (
+        <>
+          {/* KPIs */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <Card className="border-0 shadow-sm"><CardContent className="pt-5 pb-4 text-center">
+              <Users className="h-5 w-5 text-primary mx-auto mb-1" />
+              <p className="text-2xl font-bold text-foreground">{totalServidores}</p>
+              <p className="text-[11px] text-muted-foreground">Servidores Ativos</p>
+            </CardContent></Card>
+            <Card className="border-0 shadow-sm"><CardContent className="pt-5 pb-4 text-center">
+              <CheckCircle2 className="h-5 w-5 text-emerald-600 mx-auto mb-1" />
+              <p className="text-2xl font-bold text-foreground">{taxaConclusao}%</p>
+              <p className="text-[11px] text-muted-foreground">Taxa Conclusão</p>
+            </CardContent></Card>
+            <Card className="border-0 shadow-sm"><CardContent className="pt-5 pb-4 text-center">
+              <Star className="h-5 w-5 text-amber-500 mx-auto mb-1" />
+              <p className="text-2xl font-bold text-foreground">{pontuacaoMedia}</p>
+              <p className="text-[11px] text-muted-foreground">Pontuação Média</p>
+            </CardContent></Card>
+            <Card className="border-0 shadow-sm"><CardContent className="pt-5 pb-4 text-center">
+              <Clock className="h-5 w-5 text-blue-600 mx-auto mb-1" />
+              <p className="text-2xl font-bold text-foreground">{tempoMedio}min</p>
+              <p className="text-[11px] text-muted-foreground">Tempo Médio</p>
+            </CardContent></Card>
+            <Card className="border-0 shadow-sm"><CardContent className="pt-5 pb-4 text-center">
+              <Award className="h-5 w-5 text-primary mx-auto mb-1" />
+              <p className="text-2xl font-bold text-foreground">{totalMedalhas}</p>
+              <p className="text-[11px] text-muted-foreground">Medalhas</p>
+            </CardContent></Card>
+            <Card className="border-0 shadow-sm"><CardContent className="pt-5 pb-4 text-center">
+              <TrendingUp className="h-5 w-5 text-emerald-600 mx-auto mb-1" />
+              <p className="text-2xl font-bold text-foreground">{concluidos}</p>
+              <p className="text-[11px] text-muted-foreground">Concluídos</p>
+            </CardContent></Card>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <Card className="border-0 shadow-sm">
+              <CardHeader><CardTitle className="text-base text-foreground">Distribuição por Nível</CardTitle></CardHeader>
+              <CardContent>
+                {nivelChartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={250}>
+                    <PieChart>
+                      <Pie data={nivelChartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={35} label>
+                        {nivelChartData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                      </Pie>
+                      <Tooltip /><Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : <p className="text-muted-foreground text-center py-12">Nenhum dado</p>}
+              </CardContent>
+            </Card>
+            <Card className="border-0 shadow-sm">
+              <CardHeader><CardTitle className="text-base text-foreground flex items-center gap-2"><Trophy className="h-4 w-4 text-amber-500" /> Top Servidores</CardTitle></CardHeader>
+              <CardContent>
+                <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                  {data.filter((d: any) => d.concluido).slice(0, 10).map((entry: any, i: number) => (
+                    <div key={entry.id} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl ${i === 0 ? 'bg-amber-500/10' : 'hover:bg-muted/50'}`}>
+                      <span className="w-6 text-center text-sm font-bold text-muted-foreground">
+                        {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}º`}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground truncate">{entry.nome}</p>
+                        <p className="text-[10px] text-muted-foreground">{entry.nivel} · {entry.tempo_minutos || 0}min</p>
+                      </div>
+                      <div className="flex items-center gap-1 text-sm font-bold text-amber-600">
+                        <Star className="h-3.5 w-3.5" /> {entry.pontuacao}
+                      </div>
+                    </div>
+                  ))}
+                  {data.filter((d: any) => d.concluido).length === 0 && <p className="text-muted-foreground text-center py-8 text-sm">Nenhum servidor concluiu ainda</p>}
                 </div>
-              ))}
-              {data.filter((d: any) => d.concluido).length === 0 && <p className="text-muted-foreground text-center py-8 text-sm">Nenhum servidor concluiu ainda</p>}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              </CardContent>
+            </Card>
+          </div>
 
-      {/* Full table */}
-      <Card className="border-0 shadow-sm">
-        <CardHeader><CardTitle className="text-base text-foreground">Todos os Participantes</CardTitle></CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>E-mail</TableHead>
-                <TableHead>Nível</TableHead>
-                <TableHead>Pontos</TableHead>
-                <TableHead>Medalhas</TableHead>
-                <TableHead>Tempo</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Data</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.map((d: any) => (
-                <TableRow key={d.id}>
-                  <TableCell className="font-medium text-foreground">{d.nome}</TableCell>
-                  <TableCell className="text-muted-foreground text-sm">{d.email}</TableCell>
-                  <TableCell><Badge variant="outline" className="rounded-full text-[10px]">{d.nivel}</Badge></TableCell>
-                  <TableCell className="font-semibold text-amber-600">{d.pontuacao}</TableCell>
-                  <TableCell>{Array.isArray(d.medalhas) ? d.medalhas.length : 0}</TableCell>
-                  <TableCell className="text-muted-foreground">{d.tempo_minutos || 0}min</TableCell>
-                  <TableCell>{d.concluido ? <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px]">Concluído</Badge> : <Badge variant="outline" className="text-[10px]">Em progresso</Badge>}</TableCell>
-                  <TableCell className="text-muted-foreground text-sm">{d.concluido_em ? new Date(d.concluido_em).toLocaleDateString('pt-BR') : '-'}</TableCell>
-                </TableRow>
-              ))}
-              {data.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhum participante registrado</TableCell></TableRow>}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+          {/* Full table */}
+          <Card className="border-0 shadow-sm">
+            <CardHeader><CardTitle className="text-base text-foreground">Todos os Participantes</CardTitle></CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead><TableHead>E-mail</TableHead><TableHead>Nível</TableHead>
+                    <TableHead>Pontos</TableHead><TableHead>Medalhas</TableHead><TableHead>Tempo</TableHead>
+                    <TableHead>Status</TableHead><TableHead>Data</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.map((d: any) => (
+                    <TableRow key={d.id}>
+                      <TableCell className="font-medium text-foreground">{d.nome}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm">{d.email}</TableCell>
+                      <TableCell><Badge variant="outline" className="rounded-full text-[10px]">{d.nivel}</Badge></TableCell>
+                      <TableCell className="font-semibold text-amber-600">{d.pontuacao}</TableCell>
+                      <TableCell>{Array.isArray(d.medalhas) ? d.medalhas.length : 0}</TableCell>
+                      <TableCell className="text-muted-foreground">{d.tempo_minutos || 0}min</TableCell>
+                      <TableCell>{d.concluido ? <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px]">Concluído</Badge> : <Badge variant="outline" className="text-[10px]">Em progresso</Badge>}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm">{d.concluido_em ? new Date(d.concluido_em).toLocaleDateString('pt-BR') : '-'}</TableCell>
+                    </TableRow>
+                  ))}
+                  {data.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhum participante</TableCell></TableRow>}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </>
+      )}
+
+      {activeTab === 'conteudo' && (
+        <div className="space-y-4">
+          {filteredContent.map((mod: any) => (
+            <Card key={mod.id} className="border-0 shadow-sm">
+              <CardContent className="p-5">
+                {editingContent === mod.id ? (
+                  <div className="space-y-3">
+                    <div className="grid md:grid-cols-2 gap-3">
+                      <div className="space-y-1"><Label>Título</Label><Input value={editFields.titulo} onChange={(e) => setEditFields({ ...editFields, titulo: e.target.value })} /></div>
+                      <div className="space-y-1"><Label>Subtítulo</Label><Input value={editFields.subtitulo} onChange={(e) => setEditFields({ ...editFields, subtitulo: e.target.value })} /></div>
+                    </div>
+                    <div className="space-y-1"><Label>Conteúdo</Label><Textarea value={editFields.conteudo} onChange={(e) => setEditFields({ ...editFields, conteudo: e.target.value })} className="min-h-[100px]" /></div>
+                    <div className="space-y-1 max-w-[100px]"><Label>Pontos</Label><Input type="number" value={editFields.pontos} onChange={(e) => setEditFields({ ...editFields, pontos: parseInt(e.target.value) || 0 })} /></div>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => handleSaveContent(mod.id)} disabled={saving} className="gap-1"><Save className="h-3 w-3" /> Salvar</Button>
+                      <Button size="sm" variant="ghost" onClick={() => setEditingContent(null)}><X className="h-3 w-3" /> Cancelar</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge variant="outline" className="rounded-full text-[10px]">Módulo {mod.modulo_ordem}</Badge>
+                        <Badge className="bg-amber-100 text-amber-700 border-amber-200 rounded-full text-[10px]">{mod.pontos} pts</Badge>
+                      </div>
+                      <p className="font-semibold text-foreground">{mod.titulo}</p>
+                      <p className="text-sm text-primary">{mod.subtitulo}</p>
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{mod.conteudo}</p>
+                    </div>
+                    <Button size="sm" variant="outline" className="gap-1 shrink-0" onClick={() => { setEditingContent(mod.id); setEditFields({ titulo: mod.titulo, subtitulo: mod.subtitulo, conteudo: mod.conteudo, pontos: mod.pontos }); }}>
+                      <Pencil className="h-3 w-3" /> Editar
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+          {filteredContent.length === 0 && <p className="text-muted-foreground text-center py-8">Nenhum conteúdo para esta trilha.</p>}
+        </div>
+      )}
+
+      {activeTab === 'quizzes' && (
+        <div className="space-y-6">
+          {filteredContent.map((mod: any) => {
+            const modQuizzes = filteredQuizzes.filter((q: any) => q.trilha_conteudo_id === mod.id);
+            return (
+              <Card key={mod.id} className="border-0 shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Badge variant="outline" className="rounded-full text-[10px]">Módulo {mod.modulo_ordem}</Badge>
+                    {mod.titulo}
+                    <Badge className="ml-auto rounded-full text-[10px]">{modQuizzes.length} perguntas</Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {modQuizzes.map((q: any) => (
+                    <div key={q.id} className="border rounded-xl p-3 space-y-2">
+                      {editingQuiz === q.id ? (
+                        <div className="space-y-2">
+                          <Input value={newQuiz.pergunta} onChange={(e) => setNewQuiz({ ...newQuiz, pergunta: e.target.value })} placeholder="Pergunta" />
+                          {newQuiz.opcoes.map((opt, i) => (
+                            <div key={i} className="flex items-center gap-2">
+                              <Input value={opt} onChange={(e) => { const o = [...newQuiz.opcoes]; o[i] = e.target.value; setNewQuiz({ ...newQuiz, opcoes: o }); }} placeholder={`Opção ${i + 1}`} className="flex-1" />
+                              <input type="radio" name="edit-correct" checked={newQuiz.resposta_correta === i} onChange={() => setNewQuiz({ ...newQuiz, resposta_correta: i })} />
+                              <span className="text-[10px] text-muted-foreground">Correta</span>
+                            </div>
+                          ))}
+                          <div className="flex gap-2">
+                            <Button size="sm" onClick={() => handleUpdateQuiz(q.id)} disabled={saving} className="gap-1"><Save className="h-3 w-3" /> Salvar</Button>
+                            <Button size="sm" variant="ghost" onClick={() => setEditingQuiz(null)}><X className="h-3 w-3" /></Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="text-sm font-medium text-foreground">{q.pergunta}</p>
+                          <div className="flex flex-wrap gap-1">
+                            {(Array.isArray(q.opcoes) ? q.opcoes : []).map((opt: string, i: number) => (
+                              <Badge key={i} variant={i === q.resposta_correta ? 'default' : 'outline'} className="text-[10px] rounded-full">{opt}</Badge>
+                            ))}
+                          </div>
+                          <div className="flex gap-1">
+                            <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1" onClick={() => { setEditingQuiz(q.id); setNewQuiz({ pergunta: q.pergunta, opcoes: Array.isArray(q.opcoes) ? q.opcoes : ['', '', '', ''], resposta_correta: q.resposta_correta }); }}>
+                              <Pencil className="h-2.5 w-2.5" /> Editar
+                            </Button>
+                            <Button size="sm" variant="destructive" className="h-6 text-[10px] gap-1" onClick={() => handleDeleteQuiz(q.id)}>
+                              <Trash2 className="h-2.5 w-2.5" /> Excluir
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Add new quiz */}
+                  <div className="border-t pt-3 space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground flex items-center gap-1"><Plus className="h-3 w-3" /> Nova Pergunta</p>
+                    <Input value={newQuiz.pergunta} onChange={(e) => setNewQuiz({ ...newQuiz, pergunta: e.target.value })} placeholder="Pergunta" className="text-sm" />
+                    {newQuiz.opcoes.map((opt, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <Input value={opt} onChange={(e) => { const o = [...newQuiz.opcoes]; o[i] = e.target.value; setNewQuiz({ ...newQuiz, opcoes: o }); }} placeholder={`Opção ${i + 1}`} className="flex-1 text-sm" />
+                        <input type="radio" name={`new-correct-${mod.id}`} checked={newQuiz.resposta_correta === i} onChange={() => setNewQuiz({ ...newQuiz, resposta_correta: i })} />
+                        <span className="text-[10px] text-muted-foreground whitespace-nowrap">Correta</span>
+                      </div>
+                    ))}
+                    <Button size="sm" onClick={() => handleAddQuiz(mod.id)} disabled={saving} className="gap-1"><Plus className="h-3 w-3" /> Adicionar</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -922,7 +1120,7 @@ const Admin = () => {
               <h2 className="text-xl font-bold text-foreground tracking-tight">
                 {activeSection === 'executivo' && 'Visão Executiva'}
                 {activeSection === 'operacional' && 'Operacional'}
-                {activeSection === 'aprendizagem' && 'Trilha SIAD – Engajamento'}
+                {activeSection === 'aprendizagem' && 'Gestão de Trilhas'}
                 {activeSection === 'faq' && 'Gerenciar FAQ'}
                 {activeSection === 'usuarios' && 'Gestão de Usuários'}
                 {activeSection === 'configuracoes' && 'Configurações'}
@@ -930,7 +1128,7 @@ const Admin = () => {
               <p className="text-sm text-muted-foreground mt-0.5">
                 {activeSection === 'executivo' && 'Dashboard com indicadores e gráficos'}
                 {activeSection === 'operacional' && 'Triagem e gestão de solicitações'}
-                {activeSection === 'aprendizagem' && 'Métricas de participação e gamificação'}
+                {activeSection === 'aprendizagem' && 'Conteúdo, quizzes e métricas de engajamento'}
                 {activeSection === 'faq' && 'Perguntas frequentes do portal'}
                 {activeSection === 'usuarios' && 'Controle de acessos e operadores'}
                 {activeSection === 'configuracoes' && 'Órgãos e assuntos do sistema'}
