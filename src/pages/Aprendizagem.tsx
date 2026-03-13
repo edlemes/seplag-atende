@@ -4,7 +4,7 @@ import {
   Building2, ArrowLeft, ArrowRight, CheckCircle2, BookOpen, Search,
   Trophy, Star, Award, Download, Zap, Medal, Crown, Lock, Sparkles,
   Users, TrendingUp, Clock, ChevronRight, FileText, Shield, Monitor,
-  HelpCircle, Target, Lightbulb, ClipboardCheck,
+  HelpCircle, Target, Lightbulb, ClipboardCheck, XCircle, ChevronUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -13,169 +13,33 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import jsPDF from 'jspdf';
 
-import mod1Img from '@/assets/siad-mod1.jpg';
-import mod2Img from '@/assets/siad-mod2.jpg';
-import mod3Img from '@/assets/siad-mod3.jpg';
-import mod4Img from '@/assets/siad-mod4.jpg';
-import mod5Img from '@/assets/siad-mod5.jpg';
-import mod6Img from '@/assets/siad-mod6.jpg';
-
-// ── Points & Levels ──
-const POINTS_PER_STEP = [15, 15, 20, 15, 20, 15];
-const LEVELS = [
-  { name: 'Iniciante', minPts: 0, icon: '🌱' },
-  { name: 'Aprendiz', minPts: 15, icon: '📘' },
-  { name: 'Conhecedor', minPts: 45, icon: '🎯' },
-  { name: 'Especialista', minPts: 80, icon: '⭐' },
-  { name: 'Mentor', minPts: 100, icon: '🏆' },
-];
-
-const ACHIEVEMENTS = [
-  { id: 'explorer', name: 'Explorador do SIAD', desc: 'Completou o primeiro módulo', icon: '🧭', requiredSteps: 1 },
-  { id: 'halfway', name: 'Meio Caminho', desc: 'Completou 3 módulos', icon: '🛤️', requiredSteps: 3 },
-  { id: 'specialist', name: 'Especialista em Avaliação', desc: 'Completou o módulo de avaliação', icon: '📊', requiredSteps: 3 },
-  { id: 'guardian', name: 'Guardião da Transparência', desc: 'Completou 5 módulos', icon: '🛡️', requiredSteps: 5 },
-  { id: 'master', name: 'Mestre da Gestão Pública', desc: 'Concluiu toda a trilha', icon: '👑', requiredSteps: 6 },
-];
-
-function getLevel(pts: number) {
-  for (let i = LEVELS.length - 1; i >= 0; i--) {
-    if (pts >= LEVELS[i].minPts) return LEVELS[i];
-  }
-  return LEVELS[0];
+// ── Types ──
+interface TrailModule {
+  id: string;
+  trilha: string;
+  modulo_ordem: number;
+  titulo: string;
+  subtitulo: string;
+  conteudo: string;
+  checklist: string[];
+  pontos: number;
 }
 
-function getNextLevel(pts: number) {
-  for (const lv of LEVELS) {
-    if (pts < lv.minPts) return lv;
-  }
-  return null;
+interface QuizQuestion {
+  id: string;
+  trilha_conteudo_id: string;
+  pergunta: string;
+  opcoes: string[];
+  resposta_correta: number;
 }
-
-function getUnlockedAchievements(completedCount: number) {
-  return ACHIEVEMENTS.filter((a) => completedCount >= a.requiredSteps);
-}
-
-const STEP_ICONS = [BookOpen, Lightbulb, ClipboardCheck, Users, Monitor, HelpCircle];
-
-const modules = [
-  {
-    title: 'Introdução ao SIAD',
-    subtitle: 'O que é e qual seu objetivo',
-    image: mod1Img,
-    points: POINTS_PER_STEP[0],
-    checklist: [
-      'Entender o que é o SIAD',
-      'Conhecer o objetivo do sistema',
-      'Compreender a importância da avaliação',
-    ],
-    content: [
-      'O SIAD é um sistema digital utilizado pelo governo para organizar e acompanhar a avaliação anual de desempenho dos servidores públicos.',
-      'Ele ajuda a tornar o processo de avaliação mais transparente, organizado e fácil de acompanhar.',
-    ],
-  },
-  {
-    title: 'Por que o SIAD foi criado',
-    subtitle: 'A evolução da gestão pública',
-    image: mod2Img,
-    points: POINTS_PER_STEP[1],
-    checklist: [
-      'Entender a modernização da gestão',
-      'Comparar processos antigos e atuais',
-      'Reconhecer os benefícios da digitalização',
-    ],
-    content: [
-      'O sistema foi criado para melhorar a gestão de desempenho e organizar o processo de avaliação dos servidores.',
-      'Ele traz mais transparência e moderniza a administração pública, substituindo processos manuais em papel por uma plataforma digital eficiente.',
-    ],
-  },
-  {
-    title: 'Como funciona a avaliação',
-    subtitle: 'O fluxo completo em 6 fases',
-    image: mod3Img,
-    points: POINTS_PER_STEP[2],
-    checklist: [
-      'Conhecer as 6 fases da avaliação',
-      'Compreender o fluxo do processo',
-      'Identificar em qual fase você está',
-    ],
-    timeline: [
-      { phase: 'Planejamento', desc: 'Definição de metas e critérios de avaliação' },
-      { phase: 'Acompanhamento', desc: 'Monitoramento contínuo do desempenho' },
-      { phase: 'Avaliação do Gestor', desc: 'O gestor registra a avaliação formal' },
-      { phase: 'Ciência do Servidor', desc: 'O servidor toma ciência do resultado' },
-      { phase: 'Manifestação', desc: 'Possibilidade de contestar ou complementar' },
-      { phase: 'Consolidação', desc: 'Registro oficial do resultado final' },
-    ],
-    content: [],
-  },
-  {
-    title: 'Quem participa do processo',
-    subtitle: 'Os papéis na avaliação',
-    image: mod4Img,
-    points: POINTS_PER_STEP[3],
-    checklist: [
-      'Identificar os participantes',
-      'Entender o papel de cada ator',
-      'Saber quem avalia e quem é avaliado',
-    ],
-    content: [
-      'Servidor Avaliado – o profissional que terá seu desempenho analisado.',
-      'Gestor Avaliador – responsável pela avaliação direta.',
-      'Comissão de Avaliação – grupo que valida e analisa os resultados.',
-      'Área de Gestão de Pessoas – setor que coordena todo o processo dentro do órgão.',
-    ],
-  },
-  {
-    title: 'Acompanhando sua avaliação',
-    subtitle: 'Indicadores e resultados',
-    image: mod5Img,
-    points: POINTS_PER_STEP[4],
-    checklist: [
-      'Acessar o sistema de avaliação',
-      'Interpretar seus indicadores',
-      'Registrar manifestações',
-    ],
-    content: [
-      'O servidor pode acessar o sistema a qualquer momento para:',
-      '• Visualizar sua avaliação atual e anteriores.',
-      '• Acompanhar os resultados e indicadores.',
-      '• Registrar manifestações ou observações.',
-      '• Consultar prazos e etapas do processo.',
-    ],
-  },
-  {
-    title: 'Central de Conhecimento',
-    subtitle: 'FAQ inteligente e suporte',
-    image: mod6Img,
-    points: POINTS_PER_STEP[5],
-    checklist: [
-      'Pesquisar dúvidas frequentes',
-      'Encontrar respostas rapidamente',
-      'Saber onde buscar ajuda',
-    ],
-    content: [
-      'Se tiver dúvidas, o servidor pode pesquisar questões frequentes como:',
-      '• Quem realiza minha avaliação?',
-      '• Posso discordar da avaliação?',
-      '• Como acessar o sistema SIAD?',
-      '• Quais os prazos do processo?',
-    ],
-  },
-];
-
-const faqItems = [
-  { q: 'Quem realiza minha avaliação?', a: 'A avaliação é realizada pelo seu gestor direto (chefia imediata), que acompanha seu desempenho ao longo do período avaliativo.' },
-  { q: 'Posso discordar da avaliação?', a: 'Sim. Após tomar ciência do resultado, você pode registrar uma manifestação formal no sistema dentro do prazo estabelecido.' },
-  { q: 'Como acessar o sistema SIAD?', a: 'O SIAD é acessado pelo portal de serviços do governo com suas credenciais institucionais.' },
-  { q: 'Quais são os prazos?', a: 'O calendário de avaliação é definido anualmente. Consulte a área de gestão de pessoas do seu órgão para datas específicas.' },
-  { q: 'O que acontece se eu não for avaliado?', a: 'A ausência de avaliação pode impactar processos de progressão funcional. Comunique sua chefia e a área de RH.' },
-  { q: 'Como funciona a manifestação?', a: 'A manifestação permite complementar informações ou contestar o resultado. Ela é analisada pela Comissão de Avaliação.' },
-];
 
 interface RankingEntry {
   id: string;
@@ -185,8 +49,35 @@ interface RankingEntry {
   concluido_em: string | null;
 }
 
+// ── Levels & Achievements ──
+const LEVELS = [
+  { name: 'Iniciante', minPts: 0, icon: '🌱' },
+  { name: 'Aprendiz', minPts: 15, icon: '📘' },
+  { name: 'Conhecedor', minPts: 45, icon: '🎯' },
+  { name: 'Especialista', minPts: 80, icon: '⭐' },
+  { name: 'Mentor', minPts: 100, icon: '🏆' },
+];
+
+const ACHIEVEMENTS = [
+  { id: 'explorer', name: 'Explorador', desc: 'Completou o primeiro módulo', icon: '🧭', requiredSteps: 1 },
+  { id: 'halfway', name: 'Meio Caminho', desc: 'Completou 3 módulos', icon: '🛤️', requiredSteps: 3 },
+  { id: 'guardian', name: 'Guardião', desc: 'Completou 5 módulos', icon: '🛡️', requiredSteps: 5 },
+  { id: 'master', name: 'Mestre', desc: 'Concluiu toda a trilha', icon: '👑', requiredSteps: 6 },
+];
+
+function getLevel(pts: number) {
+  for (let i = LEVELS.length - 1; i >= 0; i--) {
+    if (pts >= LEVELS[i].minPts) return LEVELS[i];
+  }
+  return LEVELS[0];
+}
+
+function getUnlockedAchievements(completedCount: number) {
+  return ACHIEVEMENTS.filter((a) => completedCount >= a.requiredSteps);
+}
+
 // ── PDF Certificate ──
-function generateCertificate(nome: string, pontuacao: number) {
+function generateCertificate(nome: string, pontuacao: number, trilha: string) {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   const w = doc.internal.pageSize.getWidth();
   const h = doc.internal.pageSize.getHeight();
@@ -197,18 +88,6 @@ function generateCertificate(nome: string, pontuacao: number) {
   doc.setLineWidth(0.5);
   doc.rect(14, 14, w - 28, h - 28);
 
-  const cornerSize = 15;
-  doc.setDrawColor(0, 100, 179);
-  doc.setLineWidth(1.5);
-  doc.line(14, 14, 14 + cornerSize, 14);
-  doc.line(14, 14, 14, 14 + cornerSize);
-  doc.line(w - 14, 14, w - 14 - cornerSize, 14);
-  doc.line(w - 14, 14, w - 14, 14 + cornerSize);
-  doc.line(14, h - 14, 14 + cornerSize, h - 14);
-  doc.line(14, h - 14, 14, h - 14 - cornerSize);
-  doc.line(w - 14, h - 14, w - 14 - cornerSize, h - 14);
-  doc.line(w - 14, h - 14, w - 14, h - 14 - cornerSize);
-
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(11);
   doc.setTextColor(100, 100, 100);
@@ -216,7 +95,7 @@ function generateCertificate(nome: string, pontuacao: number) {
   doc.text('SECRETARIA DE PLANEJAMENTO E GESTÃO – SEPLAG', w / 2, 37, { align: 'center' });
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(30);
+  doc.setFontSize(28);
   doc.setTextColor(0, 60, 120);
   doc.text('CERTIFICADO DE CONCLUSÃO', w / 2, 58, { align: 'center' });
 
@@ -239,26 +118,23 @@ function generateCertificate(nome: string, pontuacao: number) {
   doc.setFontSize(12);
   doc.setTextColor(60, 60, 60);
   const bodyLines = [
-    'concluiu com êxito a Trilha de Aprendizagem sobre o SIAD –',
-    'Sistema de Avaliação de Desempenho do Servidor Público,',
-    `obtendo a pontuação de ${pontuacao}/100 pontos e o nível "${level.name}".`,
+    `concluiu com êxito a Trilha de Aprendizagem: ${trilha}`,
+    `obtendo a pontuação de ${pontuacao} pontos e o nível "${level.name}".`,
   ];
-  bodyLines.forEach((line, i) => {
-    doc.text(line, w / 2, 108 + i * 7, { align: 'center' });
-  });
+  bodyLines.forEach((line, i) => doc.text(line, w / 2, 110 + i * 7, { align: 'center' }));
 
   const now = new Date();
   const dateStr = now.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
   doc.setFontSize(11);
-  doc.text(`Cuiabá-MT, ${dateStr}`, w / 2, 146, { align: 'center' });
+  doc.text(`Cuiabá-MT, ${dateStr}`, w / 2, 140, { align: 'center' });
 
   doc.setDrawColor(100, 100, 100);
   doc.setLineWidth(0.4);
-  doc.line(w / 2 - 50, 168, w / 2 + 50, 168);
+  doc.line(w / 2 - 50, 165, w / 2 + 50, 165);
   doc.setFontSize(10);
-  doc.text('Coordenação de Gestão de Pessoas', w / 2, 174, { align: 'center' });
+  doc.text('Coordenação de Gestão de Pessoas', w / 2, 171, { align: 'center' });
 
-  doc.save(`Certificado_SIAD_${nome.replace(/\s+/g, '_')}.pdf`);
+  doc.save(`Certificado_${trilha}_${nome.replace(/\s+/g, '_')}.pdf`);
 }
 
 // ── Rank Medal ──
@@ -270,14 +146,8 @@ function RankMedal({ position }: { position: number }) {
 }
 
 function RankingList({ ranking, loading }: { ranking: RankingEntry[]; loading: boolean }) {
-  if (loading) return (
-    <div className="space-y-3 py-2">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="flex items-center gap-3"><Skeleton className="h-8 w-8 rounded-full" /><Skeleton className="h-4 flex-1" /><Skeleton className="h-4 w-12" /></div>
-      ))}
-    </div>
-  );
-  if (ranking.length === 0) return <p className="text-center text-muted-foreground py-6 text-sm">Nenhum servidor concluiu a trilha ainda. Seja o primeiro!</p>;
+  if (loading) return <div className="space-y-3 py-2">{[1, 2, 3].map((i) => (<div key={i} className="flex items-center gap-3"><Skeleton className="h-8 w-8 rounded-full" /><Skeleton className="h-4 flex-1" /><Skeleton className="h-4 w-12" /></div>))}</div>;
+  if (ranking.length === 0) return <p className="text-center text-muted-foreground py-6 text-sm">Nenhum servidor concluiu a trilha ainda.</p>;
   return (
     <div className="space-y-2 py-2 max-h-80 overflow-y-auto">
       {ranking.map((entry, i) => (
@@ -294,54 +164,212 @@ function RankingList({ ranking, loading }: { ranking: RankingEntry[]; loading: b
   );
 }
 
-// ── Timeline Component ──
-function Timeline({ items }: { items: { phase: string; desc: string }[] }) {
+// ── Quiz Component ──
+function QuizPanel({
+  questions,
+  moduleTitle,
+  onComplete,
+  completed: isCompleted,
+}: {
+  questions: QuizQuestion[];
+  moduleTitle: string;
+  onComplete: (acertos: number, total: number) => void;
+  completed: boolean;
+}) {
+  const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [submitted, setSubmitted] = useState(false);
+  const [acertos, setAcertos] = useState(0);
+
+  useEffect(() => {
+    setAnswers({});
+    setSubmitted(false);
+    setAcertos(0);
+  }, [questions]);
+
+  const handleSubmit = () => {
+    let correct = 0;
+    questions.forEach((q) => {
+      if (answers[q.id] === q.resposta_correta) correct++;
+    });
+    setAcertos(correct);
+    setSubmitted(true);
+    onComplete(correct, questions.length);
+  };
+
+  const allAnswered = questions.length > 0 && questions.every((q) => answers[q.id] !== undefined);
+
+  if (questions.length === 0) {
+    return (
+      <Card className="rounded-3xl border-0 shadow-sm h-full">
+        <CardContent className="p-6 flex items-center justify-center h-full">
+          <p className="text-muted-foreground text-sm text-center">Nenhum quiz disponível para este módulo.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <div className="relative pl-8 space-y-6 py-2">
-      <div className="absolute left-3 top-3 bottom-3 w-0.5 bg-gradient-to-b from-primary via-primary/60 to-primary/20 rounded-full" />
-      {items.map((item, i) => (
-        <div key={i} className="relative group">
-          <div className="absolute -left-5 top-1 w-4 h-4 rounded-full border-2 border-primary bg-card group-hover:bg-primary group-hover:scale-110 transition-all duration-300 z-10" />
-          <div className="bg-muted/40 rounded-2xl p-4 hover:bg-muted/70 transition-colors duration-300">
-            <div className="flex items-center gap-2 mb-1">
-              <Badge variant="outline" className="text-[10px] rounded-full px-2 py-0 font-semibold">Fase {i + 1}</Badge>
-              <h4 className="text-sm font-bold text-foreground">{item.phase}</h4>
+    <Card className="rounded-3xl border-0 shadow-sm h-full flex flex-col">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2 text-foreground">
+          <Lightbulb className="h-4 w-4 text-amber-500" /> Quiz — {moduleTitle}
+        </CardTitle>
+        {submitted && (
+          <Badge className={`w-fit rounded-full text-xs ${acertos === questions.length ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-amber-100 text-amber-700 border-amber-200'}`}>
+            {acertos}/{questions.length} corretas
+          </Badge>
+        )}
+      </CardHeader>
+      <ScrollArea className="flex-1">
+        <CardContent className="space-y-5 pb-6">
+          {questions.map((q, qi) => {
+            const selected = answers[q.id];
+            const isCorrect = submitted && selected === q.resposta_correta;
+            const isWrong = submitted && selected !== undefined && selected !== q.resposta_correta;
+
+            return (
+              <div key={q.id} className={`space-y-3 p-4 rounded-2xl transition-all duration-300 ${submitted ? (isCorrect ? 'bg-emerald-50 dark:bg-emerald-900/10' : isWrong ? 'bg-red-50 dark:bg-red-900/10' : 'bg-muted/30') : 'bg-muted/30'}`}>
+                <p className="text-sm font-semibold text-foreground">
+                  <span className="text-primary mr-1">{qi + 1}.</span> {q.pergunta}
+                </p>
+                <RadioGroup
+                  value={selected !== undefined ? String(selected) : undefined}
+                  onValueChange={(v) => !submitted && setAnswers({ ...answers, [q.id]: parseInt(v) })}
+                  disabled={submitted}
+                  className="space-y-2"
+                >
+                  {q.opcoes.map((opt, oi) => {
+                    const isThisCorrect = submitted && oi === q.resposta_correta;
+                    const isThisSelected = selected === oi;
+                    return (
+                      <div
+                        key={oi}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all cursor-pointer ${
+                          submitted
+                            ? isThisCorrect
+                              ? 'border-emerald-300 bg-emerald-50 dark:bg-emerald-900/20'
+                              : isThisSelected
+                              ? 'border-red-300 bg-red-50 dark:bg-red-900/20'
+                              : 'border-transparent'
+                            : isThisSelected
+                            ? 'border-primary bg-primary/5'
+                            : 'border-transparent hover:border-border hover:bg-muted/50'
+                        }`}
+                      >
+                        <RadioGroupItem value={String(oi)} id={`${q.id}-${oi}`} />
+                        <Label htmlFor={`${q.id}-${oi}`} className="text-sm text-foreground cursor-pointer flex-1">{opt}</Label>
+                        {submitted && isThisCorrect && <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />}
+                        {submitted && isThisSelected && !isThisCorrect && <XCircle className="h-4 w-4 text-red-500 shrink-0" />}
+                      </div>
+                    );
+                  })}
+                </RadioGroup>
+              </div>
+            );
+          })}
+
+          {!submitted ? (
+            <Button
+              className="w-full rounded-full gap-2 shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all"
+              disabled={!allAnswered || isCompleted}
+              onClick={handleSubmit}
+            >
+              <CheckCircle2 className="h-4 w-4" /> Verificar Respostas
+            </Button>
+          ) : (
+            <div className="text-center space-y-2">
+              <p className="text-sm text-muted-foreground">
+                {acertos === questions.length ? '🎉 Perfeito! Todas corretas!' : `Você acertou ${acertos} de ${questions.length}.`}
+              </p>
             </div>
-            <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
-          </div>
-        </div>
-      ))}
-    </div>
+          )}
+        </CardContent>
+      </ScrollArea>
+    </Card>
   );
 }
 
 // ══════════════════════════════════════════════════════════
 const Aprendizagem = () => {
   const navigate = useNavigate();
+  const [activeTrilha, setActiveTrilha] = useState('SIAD');
   const [current, setCurrent] = useState(0);
   const [completed, setCompleted] = useState<Set<number>>(new Set());
-  const [faqSearch, setFaqSearch] = useState('');
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
   const [started, setStarted] = useState(false);
   const [showRanking, setShowRanking] = useState(false);
-  const [showAchievements, setShowAchievements] = useState(false);
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
   const [rankingLoading, setRankingLoading] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [newAchievement, setNewAchievement] = useState<string | null>(null);
   const startTimeRef = useRef(Date.now());
 
-  const totalPoints = useMemo(() => Array.from(completed).reduce((sum, i) => sum + POINTS_PER_STEP[i], 0), [completed]);
-  const progress = (completed.size / modules.length) * 100;
-  const isComplete = completed.size === modules.length;
+  // Data from DB
+  const [modules, setModules] = useState<TrailModule[]>([]);
+  const [quizMap, setQuizMap] = useState<Record<string, QuizQuestion[]>>({});
+  const [loading, setLoading] = useState(true);
+
+  // Fetch trail data
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      const { data: contentData } = await supabase
+        .from('trilhas_conteudo')
+        .select('*')
+        .eq('trilha', activeTrilha)
+        .order('modulo_ordem');
+
+      const mods: TrailModule[] = (contentData || []).map((d: any) => ({
+        id: d.id,
+        trilha: d.trilha,
+        modulo_ordem: d.modulo_ordem,
+        titulo: d.titulo,
+        subtitulo: d.subtitulo,
+        conteudo: d.conteudo,
+        checklist: Array.isArray(d.checklist) ? d.checklist : JSON.parse(d.checklist || '[]'),
+        pontos: d.pontos,
+      }));
+      setModules(mods);
+
+      if (mods.length > 0) {
+        const ids = mods.map((m) => m.id);
+        const { data: quizData } = await supabase
+          .from('quiz_perguntas')
+          .select('*')
+          .in('trilha_conteudo_id', ids);
+
+        const qMap: Record<string, QuizQuestion[]> = {};
+        (quizData || []).forEach((q: any) => {
+          const parsed: QuizQuestion = {
+            id: q.id,
+            trilha_conteudo_id: q.trilha_conteudo_id,
+            pergunta: q.pergunta,
+            opcoes: Array.isArray(q.opcoes) ? q.opcoes : JSON.parse(q.opcoes || '[]'),
+            resposta_correta: q.resposta_correta,
+          };
+          if (!qMap[q.trilha_conteudo_id]) qMap[q.trilha_conteudo_id] = [];
+          qMap[q.trilha_conteudo_id].push(parsed);
+        });
+        setQuizMap(qMap);
+      }
+
+      setCurrent(0);
+      setCompleted(new Set());
+      setSaved(false);
+      setLoading(false);
+    })();
+  }, [activeTrilha]);
+
+  const totalMaxPts = modules.reduce((s, m) => s + m.pontos, 0);
+  const totalPoints = useMemo(() => Array.from(completed).reduce((sum, i) => sum + (modules[i]?.pontos || 0), 0), [completed, modules]);
+  const progress = modules.length > 0 ? (completed.size / modules.length) * 100 : 0;
+  const isComplete = modules.length > 0 && completed.size === modules.length;
   const currentLevel = getLevel(totalPoints);
-  const nextLevel = getNextLevel(totalPoints);
   const unlockedAchievements = getUnlockedAchievements(completed.size);
 
   const fetchRanking = async () => {
     setRankingLoading(true);
-    const { data } = await supabase.from('trilha_progresso').select('id, nome, pontuacao, nivel, concluido_em').eq('concluido', true).order('pontuacao', { ascending: false }).order('concluido_em', { ascending: true }).limit(20);
+    const { data } = await supabase.from('trilha_progresso').select('id, nome, pontuacao, nivel, concluido_em').eq('concluido', true).order('pontuacao', { ascending: false }).limit(20);
     setRanking((data as RankingEntry[]) || []);
     setRankingLoading(false);
   };
@@ -352,44 +380,46 @@ const Aprendizagem = () => {
     if (saved) return;
     const elapsedMin = Math.round((Date.now() - startTimeRef.current) / 60000);
     const { error } = await supabase.from('trilha_progresso').insert({
-      nome: userName,
-      email: userEmail,
+      nome: userName, email: userEmail,
       etapas_concluidas: Array.from(completed),
-      pontuacao: totalPoints,
-      nivel: currentLevel.name,
+      pontuacao: totalPoints, nivel: currentLevel.name,
       medalhas: unlockedAchievements.map((a) => a.id),
-      tempo_minutos: elapsedMin,
-      concluido: true,
+      tempo_minutos: elapsedMin, concluido: true,
       concluido_em: new Date().toISOString(),
     });
-    if (!error) { setSaved(true); toast.success('Progresso salvo com sucesso!'); fetchRanking(); }
+    if (!error) { setSaved(true); toast.success('Progresso salvo!'); fetchRanking(); }
     else toast.error('Erro ao salvar progresso.');
   };
 
   const completeStep = (idx: number) => {
     if (completed.has(idx)) return;
-    const prev = completed.size;
     const next = new Set(completed);
     next.add(idx);
     setCompleted(next);
-    toast.success(`+${POINTS_PER_STEP[idx]} pontos!`, { icon: <Zap className="h-4 w-4 text-amber-500" /> });
-    const newCount = next.size;
-    const newAch = ACHIEVEMENTS.find((a) => a.requiredSteps === newCount && prev < a.requiredSteps);
-    if (newAch) {
-      setTimeout(() => { setNewAchievement(newAch.id); toast.success(`🏅 Conquista: ${newAch.name}!`); }, 600);
+    toast.success(`+${modules[idx]?.pontos || 0} pontos!`, { icon: <Zap className="h-4 w-4 text-amber-500" /> });
+  };
+
+  const handleQuizComplete = (acertos: number, total: number) => {
+    if (acertos >= Math.ceil(total * 0.5)) {
+      completeStep(current);
+    } else {
+      toast.error('Acerte pelo menos 50% para avançar.');
     }
   };
 
   const goNext = () => {
-    completeStep(current);
+    if (!completed.has(current)) {
+      toast.error('Complete o quiz para avançar.');
+      return;
+    }
     if (current < modules.length - 1) setCurrent(current + 1);
   };
 
   const goPrev = () => { if (current > 0) setCurrent(current - 1); };
 
-  const filteredFaq = faqSearch.trim()
-    ? faqItems.filter((f) => f.q.toLowerCase().includes(faqSearch.toLowerCase()) || f.a.toLowerCase().includes(faqSearch.toLowerCase()))
-    : faqItems;
+  const handleTrilhaChange = (trilha: string) => {
+    setActiveTrilha(trilha);
+  };
 
   // ── Enrollment Screen ──
   if (!started) {
@@ -410,33 +440,20 @@ const Aprendizagem = () => {
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-foreground/20 backdrop-blur-sm mb-4">
                   <BookOpen className="h-8 w-8 text-primary-foreground" />
                 </div>
-                <h2 className="text-2xl font-bold text-primary-foreground mb-1">Trilha de Aprendizagem</h2>
-                <p className="text-primary-foreground/80 text-sm">Sistema de Avaliação de Desempenho – SIAD</p>
+                <h2 className="text-2xl font-bold text-primary-foreground mb-1">Trilhas de Aprendizagem</h2>
+                <p className="text-primary-foreground/80 text-sm">Plataforma de Capacitação do Servidor</p>
               </div>
               <CardContent className="p-8 space-y-6">
-                {/* Level journey */}
-                <div className="flex items-center justify-between px-2">
-                  {LEVELS.map((lv) => (
-                    <div key={lv.name} className="flex flex-col items-center gap-1">
-                      <span className="text-xl">{lv.icon}</span>
-                      <span className="text-[9px] text-muted-foreground font-medium">{lv.name}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                  <div className="h-full w-0 rounded-full bg-gradient-to-r from-primary to-primary/60" />
-                </div>
-
                 <div className="grid grid-cols-3 gap-3 text-center">
                   <div className="bg-muted/50 rounded-2xl py-3">
                     <Star className="h-5 w-5 text-amber-500 mx-auto mb-1" />
-                    <p className="text-lg font-bold text-foreground">100</p>
-                    <p className="text-[10px] text-muted-foreground">Pontos</p>
+                    <p className="text-lg font-bold text-foreground">3</p>
+                    <p className="text-[10px] text-muted-foreground">Trilhas</p>
                   </div>
                   <div className="bg-muted/50 rounded-2xl py-3">
                     <Award className="h-5 w-5 text-primary mx-auto mb-1" />
-                    <p className="text-lg font-bold text-foreground">5</p>
-                    <p className="text-[10px] text-muted-foreground">Conquistas</p>
+                    <p className="text-lg font-bold text-foreground">Quiz</p>
+                    <p className="text-[10px] text-muted-foreground">Interativo</p>
                   </div>
                   <div className="bg-muted/50 rounded-2xl py-3">
                     <Trophy className="h-5 w-5 text-amber-600 mx-auto mb-1" />
@@ -444,7 +461,6 @@ const Aprendizagem = () => {
                     <p className="text-[10px] text-muted-foreground">Certificado</p>
                   </div>
                 </div>
-
                 <div className="space-y-3">
                   <Input placeholder="Seu nome completo" value={userName} onChange={(e) => setUserName(e.target.value)} className="rounded-xl h-12 bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-primary/30" />
                   <Input placeholder="Seu e-mail institucional" type="email" value={userEmail} onChange={(e) => setUserEmail(e.target.value)} className="rounded-xl h-12 bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-primary/30" />
@@ -453,25 +469,10 @@ const Aprendizagem = () => {
                   <Sparkles className="h-4 w-4" /> Iniciar Trilha
                 </Button>
                 <Button variant="ghost" className="w-full rounded-xl gap-2 text-muted-foreground" onClick={() => { setShowRanking(true); fetchRanking(); }}>
-                  <Trophy className="h-4 w-4" /> Ver Ranking de Servidores
+                  <Trophy className="h-4 w-4" /> Ver Ranking
                 </Button>
               </CardContent>
             </Card>
-
-            {/* Module preview */}
-            <div className="grid grid-cols-3 gap-3">
-              {modules.map((m, i) => (
-                <div key={i} className="relative rounded-2xl overflow-hidden aspect-[4/3] group">
-                  <img src={m.image} alt={m.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-3">
-                    <div>
-                      <p className="text-[10px] text-white/70 font-medium">Módulo {i + 1}</p>
-                      <p className="text-xs text-white font-semibold leading-tight">{m.title}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
         </main>
 
@@ -495,12 +496,9 @@ const Aprendizagem = () => {
       <header className="institutional-gradient px-6 py-3 flex items-center gap-3 shadow-lg" role="banner">
         <Building2 className="h-7 w-7 text-primary-foreground" />
         <div className="flex-1">
-          <h1 className="text-sm font-bold text-primary-foreground leading-tight">SEPLAG – Trilha SIAD</h1>
+          <h1 className="text-sm font-bold text-primary-foreground leading-tight">SEPLAG – Trilhas de Aprendizagem</h1>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setShowAchievements(true)} className="flex items-center gap-1.5 bg-primary-foreground/15 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs text-primary-foreground font-medium hover:bg-primary-foreground/25 transition-colors">
-            <Award className="h-3.5 w-3.5" /> {unlockedAchievements.length}/{ACHIEVEMENTS.length}
-          </button>
           <button onClick={() => { setShowRanking(true); fetchRanking(); }} className="flex items-center gap-1.5 bg-primary-foreground/15 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs text-primary-foreground font-medium hover:bg-primary-foreground/25 transition-colors">
             <Trophy className="h-3.5 w-3.5" /> Ranking
           </button>
@@ -511,303 +509,197 @@ const Aprendizagem = () => {
       </header>
 
       <main className="flex-1" role="main">
-        <div className="max-w-5xl mx-auto px-4 py-8">
-          {/* Back + Level */}
-          <div className="flex items-center justify-between mb-6">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          {/* Back + Trail Tabs */}
+          <div className="flex items-center justify-between mb-5">
             <Button variant="ghost" className="gap-2 text-muted-foreground hover:text-foreground rounded-full" onClick={() => navigate('/')}>
-              <ArrowLeft className="h-4 w-4" /> Portal
+              <ArrowLeft className="h-4 w-4" /> Voltar ao Início
             </Button>
             <div className="flex items-center gap-3">
               <span className="text-xl">{currentLevel.icon}</span>
-              <div>
-                <p className="text-sm font-bold text-foreground">{currentLevel.name}</p>
-                {nextLevel && <p className="text-[10px] text-muted-foreground">Próximo: {nextLevel.name} ({nextLevel.minPts} pts)</p>}
-              </div>
+              <p className="text-sm font-bold text-foreground">{currentLevel.name}</p>
             </div>
           </div>
 
-          {/* Progress bar */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-              <span className="font-medium">Progresso da Trilha</span>
-              <span className="font-bold text-primary">{Math.round(progress)}% concluído</span>
-            </div>
-            <Progress value={progress} className="h-2.5 mb-6" />
+          {/* Trail Tabs */}
+          <Tabs value={activeTrilha} onValueChange={handleTrilhaChange} className="mb-6">
+            <TabsList className="w-full max-w-lg mx-auto grid grid-cols-3 h-11 rounded-full bg-muted p-1">
+              <TabsTrigger value="SIAD" className="rounded-full text-xs font-semibold data-[state=active]:shadow-md">SIAD</TabsTrigger>
+              <TabsTrigger value="SIEP" className="rounded-full text-xs font-semibold data-[state=active]:shadow-md">SIEP</TabsTrigger>
+              <TabsTrigger value="Banco de Talentos" className="rounded-full text-xs font-semibold data-[state=active]:shadow-md">Banco de Talentos</TabsTrigger>
+            </TabsList>
+          </Tabs>
 
-            {/* Stepper */}
-            <div className="flex items-center justify-between relative">
-              {/* Connector line */}
-              <div className="absolute top-5 left-[5%] right-[5%] h-0.5 bg-muted z-0">
-                <div className="h-full bg-primary/60 transition-all duration-500 rounded-full" style={{ width: `${progress}%` }} />
-              </div>
-
-              {modules.map((m, i) => {
-                const done = completed.has(i);
-                const active = i === current;
-                const locked = !done && i > 0 && !completed.has(i - 1) && i !== current;
-                const Icon = STEP_ICONS[i];
-                return (
-                  <button
-                    key={i}
-                    onClick={() => !locked && setCurrent(i)}
-                    disabled={locked}
-                    className={`relative z-10 flex flex-col items-center gap-1.5 group transition-all duration-300 ${locked ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
-                  >
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
-                      done ? 'bg-primary text-primary-foreground shadow-md' :
-                      active ? 'bg-primary/10 text-primary ring-2 ring-primary ring-offset-2 shadow-lg scale-110' :
-                      'bg-muted text-muted-foreground'
-                    } ${!locked && !done && !active ? 'group-hover:bg-primary/10 group-hover:text-primary' : ''}`}>
-                      {done ? <CheckCircle2 className="h-5 w-5" /> : locked ? <Lock className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
-                    </div>
-                    <span className={`text-[9px] font-medium text-center leading-tight max-w-[70px] ${active ? 'text-primary font-bold' : 'text-muted-foreground'}`}>
-                      {m.title.length > 18 ? m.title.substring(0, 16) + '…' : m.title}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Module Content */}
-          <div className="grid lg:grid-cols-[1fr_300px] gap-6">
-            {/* Main card */}
-            <Card className="rounded-3xl shadow-xl border-0 overflow-hidden">
-              {/* Image header */}
-              <div className="relative">
-                <img src={mod.image} alt={mod.title} className="w-full h-48 md:h-56 object-cover" />
-                <div className="absolute top-4 right-4">
-                  <Badge className="bg-card/90 backdrop-blur-md text-amber-600 border-0 gap-1 rounded-full px-3 shadow-sm">
-                    <Star className="h-3 w-3" /> +{mod.points} pts
-                  </Badge>
+          {loading ? (
+            <div className="space-y-4">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-32 rounded-2xl" />)}</div>
+          ) : modules.length === 0 ? (
+            <Card className="rounded-3xl border-0 shadow-sm"><CardContent className="p-12 text-center"><p className="text-muted-foreground">Nenhum módulo disponível para esta trilha.</p></CardContent></Card>
+          ) : (
+            <>
+              {/* Progress bar */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
+                  <span className="font-medium">Progresso — {activeTrilha}</span>
+                  <span className="font-bold text-primary">{Math.round(progress)}% concluído</span>
                 </div>
-                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-card via-card/80 to-transparent h-20" />
-              </div>
+                <Progress value={progress} className="h-2.5 mb-4" />
 
-              <CardContent className="p-8 md:p-10 -mt-6 relative space-y-6">
-                {/* Header */}
-                <div>
-                  <Badge variant="outline" className="mb-3 rounded-full text-[10px] font-semibold">Etapa {current + 1} de {modules.length}</Badge>
-                  <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-1">{mod.title}</h2>
-                  <p className="text-primary font-medium">{mod.subtitle}</p>
-                </div>
-
-                {/* Checklist */}
-                {mod.checklist && (
-                  <div className="bg-primary/5 rounded-2xl p-5">
-                    <p className="text-xs font-bold text-primary mb-3 flex items-center gap-2">
-                      <Target className="h-3.5 w-3.5" /> O que você vai aprender
-                    </p>
-                    <ul className="space-y-2">
-                      {mod.checklist.map((item, i) => (
-                        <li key={i} className="flex items-start gap-2.5 text-sm text-foreground">
-                          <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
+                {/* Stepper */}
+                <div className="flex items-center justify-between relative">
+                  <div className="absolute top-5 left-[5%] right-[5%] h-0.5 bg-muted z-0">
+                    <div className="h-full bg-primary/60 transition-all duration-500 rounded-full" style={{ width: `${progress}%` }} />
                   </div>
-                )}
-
-                {/* Timeline for step 3 */}
-                {'timeline' in mod && mod.timeline && (
-                  <Timeline items={mod.timeline} />
-                )}
-
-                {/* Content */}
-                {mod.content.length > 0 && (
-                  <div className="space-y-3">
-                    {mod.content.map((line, i) => (
-                      <p key={i} className="text-muted-foreground leading-relaxed">{line}</p>
-                    ))}
-                  </div>
-                )}
-
-                {/* FAQ search in step 6 */}
-                {current === 5 && (
-                  <div className="space-y-4 pt-2">
-                    <div className="relative">
-                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Pesquise sua dúvida sobre o SIAD..."
-                        value={faqSearch}
-                        onChange={(e) => setFaqSearch(e.target.value)}
-                        className="pl-11 rounded-full bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-primary/30 h-12"
-                      />
-                    </div>
-                    <div className="space-y-3">
-                      {filteredFaq.map((item, i) => (
-                        <div key={i} className="bg-muted/40 rounded-2xl p-4 hover:bg-muted/70 transition-colors">
-                          <p className="text-sm font-semibold text-foreground mb-1">{item.q}</p>
-                          <p className="text-sm text-muted-foreground leading-relaxed">{item.a}</p>
+                  {modules.map((m, i) => {
+                    const done = completed.has(i);
+                    const active = i === current;
+                    const locked = !done && i > 0 && !completed.has(i - 1) && i !== current;
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => !locked && setCurrent(i)}
+                        disabled={locked}
+                        className={`relative z-10 flex flex-col items-center gap-1.5 group transition-all duration-300 ${locked ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                      >
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 text-sm font-bold ${
+                          done ? 'bg-primary text-primary-foreground shadow-md' :
+                          active ? 'bg-primary/10 text-primary ring-2 ring-primary ring-offset-2 shadow-lg scale-110' :
+                          'bg-muted text-muted-foreground'
+                        }`}>
+                          {done ? <CheckCircle2 className="h-5 w-5" /> : locked ? <Lock className="h-4 w-4" /> : i + 1}
                         </div>
-                      ))}
-                    </div>
-                    {/* Quick links */}
-                    <div className="flex flex-wrap gap-2 pt-2">
-                      <a href="#" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-muted text-sm text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors">
-                        <FileText className="h-3.5 w-3.5" /> Manual do Usuário
-                      </a>
-                      <a href="#" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-muted text-sm text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors">
-                        <Shield className="h-3.5 w-3.5" /> Guia do Gestor
-                      </a>
-                      <a href="#" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-muted text-sm text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors">
-                        <ClipboardCheck className="h-3.5 w-3.5" /> Fluxograma PDF
-                      </a>
-                    </div>
-                  </div>
-                )}
-
-                {/* Navigation */}
-                <div className="flex items-center justify-between pt-6 border-t">
-                  <Button variant="outline" className="rounded-full px-6 gap-2" onClick={goPrev} disabled={current === 0}>
-                    <ArrowLeft className="h-4 w-4" /> Voltar
-                  </Button>
-                  {current < modules.length - 1 ? (
-                    <Button className="rounded-full px-8 gap-2 shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all" onClick={goNext}>
-                      Próxima Etapa <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  ) : (
-                    <Button className="rounded-full px-8 gap-2 shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all" onClick={() => completeStep(current)}>
-                      <CheckCircle2 className="h-4 w-4" /> Concluir Trilha
-                    </Button>
-                  )}
+                        <span className={`text-[9px] font-medium text-center leading-tight max-w-[70px] ${active ? 'text-primary font-bold' : 'text-muted-foreground'}`}>
+                          {m.titulo.length > 18 ? m.titulo.substring(0, 16) + '…' : m.titulo}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
 
-            {/* Side panel */}
-            <div className="space-y-4">
-              {/* Level card */}
-              <Card className="rounded-2xl border-0 shadow-sm">
-                <CardContent className="p-5">
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className="text-3xl">{currentLevel.icon}</span>
-                    <div>
-                      <p className="font-bold text-foreground">{currentLevel.name}</p>
-                      <p className="text-xs text-muted-foreground">{totalPoints}/100 pontos</p>
-                    </div>
-                  </div>
-                  {nextLevel ? (
-                    <>
-                      <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
-                        <span>{currentLevel.name}</span>
-                        <span>{nextLevel.name} ({nextLevel.minPts} pts)</span>
+              {/* Split Layout: Content LEFT + Quiz RIGHT */}
+              <div className="grid lg:grid-cols-2 gap-6">
+                {/* LEFT: Trail Content */}
+                <Card className="rounded-3xl shadow-sm border-0 flex flex-col">
+                  <CardHeader className="pb-3">
+                    <Badge variant="outline" className="w-fit rounded-full text-[10px] font-semibold mb-2">
+                      Etapa {current + 1} de {modules.length}
+                    </Badge>
+                    <CardTitle className="text-xl text-foreground">{mod?.titulo}</CardTitle>
+                    <p className="text-sm text-primary font-medium">{mod?.subtitulo}</p>
+                  </CardHeader>
+                  <ScrollArea className="flex-1">
+                    <CardContent className="space-y-5 pb-6">
+                      {/* Checklist */}
+                      {mod?.checklist && mod.checklist.length > 0 && (
+                        <div className="bg-primary/5 rounded-2xl p-5">
+                          <p className="text-xs font-bold text-primary mb-3 flex items-center gap-2">
+                            <Target className="h-3.5 w-3.5" /> O que você vai aprender
+                          </p>
+                          <ul className="space-y-2">
+                            {mod.checklist.map((item, i) => (
+                              <li key={i} className="flex items-start gap-2.5 text-sm text-foreground">
+                                <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                                {item}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Content */}
+                      {mod?.conteudo && (
+                        <div className="space-y-3">
+                          {mod.conteudo.split('\n').filter(Boolean).map((line, i) => (
+                            <p key={i} className="text-muted-foreground leading-relaxed">{line}</p>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Points badge */}
+                      <div className="flex items-center gap-2 pt-2">
+                        <Badge className="bg-amber-100 text-amber-700 border-amber-200 rounded-full gap-1">
+                          <Star className="h-3 w-3" /> +{mod?.pontos} pts
+                        </Badge>
+                        {completed.has(current) && (
+                          <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 rounded-full gap-1">
+                            <CheckCircle2 className="h-3 w-3" /> Concluído
+                          </Badge>
+                        )}
                       </div>
-                      <Progress value={(totalPoints / nextLevel.minPts) * 100} className="h-2" />
-                    </>
-                  ) : (
-                    <p className="text-xs text-primary font-semibold">Nível máximo atingido! 🎉</p>
-                  )}
-                </CardContent>
-              </Card>
 
-              {/* Achievements */}
-              <Card className="rounded-2xl border-0 shadow-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2"><Award className="h-4 w-4 text-primary" /> Conquistas</CardTitle>
-                </CardHeader>
-                <CardContent className="pb-5">
-                  <div className="space-y-2">
-                    {ACHIEVEMENTS.map((a) => {
-                      const unlocked = unlockedAchievements.includes(a);
-                      return (
-                        <div key={a.id} className={`flex items-center gap-3 p-2.5 rounded-xl transition-all ${unlocked ? 'bg-primary/5' : 'opacity-40'} ${newAchievement === a.id ? 'ring-2 ring-amber-400 animate-pulse' : ''}`}>
-                          <span className="text-lg">{a.icon}</span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-semibold text-foreground truncate">{a.name}</p>
-                            <p className="text-[10px] text-muted-foreground">{a.desc}</p>
-                          </div>
-                          {unlocked ? <CheckCircle2 className="h-4 w-4 text-primary shrink-0" /> : <Lock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
+                      {/* Navigation */}
+                      <div className="flex items-center justify-between pt-4 border-t">
+                        <Button variant="outline" className="rounded-full px-6 gap-2" onClick={goPrev} disabled={current === 0}>
+                          <ArrowLeft className="h-4 w-4" /> Voltar
+                        </Button>
+                        {current < modules.length - 1 ? (
+                          <Button className="rounded-full px-8 gap-2 shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all" onClick={goNext} disabled={!completed.has(current)}>
+                            Próxima Etapa <ArrowRight className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <Button className="rounded-full px-8 gap-2 shadow-md" disabled={!isComplete} onClick={() => {}}>
+                            <CheckCircle2 className="h-4 w-4" /> Trilha Concluída
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </ScrollArea>
+                </Card>
 
-              {/* Quick stats */}
-              <Card className="rounded-2xl border-0 shadow-sm">
-                <CardContent className="p-5">
-                  <div className="grid grid-cols-2 gap-3 text-center">
-                    <div className="bg-muted/50 rounded-xl py-3">
-                      <p className="text-lg font-bold text-foreground">{completed.size}/{modules.length}</p>
-                      <p className="text-[10px] text-muted-foreground">Etapas</p>
-                    </div>
-                    <div className="bg-muted/50 rounded-xl py-3">
-                      <p className="text-lg font-bold text-foreground">{Math.round((Date.now() - startTimeRef.current) / 60000)}m</p>
-                      <p className="text-[10px] text-muted-foreground">Tempo</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-
-          {/* Completion Card */}
-          {isComplete && (
-            <Card className="rounded-3xl border-0 shadow-2xl mt-8 overflow-hidden">
-              <div className="institutional-gradient p-8 md:p-10 text-center">
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary-foreground/20 backdrop-blur-sm mb-4">
-                  <Award className="h-10 w-10 text-primary-foreground" />
-                </div>
-                <h3 className="text-2xl md:text-3xl font-bold text-primary-foreground mb-2">Trilha Concluída!</h3>
-                <p className="text-primary-foreground/80 text-lg">
-                  Parabéns, <span className="font-semibold">{userName}</span>!
-                  Você obteve <span className="font-bold">{totalPoints} pontos</span> e alcançou o nível <span className="font-bold">{currentLevel.name}</span>.
-                </p>
+                {/* RIGHT: Quiz */}
+                <QuizPanel
+                  questions={quizMap[mod?.id] || []}
+                  moduleTitle={mod?.titulo || ''}
+                  onComplete={handleQuizComplete}
+                  completed={completed.has(current)}
+                />
               </div>
-              <CardContent className="p-8 md:p-10 space-y-6">
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                  <Button className="rounded-full gap-2 px-8 py-6 text-base shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95 transition-all" onClick={() => generateCertificate(userName, totalPoints)}>
-                    <Download className="h-5 w-5" /> Baixar Certificado PDF
-                  </Button>
-                  {!saved ? (
-                    <Button variant="outline" className="rounded-full gap-2 px-8 py-6 text-base" onClick={saveProgress}>
-                      <Trophy className="h-5 w-5" /> Salvar no Ranking
-                    </Button>
-                  ) : (
-                    <span className="text-sm text-primary font-medium flex items-center gap-1"><CheckCircle2 className="h-5 w-5" /> Salvo com sucesso!</span>
-                  )}
-                </div>
-                <div className="flex items-center justify-center gap-6">
-                  {unlockedAchievements.map((a) => (
-                    <div key={a.id} className="flex flex-col items-center gap-1.5">
-                      <span className="text-3xl">{a.icon}</span>
-                      <span className="text-[10px] text-muted-foreground font-medium">{a.name}</span>
+
+              {/* Completion Card */}
+              {isComplete && (
+                <Card className="rounded-3xl border-0 shadow-2xl mt-8 overflow-hidden">
+                  <div className="institutional-gradient p-8 text-center">
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary-foreground/20 backdrop-blur-sm mb-4">
+                      <Award className="h-10 w-10 text-primary-foreground" />
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    <h3 className="text-2xl font-bold text-primary-foreground mb-2">Trilha {activeTrilha} Concluída!</h3>
+                    <p className="text-primary-foreground/80 text-lg">
+                      Parabéns, <span className="font-semibold">{userName}</span>!
+                      Você obteve <span className="font-bold">{totalPoints} pontos</span> e alcançou o nível <span className="font-bold">{currentLevel.name}</span>.
+                    </p>
+                  </div>
+                  <CardContent className="p-8 space-y-6">
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                      <Button className="rounded-full gap-2 px-8 py-6 text-base shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95 transition-all" onClick={() => generateCertificate(userName, totalPoints, activeTrilha)}>
+                        <Download className="h-5 w-5" /> Baixar Certificado PDF
+                      </Button>
+                      {!saved ? (
+                        <Button variant="outline" className="rounded-full gap-2 px-8 py-6 text-base" onClick={saveProgress}>
+                          <Trophy className="h-5 w-5" /> Salvar no Ranking
+                        </Button>
+                      ) : (
+                        <span className="text-sm text-primary font-medium flex items-center gap-1"><CheckCircle2 className="h-5 w-5" /> Salvo!</span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-center gap-6">
+                      {unlockedAchievements.map((a) => (
+                        <div key={a.id} className="flex flex-col items-center gap-1.5">
+                          <span className="text-3xl">{a.icon}</span>
+                          <span className="text-[10px] text-muted-foreground font-medium">{a.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </>
           )}
         </div>
       </main>
 
-      {/* Dialogs */}
+      {/* Ranking Dialog */}
       <Dialog open={showRanking} onOpenChange={setShowRanking}>
         <DialogContent className="rounded-2xl max-w-md"><DialogHeader><DialogTitle className="flex items-center gap-2"><Trophy className="h-5 w-5 text-amber-500" /> Ranking</DialogTitle></DialogHeader><RankingList ranking={ranking} loading={rankingLoading} /></DialogContent>
-      </Dialog>
-
-      <Dialog open={showAchievements} onOpenChange={setShowAchievements}>
-        <DialogContent className="rounded-2xl max-w-sm">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><Award className="h-5 w-5 text-primary" /> Conquistas</DialogTitle></DialogHeader>
-          <div className="space-y-3 py-2">
-            {ACHIEVEMENTS.map((a) => {
-              const unlocked = unlockedAchievements.includes(a);
-              return (
-                <div key={a.id} className={`flex items-center gap-3 p-3 rounded-xl ${unlocked ? 'bg-primary/5' : 'opacity-40'}`}>
-                  <span className="text-2xl">{a.icon}</span>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-foreground">{a.name}</p>
-                    <p className="text-xs text-muted-foreground">{a.desc}</p>
-                  </div>
-                  {unlocked ? <CheckCircle2 className="h-5 w-5 text-primary" /> : <Lock className="h-4 w-4 text-muted-foreground" />}
-                </div>
-              );
-            })}
-          </div>
-        </DialogContent>
       </Dialog>
 
       <footer className="border-t bg-card px-6 py-4 text-center text-sm text-muted-foreground" role="contentinfo">
