@@ -28,18 +28,6 @@ interface Membro {
   foto_url: string;
 }
 
-interface Solicitacao {
-  id: string;
-  protocolo: string;
-  nome: string;
-  secretaria: string;
-  assunto: string;
-  status: string;
-  prioridade: string;
-  sla_limite: string;
-  data: string;
-}
-
 const SISTEMAS = [
   {
     id: 'atendimento',
@@ -82,56 +70,22 @@ const SISTEMAS = [
   },
 ];
 
-function getSlaStatus(slaLimite: string) {
-  const now = new Date();
-  const limite = new Date(slaLimite);
-  const diffMs = limite.getTime() - now.getTime();
-  const diffH = diffMs / (1000 * 60 * 60);
-  if (diffH < 0) return 'vencido';
-  if (diffH <= 2) return 'critico';
-  if (diffH <= 24) return 'alerta';
-  return 'ok';
-}
-
 const Home = () => {
   const navigate = useNavigate();
   const [banners, setBanners] = useState<Banner[]>([]);
   const [equipe, setEquipe] = useState<Membro[]>([]);
-  const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
-      const [{ data: b }, { data: e }, { data: s }] = await Promise.all([
+      const [{ data: b }, { data: e }] = await Promise.all([
         supabase.from('banners').select('*').eq('ativo', true).order('ordem'),
         supabase.from('equipe').select('*').eq('ativo', true).order('ordem'),
-        supabase.from('solicitacoes').select('id,protocolo,nome,secretaria,assunto,status,prioridade,sla_limite,data').order('data', { ascending: false }).limit(200),
       ]);
       setBanners((b as Banner[]) || []);
       setEquipe((e as Membro[]) || []);
-      setSolicitacoes((s as Solicitacao[]) || []);
     };
     fetchData();
   }, []);
-
-  const stats = useMemo(() => {
-    const abertos = solicitacoes.filter(s => s.status === 'Aberto');
-    const emAndamento = solicitacoes.filter(s => s.status === 'Em andamento');
-    const resolvidos = solicitacoes.filter(s => s.status === 'Resolvido' || s.status === 'Fechado');
-    const vencidos = solicitacoes.filter(s => (s.status === 'Aberto' || s.status === 'Em andamento') && getSlaStatus(s.sla_limite) === 'vencido');
-    const criticos = solicitacoes.filter(s => (s.status === 'Aberto' || s.status === 'Em andamento') && getSlaStatus(s.sla_limite) === 'critico');
-    const alertas = solicitacoes.filter(s => (s.status === 'Aberto' || s.status === 'Em andamento') && getSlaStatus(s.sla_limite) === 'alerta');
-
-    // Lotes por secretaria
-    const porSecretaria: Record<string, number> = {};
-    abertos.concat(emAndamento).forEach(s => {
-      porSecretaria[s.secretaria] = (porSecretaria[s.secretaria] || 0) + 1;
-    });
-    const lotes = Object.entries(porSecretaria)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6);
-
-    return { abertos: abertos.length, emAndamento: emAndamento.length, resolvidos: resolvidos.length, vencidos, criticos, alertas, lotes, total: solicitacoes.length };
-  }, [solicitacoes]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -222,7 +176,6 @@ const Home = () => {
 
         {/* ─── System Cards Grid ─── */}
         <section className="max-w-6xl mx-auto px-4 py-12 space-y-8">
-          {/* Logo + Title */}
           <div className="text-center space-y-4">
             <img
               src="/images/logo-seplag-alt.jpg"
@@ -281,7 +234,6 @@ const Home = () => {
             })}
           </div>
 
-          {/* Action buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             <Button
               size="lg"
