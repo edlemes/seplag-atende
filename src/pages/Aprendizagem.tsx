@@ -360,8 +360,17 @@ const Aprendizagem = () => {
     })();
   }, [activeTrilha]);
 
+  const [transitioning, setTransitioning] = useState(false);
+
+  useEffect(() => {
+    if (transitioning) {
+      const t = setTimeout(() => setTransitioning(false), 400);
+      return () => clearTimeout(t);
+    }
+  }, [transitioning]);
+
   const totalMaxPts = modules.reduce((s, m) => s + m.pontos, 0);
-  const totalPoints = useMemo(() => Array.from(completed).reduce((sum, i) => sum + (modules[i]?.pontos || 0), 0), [completed, modules]);
+  const totalPoints = useMemo(() => Object.values(earnedPoints).reduce((sum, pts) => sum + pts, 0), [earnedPoints]);
   const progress = modules.length > 0 ? (completed.size / modules.length) * 100 : 0;
   const isComplete = modules.length > 0 && completed.size === modules.length;
   const currentLevel = getLevel(totalPoints);
