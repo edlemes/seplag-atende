@@ -90,19 +90,19 @@ const Home = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* ─── Navbar ─── */}
-      <header className="sticky top-0 z-50 bg-[hsl(213,100%,14%)]/95 backdrop-blur-xl border-b border-white/5 px-6 py-3 flex items-center gap-4" role="banner">
-        <img src="/images/logo-seplag.png" alt="SEPLAG" className="h-7 w-auto opacity-90" />
-        <div className="h-5 w-px bg-white/20" />
+      <header className="sticky top-0 z-50 bg-[hsl(213,100%,14%)] backdrop-blur-xl border-b border-white/10 px-6 md:px-10 py-4 flex items-center gap-5" role="banner">
+        <img src="/images/logo-seplag.png" alt="SEPLAG" className="h-9 w-auto" />
+        <div className="h-6 w-px bg-white/20" />
         <div>
-          <h1 className="text-sm font-semibold text-white/95 leading-tight tracking-tight">Central de Atendimento às Setoriais</h1>
-          <p className="text-[10px] text-white/50 font-medium">SEPLAG – Governo de Mato Grosso</p>
+          <h1 className="text-base md:text-lg font-bold text-white leading-tight tracking-tight">Central de Atendimento às Setoriais</h1>
+          <p className="text-xs text-white/60 font-medium mt-0.5">SEPLAG – Governo de Mato Grosso</p>
         </div>
-        <div className="ml-auto flex gap-1">
-          <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/10 text-xs rounded-full px-4" onClick={() => navigate('/faq')}>
-            <HelpCircle className="h-3.5 w-3.5 mr-1.5" /> FAQ
+        <div className="ml-auto flex gap-2">
+          <Button variant="ghost" size="sm" className="text-white/70 hover:text-white hover:bg-white/10 text-sm rounded-full px-5 py-2 font-medium" onClick={() => navigate('/faq')}>
+            <HelpCircle className="h-4 w-4 mr-2" /> FAQ
           </Button>
-          <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/10 text-xs rounded-full px-4" onClick={() => navigate('/admin')}>
-            <BarChart3 className="h-3.5 w-3.5 mr-1.5" /> Admin
+          <Button variant="ghost" size="sm" className="text-white/70 hover:text-white hover:bg-white/10 text-sm rounded-full px-5 py-2 font-medium" onClick={() => navigate('/admin')}>
+            <BarChart3 className="h-4 w-4 mr-2" /> Admin
           </Button>
         </div>
       </header>
@@ -182,14 +182,15 @@ const Home = () => {
         {/* ─── System Cards ─── */}
         <section className="max-w-6xl mx-auto px-4 py-20 space-y-12">
           {/* Logo + Title */}
-          <div className="text-center space-y-5">
-            <p className="text-[11px] font-semibold tracking-[0.2em] text-primary uppercase">
+          <div className="text-center space-y-6">
+            <p className="text-xs md:text-sm font-bold tracking-[0.25em] text-primary uppercase">
               Central de Atendimento às Setoriais
             </p>
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground tracking-tight leading-[1.08]">
-              Capacitação Digital<br />do Servidor
+            <h2 className="text-3xl md:text-5xl lg:text-6xl font-extrabold text-foreground tracking-tight leading-[1.08]">
+              Capacitação Digital<br />
+              <span className="bg-gradient-to-r from-primary to-[hsl(199,89%,48%)] bg-clip-text text-transparent">do Servidor</span>
             </h2>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto font-light leading-relaxed">
+            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               Aprenda sobre os sistemas estaduais de forma interativa, com quizzes, pontuação e certificado de conclusão.
             </p>
           </div>
