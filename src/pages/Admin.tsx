@@ -48,7 +48,7 @@ const SLA_COLORS = {
   'Atrasado': 'text-red-600',
 };
 
-type AdminSection = 'executivo' | 'operacional' | 'faq' | 'usuarios' | 'configuracoes';
+type AdminSection = 'executivo' | 'operacional' | 'faq' | 'usuarios' | 'configuracoes' | 'aprendizagem';
 
 // ─── KPI Card ───
 function KpiCard({ icon: Icon, label, value, color, sub }: { icon: any; label: string; value: string | number; color: string; sub?: string }) {
