@@ -1179,6 +1179,8 @@ const Admin = () => {
           )}
 
           {activeSection === 'aprendizagem' && <AprendizagemManager />}
+          {activeSection === 'banners' && <BannersManager />}
+          {activeSection === 'equipe' && <EquipeManager />}
           {activeSection === 'faq' && <FaqManager />}
           {activeSection === 'usuarios' && <UsersManager />}
           {activeSection === 'configuracoes' && <SettingsManager />}
