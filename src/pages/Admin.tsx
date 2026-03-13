@@ -961,11 +961,27 @@ const Admin = () => {
 
           {/* ═══ OPERACIONAL ═══ */}
           {activeSection === 'operacional' && (
-            <div className="space-y-6">
-              <Card className="border-0 shadow-sm">
-                <CardContent className="pt-6">
-                  <div className="flex flex-wrap gap-3">
-                    <Input placeholder="Buscar por protocolo, nome ou e-mail..." value={busca} onChange={(e) => setBusca(e.target.value)} className="w-64" />
+            <OperacionalSection
+              filtered={filtered}
+              busca={busca}
+              setBusca={setBusca}
+              filtroSecretaria={filtroSecretaria}
+              setFiltroSecretaria={setFiltroSecretaria}
+              filtroStatus={filtroStatus}
+              setFiltroStatus={setFiltroStatus}
+              filtroPrioridade={filtroPrioridade}
+              setFiltroPrioridade={setFiltroPrioridade}
+              secretarias={secretarias}
+              activeOperadores={activeOperadores}
+              currentUser={currentUser!}
+              isGestao={isGestao}
+              isOperacao={isOperacao}
+              isLeitura={isLeitura}
+              onStatusChange={handleStatusChange}
+              onResponsavel={handleResponsavel}
+              onRefresh={refreshSol}
+            />
+          )}
                     <Select value={filtroSecretaria} onValueChange={setFiltroSecretaria}>
                       <SelectTrigger className="w-[200px]"><SelectValue placeholder="Secretaria" /></SelectTrigger>
                       <SelectContent>
