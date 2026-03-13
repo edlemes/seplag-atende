@@ -135,18 +135,18 @@ const Home = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* Header — fundo branco */}
-      <header className="bg-card border-b border-border px-6 py-3 flex items-center gap-3 shadow-sm" role="banner">
-        <img src="/images/logo-seplag-alt.jpg" alt="SEPLAG" className="h-10 w-auto" />
+      {/* Header */}
+      <header className="institutional-gradient px-6 py-4 flex items-center gap-3 shadow-lg" role="banner">
+        <img src="/images/logo-seplag-alt.jpg" alt="SEPLAG" className="h-8 w-auto rounded" />
         <div>
-          <h1 className="text-base font-bold text-foreground leading-tight">Central de Atendimento às Setoriais</h1>
-          <p className="text-[11px] text-muted-foreground">SEPLAG – Mato Grosso</p>
+          <h1 className="text-lg font-bold text-primary-foreground leading-tight">Central de Atendimento às Setoriais</h1>
+          <p className="text-xs text-primary-foreground/80">SEPLAG – Mato Grosso</p>
         </div>
         <div className="ml-auto flex gap-2">
-          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-muted text-xs" onClick={() => navigate('/faq')}>
+          <Button variant="ghost" size="sm" className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 text-xs" onClick={() => navigate('/faq')}>
             <HelpCircle className="h-4 w-4 mr-1" /> FAQ
           </Button>
-          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-muted text-xs" onClick={() => navigate('/admin')}>
+          <Button variant="ghost" size="sm" className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 text-xs" onClick={() => navigate('/admin')}>
             <BarChart3 className="h-4 w-4 mr-1" /> Admin
           </Button>
         </div>
