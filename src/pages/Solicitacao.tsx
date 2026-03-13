@@ -74,6 +74,32 @@ const SolicitacaoPage = () => {
         console.error('Erro ao enviar e-mail:', emailErr);
       }
 
+      // Sync to Google Sheets
+      try {
+        await supabase.functions.invoke('sync-google-sheets', {
+          body: {
+            protocolo: sol.protocolo,
+            nome,
+            email,
+            secretaria,
+            setor,
+            tipo: sol.tipo,
+            categoria: sol.categoria,
+            assunto: sol.assunto,
+            impacto: sol.impacto,
+            prioridade: sol.prioridade,
+            descricao: sol.descricao,
+            data: sol.data,
+            status: sol.status,
+            responsavel: '',
+            dataEnvio: new Date().toISOString(),
+            validacao: '',
+          },
+        });
+      } catch (sheetErr) {
+        console.error('Erro ao sincronizar com Google Sheets:', sheetErr);
+      }
+
       navigate(`/confirmacao?protocolo=${sol.protocolo}`);
     } catch (err) {
       console.error('Erro ao salvar solicitação:', err);
