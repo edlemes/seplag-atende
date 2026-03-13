@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+        <link rel="icon" href="favicon.ico">
+        <meta name="TITLE" content="Secretaria de Estado de Gest&atilde;o de Mato Grosso">
+        <meta name="AUTHOR" content="CTI">
+        <meta name="DESCRIPTION" content="Website de Gestão de Processos da Secretaria de Planejamento e Gestão do Estado de Mato Grosso.">
+        <meta name="KEYWORDS" content="SEPLAG, SEPLAGMT, SEPLAG-MT, SEPLAG MT, ESTADO DE MATO GROSSO, ESCRITORIO DE PROCESSOS">
+        <meta name="LANGUAGE" content="Portuguese">
+        <meta name="RATING" content="All">
+        <meta name="ROBOTS" content="Index, Follow">
+        <meta name="REVISIT-AFTER" content="3 days">
+        <meta name="URL" content="http://egprocessos.seplag.mt.gov.br/">
+        <meta name="GENERATOR" content="SEPLAG-MT">
+
+        <meta property="og:title" content=""/>
+        <meta property="og:type" content="government"/>
+        <meta property="og:description" content=""/> 
+        <meta property="og:image" content="">
+		
+		<!-- Fav and touch icons --> 
+		<link rel="apple-touch-icon" sizes="180x180" href="/assets/ico/apple-touch-icon.png">
+		<link rel="icon" type="image/png" sizes="32x32" href="/assets/ico/favicon-32x32.png">
+		<link rel="icon" type="image/png" sizes="16x16" href="/assets/ico/favicon-16x16.png">
+		<link rel="manifest" href="/assets/ico/site.webmanifest">
+
+        <title>SEPLAG/MT Escritorio de Processos</title>
+
+        <link type="text/css" rel="stylesheet" href="http://egprocessos.seplag.mt.gov.br//assets/styles/site/bootstrap.min.css" media="screen" />
+<link type="text/css" rel="stylesheet" href="http://egprocessos.seplag.mt.gov.br//assets/styles/site/css.css" media="screen" />
+<link type="text/css" rel="stylesheet" href="http://egprocessos.seplag.mt.gov.br//assets/styles/site/font-awesome.min.css" media="screen" />
+<link type="text/css" rel="stylesheet" href="http://egprocessos.seplag.mt.gov.br//assets/styles/site/ie10-viewport-bug-workaround.css" media="screen" />
+<link type="text/css" rel="stylesheet" href="http://egprocessos.seplag.mt.gov.br//assets/styles/site/ico.css" media="screen" />
+<link type="text/css" rel="stylesheet" href="http://egprocessos.seplag.mt.gov.br//assets/styles/site/acesso.css" media="screen" />
+<link type="text/css" rel="stylesheet" href="http://egprocessos.seplag.mt.gov.br//assets/styles/site/ico.css" media="screen" />
+<link type="text/css" rel="stylesheet" href="http://egprocessos.seplag.mt.gov.br//assets/styles/site/curtas.css" media="screen" />
+<link type="text/css" rel="stylesheet" href="http://egprocessos.seplag.mt.gov.br//assets/styles/site/footer.css" media="screen" />
+<link type="text/css" rel="stylesheet" href="http://egprocessos.seplag.mt.gov.br//assets/styles/site/menu-topo.css" media="screen" />
+<link type="text/css" rel="stylesheet" href="http://egprocessos.seplag.mt.gov.br//assets/styles/site/menu-lateral.css" media="screen" />
+
+        <style>
+            .pseudoStyle1:before {
+                content: '=';
+            }
+        </style>
+    </head>
+
+    <body>
+
+
+        <div class="container-fluid" id="wrapper">
+			            <header id="banner" role="banner">
+    <div id="main-header">
+        <div class="inner-header">
+
+            <div class="row-fluid">
+                <div class="col-lg-12 col-md-12 col-xs-11">
+                    <div id="accessibility" class="col-lg-8 col-md-6 hidden-xs hidden-md">
+                        <div class="col-lg-3 col-md-3">
+                            <a href="#banner" aria-label="ir para o topo" title="ir para o topo" alt="ir para o topo">Ir para o topo <span class="accLink">1</span></a>
+                        </div>
+                        <div class="col-lg-3 col-md-3">
+                            <a href="#menu_principal" aria-label="ir para menu" title="ir para menu" alt="ir para menu">Ir para o menu <span class="accLink">2</span></a>
+                        </div>
+                        <div class="col-lg-3 col-md-3">
+                            <a href="#menu-lateral" aria-label="ir para conteudo" title="ir para conteudo" alt="ir para conteudo">Ir para o conte&uacute;do <span class="accLink">3</span></a>
+                        </div>
+                        <div class="col-lg-3 col-md-3">
+                            <a href="#footer" aria-label="ir para rodape" title="ir para rodape" alt="ir para rodape">Ir para o rodap&eacute; <span class="accLink">4</span></a>
+                        </div>
+                    </div>
+                    <div class="topo2 col-lg-4 col-md-12 col-xs-12">
+                        <div class="header-block">
+                            <ul>
+                                <li class="hidden-xs">
+                                    <a href="http://www.mt.gov.br" aria-label="ir para mt.gov.br" title="ir para mt.gov.br" alt="ir para mt.gov.br">mt.gov.br</a>
+                                </li>
+                                <li class="">
+                                    <i class="fa fa-adjust" style="cursor:pointer;" aria-hidden="true" onclick="contrast()" aria-label="modo alto contraste" title="modo alto contraste" alt="modo alto contraste"></i>
+                                </li>
+                                <li aria-label="idiomas">
+                                    <span class="taglib-language-list-text last" lang="pt-BR">PT</span>
+                                </li>
+                                <li class="hidden-xs">
+                                    <a href="index.php?pg=ver&c=45" aria-label="telefones" title="telefones" alt="telefones">Contatos</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--<div class="container">-->
+
+            <div id="logo-hheader">
+                <a class="logo custom-logo" href="http://egprocessos.seplag.mt.gov.br/" title="Ir para P&aacute;gina Inicial">
+					<img src="http://egprocessos.seplag.mt.gov.br/assets/img/logo-seges-topo-2.png" alt="" />                </a>
+            </div>
+
+            <div id="components-header">
+
+
+
+
+                <div id="components-header-first-line row-fluid">
+                    <div class="row-fluid">
+                        <div class="header-block header-search" style="" role="search">
+                            <form action="index.php?pg=ver" method="post" name="" onsubmit="">
+                                <fieldset class="fieldset ">
+                                    <div class="col-lg-12 col-md-12 col-xs-12 barra-pesquisa">
+                                        <div class="control-group control-group-inline input-text-wrapper">
+                                            <input class="field" id="busca" name="busca" title="Pesquisar" type="text" value="" size="30" placeholder="Pesquisar...">
+                                            <input alt="Pesquisar" class="field imgSearch" id="search" name="search" title="Pesquisar" type="image" src="http://www5.sefaz.mt.gov.br/mt-portal-theme/images/common/search2.png">
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </form>
+                        </div>
+                        <div class="icones-social header-block hidden-xs hidden-md">
+                            <ul class="icons">
+                                <li><a class="icoone" target="_blank" href="https://m.facebook.com/GovernodeMatoGrosso/?tsid=0.985712869668991" title="Facebook" alt="Facebook"><i class="icon-facebook-sign"></i></a><div class="rectangle"></div></li>
+                                <li><a class="icoone" target="_blank" href="https://mobile.twitter.com/govmatogrosso" title="Twitter" alt="Twitter"><i class="icon-twitter-sign"></i></a><div class="rectangle_maior"></div></li>
+                                <li><a class="icoone" target="_blank" href="https://www.instagram.com/govmatogrosso/" title="Instagram" alt="Instagram"><i class="icon-instagram"></i></a><div class="rectangle_maior"></div></li>
+                                <li><a class="icoone" target="_blank" href="https://www.youtube.com/user/mtcomvc" title="YouTube" alt="YouTube"><i class="icon-youtube-play"></i></a><div class="rectangle"></div></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <!--
+                    <div class="row hidden-xs hidden-md">
+                            <div class="divDenuncie hidden-phone">
+                                    <a style="padding:0;" href="http://www.denunciaagora.com.br/" target="_blank">
+                                            <img src="http://www.mt.gov.br/mt-portal-theme/images/denuncia-agora.png">
+                                    </a>
+                            </div>
+                            <div class="divTransparencia" style="margin-top:-40px;">
+                                    <a style="padding:0;" href="http://www.transparencia.mt.gov.br/" target="_blank">
+                                            <img src="img/logo_transparencia_topo.png">
+                                    </a>
+                            </div>
+                    </div>
+                    -->
+                </div>
+
+
+
+            </div>
+
+        </div>
+    </div>
+</header>
+            <div id="menu_principal" class="nav-wrapper fixo-menu"> 
+	<a href="#" class="nav-toggle pseudoStyle1" id="nav-toggle" aria-hidden="false">Menu</a><div class="main-nav nav-collaps nav-collaps-0 nav-collaps nav-collaps-0 closed" aria-hidden="true" style="transition: max-height 384ms; position: absolute;">
+		<div class="nav-table">
+			<ul aria-label="Páginas do site" role="navigation">
+				<li class="hidden" id="logo_menu">
+					<img src="img/logo_menu.jpg">
+				</li>	
+								
+				<li style="float:right;margin-top:5px;">
+                    <a style="padding:0;" href="http://www.auditoria.mt.gov.br/acesso-a-informacao" target="_blank">
+                        <img src="http://egprocessos.seplag.mt.gov.br/assets/img/sic_pequeno.png" class="sicGrande" alt="" />                        <img src="http://egprocessos.seplag.mt.gov.br/assets/img/sic_pequeno.png" class="sicPequeno hidden" alt="" />                    </a>
+                </li>
+			</ul>
+		</div>
+	</div>
+	
+</div>
+            <!-- inicio corpo -->
+            <p style="margin:5em 0 3em 0;text-align:center;color:lightgrey;font-size:3em;font-weight:bold">404 - Página Não Encontrada</p>            <!-- fim corpo -->
+
+            <footer id="footer" class="row-fluid">
+    <div class="div-footer div-fluid">
+        <div class="col-xs-12 col-sm-6 col-md-3" id="espaco">
+        </div>
+        <div style="clear:both;"></div>
+        <div class="footer-contact">
+            <h4>Endere&ccedil;o</h4>
+            <p>Centro Pol&iacute;tico Administrativo, Bloco III, Rua C | CEP: 78049-005 | 
+                Cuiab&aacute; - MT (<a target="_blank" href="https://www.google.com/maps/place/SEGES+-+Secretaria+de+Estado+de+Gest%C3%A3o/@-15.5681307,-56.085009,15z/data=!4m8!1m2!2m1!1sSecretaria+de+Gest%C3%A3o+do+Estado+de+Mato+Grosso!3m4!1s0x0:0x41835cd9e6d299d7!8m2!3d-15.5664253!4d-56.0746935" class="a-footer">ver no mapa</a>)
+                <br>Fones: <a href="index.php?pg=telefones" class="a-footer">Lista de Telefones</a><br></p>
+            <br>       	
+            <ul class="icons">
+                <li><a target="_blank" href="https://m.facebook.com/GovernodeMatoGrosso/?tsid=0.985712869668991" title="Facebook" alt="Facebook"><i class="fa fa-facebook-square" aria-hidden="true"></i></a></li>
+                <li><a target="_blank" href="https://mobile.twitter.com/govmatogrosso" title="Twitter" alt="Twitter"><i class="fa fa-twitter-square" aria-hidden="true"></i></a></li>
+                <li><a target="_blank" href="https://www.instagram.com/govmatogrosso/" title="Instagram" alt="Instagram"><i class="fa fa-instagram" aria-hidden="true"></i></a></li>
+                <li><a target="_blank" href="https://www.youtube.com/user/mtcomvc" title="YouTube" alt="YouTube"><i class="fa fa-youtube-play" aria-hidden="true"></i></a></li>
+            </ul><br>  
+            <img src="http://egprocessos.seplag.mt.gov.br/assets/img/assinatura.png" alt="assinatura de desenvolvido pela CTI-SEGES" style="position:relative;margin-top: -7.5em;float:right;height: 7em;" />        </div>
+    </div>
+</footer>        </div>	
+
+        <script type="text/javascript" src="http://egprocessos.seplag.mt.gov.br//assets/scripts/site/jquery-v1.12.4.min.js" charset="UTF-8"></script>
+<script type="text/javascript" src="http://egprocessos.seplag.mt.gov.br//assets/scripts/site/bootstrap.min.js" charset="UTF-8"></script>
+<script type="text/javascript" src="http://egprocessos.seplag.mt.gov.br//assets/scripts/site/js.js" charset="UTF-8"></script>
+<script type="text/javascript" src="http://egprocessos.seplag.mt.gov.br//assets/scripts/site/ie10-viewport-bug-workaround.js" charset="UTF-8"></script>
+<script type="text/javascript" src="http://egprocessos.seplag.mt.gov.br//assets/scripts/site/js.cookie.js" charset="UTF-8"></script>
+		<script type="text/javascript" src="http://egprocessos.seplag.mt.gov.br/assets/scripts/site/plug_ampliar.js" charset="UTF-8"></script>
+
+        <script type="text/javascript">
+			var base_url = "http://egprocessos.seplag.mt.gov.br/";
+            /** /
+             
+            /**/
+        </script>
+
+    </body>
+</html>
