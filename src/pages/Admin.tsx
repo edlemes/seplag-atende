@@ -729,9 +729,533 @@ function SettingsManager() {
   );
 }
 
+// ─── Operacional Section with inline response ───
+function OperacionalSection({
+  filtered, busca, setBusca, filtroSecretaria, setFiltroSecretaria,
+  filtroStatus, setFiltroStatus, filtroPrioridade, setFiltroPrioridade,
+  secretarias, activeOperadores, currentUser, isGestao, isOperacao, isLeitura,
+  onStatusChange, onResponsavel, onRefresh,
+}: {
+  filtered: Solicitacao[];
+  busca: string; setBusca: (v: string) => void;
+  filtroSecretaria: string; setFiltroSecretaria: (v: string) => void;
+  filtroStatus: string; setFiltroStatus: (v: string) => void;
+  filtroPrioridade: string; setFiltroPrioridade: (v: string) => void;
+  secretarias: string[];
+  activeOperadores: Operador[];
+  currentUser: Operador;
+  isGestao: boolean; isOperacao: boolean; isLeitura: boolean;
+  onStatusChange: (id: string, s: StatusSolicitacao) => Promise<void>;
+  onResponsavel: (id: string, r: string) => Promise<void>;
+  onRefresh: () => void;
+}) {
+  const { toast } = useToast();
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [respostaTexto, setRespostaTexto] = useState('');
+  const [sending, setSending] = useState(false);
+
+  const canRespond = (s: Solicitacao) => {
+    if (isLeitura) return false;
+    if (isGestao) return true;
+    if (isOperacao && s.responsavel === currentUser.nome) return true;
+    return false;
+  };
+
+  const handleSendResposta = async (s: Solicitacao) => {
+    if (!respostaTexto.trim() || sending) return;
+    setSending(true);
+    try {
+      await updateSolicitacaoDb(s.id, { resposta: respostaTexto.trim(), dataResposta: new Date().toISOString(), status: 'Respondido' });
+
+      // Trigger email notification
+      try {
+        const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+        if (projectId) {
+          await fetch(`https://${projectId}.supabase.co/functions/v1/send-confirmation-email`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+            body: JSON.stringify({ to: s.email, nome: s.nome, protocolo: s.protocolo, resposta: respostaTexto.trim() }),
+          });
+        }
+      } catch { /* email is best-effort */ }
+
+      toast({ title: 'Resposta enviada!', description: `Chamado ${s.protocolo} concluído.` });
+      setRespostaTexto('');
+      setExpandedId(null);
+      onRefresh();
+    } catch {
+      toast({ title: 'Erro ao enviar resposta', variant: 'destructive' });
+    } finally { setSending(false); }
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card className="border-0 shadow-sm">
+        <CardContent className="pt-6">
+          <div className="flex flex-wrap gap-3">
+            <Input placeholder="Buscar por protocolo, nome ou e-mail..." value={busca} onChange={(e) => setBusca(e.target.value)} className="w-64" />
+            <Select value={filtroSecretaria} onValueChange={setFiltroSecretaria}>
+              <SelectTrigger className="w-[200px]"><SelectValue placeholder="Secretaria" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas Secretarias</SelectItem>
+                {secretarias.map((s) => (<SelectItem key={s} value={s}>{s.split(' – ')[0]}</SelectItem>))}
+              </SelectContent>
+            </Select>
+            <Select value={filtroStatus} onValueChange={setFiltroStatus}>
+              <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos Status</SelectItem>
+                <SelectItem value="Aberto">Aberto</SelectItem>
+                <SelectItem value="Em análise">Em análise</SelectItem>
+                <SelectItem value="Respondido">Respondido</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filtroPrioridade} onValueChange={setFiltroPrioridade}>
+              <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Prioridade</SelectItem>
+                <SelectItem value="Normal">Normal</SelectItem>
+                <SelectItem value="Urgente">Urgente</SelectItem>
+              </SelectContent>
+            </Select>
+            <Badge variant="outline" className="self-center">{filtered.length} registros</Badge>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-0 shadow-sm">
+        <CardHeader><CardTitle className="text-base text-foreground">Triagem de Solicitações</CardTitle></CardHeader>
+        <CardContent className="overflow-x-auto">
+          {filtered.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-foreground/70">Protocolo</TableHead>
+                  <TableHead className="text-foreground/70">Nome</TableHead>
+                  <TableHead className="text-foreground/70">Secretaria</TableHead>
+                  <TableHead className="text-foreground/70">Tipo</TableHead>
+                  <TableHead className="text-foreground/70">Categoria</TableHead>
+                  <TableHead className="text-foreground/70">Prioridade</TableHead>
+                  <TableHead className="text-foreground/70">SLA</TableHead>
+                  <TableHead className="text-foreground/70">Status</TableHead>
+                  <TableHead className="text-foreground/70">Atribuído a</TableHead>
+                  <TableHead className="text-foreground/70 w-[80px]">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((s) => {
+                  const slaStatus = getSlaStatus(s);
+                  const isExpanded = expandedId === s.id;
+                  return (
+                    <>
+                      <TableRow key={s.id} className={isExpanded ? 'border-b-0' : ''}>
+                        <TableCell className="font-mono text-xs text-foreground">{s.protocolo}</TableCell>
+                        <TableCell className="font-medium text-sm text-foreground">{s.nome}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{s.secretaria.split(' – ')[0]}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{s.tipo}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{s.categoria || '—'}</TableCell>
+                        <TableCell>
+                          <Badge variant={s.prioridade === 'Urgente' ? 'destructive' : 'outline'} className="text-[10px]">{s.prioridade || 'Normal'}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`text-xs font-medium ${SLA_COLORS[slaStatus]}`}>{slaStatus}</span>
+                        </TableCell>
+                        <TableCell>
+                          {isLeitura || (isOperacao && s.responsavel !== currentUser?.nome) ? (
+                            <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[s.status]}`}>{s.status}</Badge>
+                          ) : (
+                            <Select value={s.status} onValueChange={(v) => onStatusChange(s.id, v as StatusSolicitacao)}>
+                              <SelectTrigger className={`w-[130px] text-xs h-8 border ${STATUS_COLORS[s.status]}`}><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Aberto">Aberto</SelectItem>
+                                <SelectItem value="Em análise">Em análise</SelectItem>
+                                <SelectItem value="Respondido">Respondido</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {(isLeitura || isOperacao) ? (
+                            <span className="text-xs text-muted-foreground">{s.responsavel || '—'}</span>
+                          ) : (
+                            <Select value={s.responsavel || ''} onValueChange={(v) => onResponsavel(s.id, v)}>
+                              <SelectTrigger className="w-[140px] text-xs h-8"><SelectValue placeholder="Atribuir" /></SelectTrigger>
+                              <SelectContent>
+                                {activeOperadores.map((op) => (
+                                  <SelectItem key={op.id} value={op.nome}>
+                                    <span className="flex items-center gap-1">
+                                      {NIVEIS_GESTAO.includes(op.nivel) ? <ShieldCheck className="h-3 w-3 text-primary inline" /> : <Shield className="h-3 w-3 text-muted-foreground inline" />}
+                                      {op.nome}
+                                    </span>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {canRespond(s) && s.status !== 'Respondido' && (
+                            <Button
+                              size="sm"
+                              variant={isExpanded ? 'secondary' : 'outline'}
+                              className="h-7 text-xs gap-1"
+                              onClick={() => { setExpandedId(isExpanded ? null : s.id); setRespostaTexto(s.resposta || ''); }}
+                            >
+                              <MessageSquare className="h-3 w-3" />
+                              {isExpanded ? 'Fechar' : 'Responder'}
+                            </Button>
+                          )}
+                          {s.status === 'Respondido' && s.resposta && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 text-xs gap-1 text-muted-foreground"
+                              onClick={() => setExpandedId(isExpanded ? null : s.id)}
+                            >
+                              <Eye className="h-3 w-3" />
+                              {isExpanded ? 'Fechar' : 'Ver'}
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                      {isExpanded && (
+                        <TableRow key={`${s.id}-detail`}>
+                          <TableCell colSpan={10} className="bg-muted/30 p-0">
+                            <div className="p-5 space-y-4">
+                              {/* Ticket details */}
+                              <div className="grid md:grid-cols-2 gap-4 text-sm">
+                                <div>
+                                  <p className="text-muted-foreground text-xs font-medium mb-1">Descrição do Chamado</p>
+                                  <p className="text-foreground bg-card rounded-xl p-3 border">{s.descricao}</p>
+                                </div>
+                                <div className="space-y-2 text-xs">
+                                  <p><span className="text-muted-foreground">E-mail:</span> <span className="text-foreground">{s.email}</span></p>
+                                  <p><span className="text-muted-foreground">Setor:</span> <span className="text-foreground">{s.setor}</span></p>
+                                  <p><span className="text-muted-foreground">Assunto:</span> <span className="text-foreground">{s.assunto}</span></p>
+                                  <p><span className="text-muted-foreground">Impacto:</span> <span className="text-foreground">{s.impacto}</span></p>
+                                  <p><span className="text-muted-foreground">Data:</span> <span className="text-foreground">{new Date(s.data).toLocaleDateString('pt-BR')}</span></p>
+                                  <p><span className="text-muted-foreground">SLA Limite:</span> <span className="text-foreground">{new Date(s.slaLimite).toLocaleDateString('pt-BR')}</span></p>
+                                </div>
+                              </div>
+
+                              {/* Response area */}
+                              {s.status === 'Respondido' && s.resposta ? (
+                                <div>
+                                  <p className="text-muted-foreground text-xs font-medium mb-1">Resposta Enviada</p>
+                                  <div className="bg-card rounded-xl p-4 border text-sm text-foreground whitespace-pre-wrap">{s.resposta}</div>
+                                  {s.dataResposta && (
+                                    <p className="text-[10px] text-muted-foreground mt-1">Respondido em {new Date(s.dataResposta).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                                  )}
+                                </div>
+                              ) : canRespond(s) ? (
+                                <div className="space-y-3">
+                                  <p className="text-muted-foreground text-xs font-medium">Responder ao Chamado</p>
+                                  <Textarea
+                                    placeholder="Escreva a resposta para o solicitante..."
+                                    value={respostaTexto}
+                                    onChange={(e) => setRespostaTexto(e.target.value)}
+                                    className="min-h-[120px] rounded-xl bg-card focus-visible:ring-primary/30"
+                                  />
+                                  <div className="flex gap-2">
+                                    <Button
+                                      onClick={() => handleSendResposta(s)}
+                                      disabled={!respostaTexto.trim() || sending}
+                                      className="gap-2"
+                                    >
+                                      <CheckCircle2 className="h-4 w-4" />
+                                      {sending ? 'Enviando...' : 'Enviar Resposta'}
+                                    </Button>
+                                    <Button variant="ghost" onClick={() => setRespostaTexto('')} className="gap-1">
+                                      <X className="h-4 w-4" /> Limpar
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : null}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          ) : <p className="text-muted-foreground text-center py-12">Nenhuma solicitação encontrada.</p>}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 // ─── MAIN ADMIN ───
 const Admin = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [currentUser, setCurrentUser] = useState<Operador | null>(() => {
+    const stored = sessionStorage.getItem('admin-auth');
+    if (!stored) return null;
+    try { return JSON.parse(stored); } catch { return null; }
+  });
+  const authed = !!currentUser;
+  const isGestao = currentUser ? NIVEIS_GESTAO.includes(currentUser.nivel) : false;
+  const isOperacao = currentUser ? NIVEIS_OPERACAO.includes(currentUser.nivel) : false;
+  const isLeitura = currentUser ? NIVEIS_LEITURA.includes(currentUser.nivel) : false;
+  const [activeSection, setActiveSection] = useState<AdminSection>(() => isLeitura ? 'operacional' : 'executivo');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [busca, setBusca] = useState('');
+  const [filtroSecretaria, setFiltroSecretaria] = useState('all');
+  const [filtroStatus, setFiltroStatus] = useState('all');
+  const [filtroPrioridade, setFiltroPrioridade] = useState('all');
+  const [profileOpen, setProfileOpen] = useState(false);
+
+  const { solicitacoes, loading: loadingSol, refresh: refreshSol } = useSolicitacoes();
+  const { operadores } = useOperadores();
+  const activeOperadores = useMemo(() => operadores.filter((o) => o.ativo), [operadores]);
+
+  const filtered = useMemo(() => {
+    return solicitacoes.filter((s) => {
+      if (filtroSecretaria !== 'all' && s.secretaria !== filtroSecretaria) return false;
+      if (filtroStatus !== 'all' && s.status !== filtroStatus) return false;
+      if (filtroPrioridade !== 'all' && s.prioridade !== filtroPrioridade) return false;
+      if (busca) { const q = busca.toLowerCase(); return s.nome.toLowerCase().includes(q) || s.protocolo.toLowerCase().includes(q) || s.email.toLowerCase().includes(q); }
+      return true;
+    });
+  }, [solicitacoes, filtroSecretaria, filtroStatus, filtroPrioridade, busca]);
+
+  // KPIs
+  const total = solicitacoes.length;
+  const abertas = solicitacoes.filter((s) => s.status === 'Aberto').length;
+  const emAnalise = solicitacoes.filter((s) => s.status === 'Em análise').length;
+  const respondidas = solicitacoes.filter((s) => s.status === 'Respondido').length;
+  const iai = total > 0 ? ((respondidas / total) * 100).toFixed(1) : '0';
+  const slaData = useMemo(() => { const nr = solicitacoes.filter((s) => s.status !== 'Respondido'); const ds = nr.filter((s) => getSlaStatus(s) === 'Dentro do Prazo').length; return ((ds / (nr.length || 1)) * 100).toFixed(1); }, [solicitacoes]);
+  const tempoMedioResposta = useMemo(() => { const t = solicitacoes.map(getTempoResposta).filter((t): t is number => t !== null); if (!t.length) return '—'; return (t.reduce((a, b) => a + b, 0) / t.length).toFixed(1) + 'd'; }, [solicitacoes]);
+  const avaliacoes = useMemo(() => solicitacoes.filter((s) => s.avaliacao), [solicitacoes]);
+  const satisfacaoMedia = useMemo(() => { if (!avaliacoes.length) return '—'; return (avaliacoes.reduce((a, s) => a + (s.avaliacao?.satisfacao || 0), 0) / avaliacoes.length).toFixed(1); }, [avaliacoes]);
+  const resolvidoPercent = useMemo(() => { if (!avaliacoes.length) return '—'; return ((avaliacoes.filter((s) => s.avaliacao?.resolvido).length / avaliacoes.length) * 100).toFixed(0) + '%'; }, [avaliacoes]);
+  const backlog = abertas + emAnalise;
+
+  // Chart data
+  const porSecretaria = useMemo(() => { const m: Record<string, number> = {}; solicitacoes.forEach((s) => { const k = s.secretaria.split(' – ')[0]; m[k] = (m[k] || 0) + 1; }); return Object.entries(m).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 10); }, [solicitacoes]);
+  const porTipo = useMemo(() => { const m: Record<string, number> = {}; solicitacoes.forEach((s) => { m[s.tipo] = (m[s.tipo] || 0) + 1; }); return Object.entries(m).map(([name, value]) => ({ name, value })); }, [solicitacoes]);
+  const porAssunto = useMemo(() => { const m: Record<string, number> = {}; solicitacoes.forEach((s) => { if (s.assunto) m[s.assunto] = (m[s.assunto] || 0) + 1; }); return Object.entries(m).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 10); }, [solicitacoes]);
+  const statusPorSecretaria = useMemo(() => { const m: Record<string, { Aberto: number; 'Em análise': number; Respondido: number }> = {}; solicitacoes.forEach((s) => { const k = s.secretaria.split(' – ')[0]; if (!m[k]) m[k] = { Aberto: 0, 'Em análise': 0, Respondido: 0 }; m[k][s.status]++; }); return Object.entries(m).map(([name, vals]) => ({ name, ...vals })).sort((a, b) => (b.Aberto + b['Em análise'] + b.Respondido) - (a.Aberto + a['Em análise'] + a.Respondido)).slice(0, 10); }, [solicitacoes]);
+  const tempoRespostaHist = useMemo(() => { const bins = [{ name: '0-1d', min: 0, max: 1, value: 0 }, { name: '2-3d', min: 1, max: 3, value: 0 }, { name: '4-7d', min: 3, max: 7, value: 0 }, { name: '>7d', min: 7, max: Infinity, value: 0 }]; solicitacoes.forEach((s) => { const t = getTempoResposta(s); if (t === null) return; const bin = bins.find((b) => t >= b.min && t < b.max) || bins[bins.length - 1]; bin.value++; }); return bins; }, [solicitacoes]);
+  const satisfacaoPorSecretaria = useMemo(() => { const m: Record<string, { sum: number; count: number }> = {}; avaliacoes.forEach((s) => { const k = s.secretaria.split(' – ')[0]; if (!m[k]) m[k] = { sum: 0, count: 0 }; m[k].sum += s.avaliacao!.satisfacao; m[k].count++; }); return Object.entries(m).map(([name, v]) => ({ name, value: Math.round((v.sum / v.count) * 10) / 10 })).sort((a, b) => b.value - a.value); }, [avaliacoes]);
+  const tendenciaSemanal = useMemo(() => { const w: Record<string, { recebidas: number; respondidas: number }> = {}; solicitacoes.forEach((s) => { const d = new Date(s.data); const ws = new Date(d); ws.setDate(d.getDate() - d.getDay()); const k = ws.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }); if (!w[k]) w[k] = { recebidas: 0, respondidas: 0 }; w[k].recebidas++; if (s.status === 'Respondido') w[k].respondidas++; }); return Object.entries(w).map(([name, v]) => ({ name, ...v })).slice(-8); }, [solicitacoes]);
+
+  const handleStatusChange = async (id: string, status: StatusSolicitacao) => { await updateStatusDb(id, status); refreshSol(); };
+  const handleResponsavel = async (id: string, responsavel: string) => { await updateSolicitacaoDb(id, { responsavel }); refreshSol(); };
+
+  const exportExcel = () => {
+    const dataSol = solicitacoes.map((s) => ({ Protocolo: s.protocolo, Nome: s.nome, Email: s.email, Secretaria: s.secretaria, Setor: s.setor, Tipo: s.tipo, Categoria: s.categoria || '', Assunto: s.assunto || '', Impacto: s.impacto || '', Prioridade: s.prioridade || '', Mensagem: s.descricao, Data: new Date(s.data).toLocaleDateString('pt-BR'), Status: s.status, Responsável: s.responsavel || '' }));
+    const dataSla = solicitacoes.map((s) => ({ Protocolo: s.protocolo, Secretaria: s.secretaria.split(' – ')[0], Tipo: s.tipo, 'Data Abertura': new Date(s.data).toLocaleDateString('pt-BR'), 'SLA Limite': new Date(s.slaLimite).toLocaleDateString('pt-BR'), 'Data Resposta': s.dataResposta ? new Date(s.dataResposta).toLocaleDateString('pt-BR') : '', 'Tempo (dias)': getTempoResposta(s) ?? '', 'Status SLA': getSlaStatus(s) }));
+    const dataAval = avaliacoes.map((s) => ({ Protocolo: s.protocolo, Secretaria: s.secretaria.split(' – ')[0], Satisfação: s.avaliacao?.satisfacao, Resolvido: s.avaliacao?.resolvido ? 'Sim' : 'Não', Clareza: s.avaliacao?.clareza, 'Tempo Resposta': s.avaliacao?.tempoResposta, Comentário: s.avaliacao?.comentario || '' }));
+    const dataResumo = [{ Indicador: 'Total de Solicitações', Valor: total }, { Indicador: 'Respondidas', Valor: respondidas }, { Indicador: 'Em Aberto', Valor: abertas }, { Indicador: '% Dentro do SLA', Valor: slaData + '%' }, { Indicador: 'Tempo Médio de Resposta', Valor: tempoMedioResposta }, { Indicador: 'Satisfação Média', Valor: satisfacaoMedia }, { Indicador: '% Resolvido', Valor: resolvidoPercent }, { Indicador: 'IAI', Valor: iai + '%' }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dataSol), 'Solicitações');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dataSla), 'SLA');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dataAval), 'Avaliações');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dataResumo), 'Resumo Mensal');
+    XLSX.writeFile(wb, `seplag-relatorio-${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
+  const handleLogout = () => { sessionStorage.removeItem('admin-auth'); setCurrentUser(null); };
+
+  if (!authed) return <AdminLogin onAuth={(op) => setCurrentUser(op)} />;
+  if (loadingSol) return <LoadingSkeleton />;
+
+  const secretarias = [...new Set(solicitacoes.map((s) => s.secretaria))];
+  const sidebarWidth = sidebarCollapsed ? '68px' : '260px';
+
+  return (
+    <div className="min-h-screen bg-background">
+      <AdminSidebar
+        currentUser={currentUser!}
+        activeSection={activeSection}
+        onSectionChange={setActiveSection}
+        isGestao={isGestao}
+        isOperacao={isOperacao}
+        isLeitura={isLeitura}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        onLogout={handleLogout}
+        onOpenProfile={() => setProfileOpen(true)}
+        onExport={exportExcel}
+      />
+
+      {currentUser && (
+        <ProfileDialog currentUser={currentUser} open={profileOpen} onOpenChange={setProfileOpen} onUpdate={setCurrentUser} />
+      )}
+
+      <main
+        className="transition-all duration-300 ease-in-out"
+        style={{ marginLeft: sidebarWidth }}
+        role="main"
+      >
+        <div className="px-6 md:px-8 py-6 space-y-6 max-w-[1400px] mx-auto">
+          {/* Page title */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-foreground tracking-tight">
+                {activeSection === 'executivo' && 'Visão Executiva'}
+                {activeSection === 'operacional' && 'Operacional'}
+                {activeSection === 'faq' && 'Gerenciar FAQ'}
+                {activeSection === 'usuarios' && 'Gestão de Usuários'}
+                {activeSection === 'configuracoes' && 'Configurações'}
+              </h2>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                {activeSection === 'executivo' && 'Dashboard com indicadores e gráficos'}
+                {activeSection === 'operacional' && 'Triagem e gestão de solicitações'}
+                {activeSection === 'faq' && 'Perguntas frequentes do portal'}
+                {activeSection === 'usuarios' && 'Controle de acessos e operadores'}
+                {activeSection === 'configuracoes' && 'Órgãos e assuntos do sistema'}
+              </p>
+            </div>
+          </div>
+
+          {/* KPIs - visible on executivo and operacional */}
+          {(activeSection === 'executivo' || activeSection === 'operacional') && (
+            <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-3" role="region" aria-label="Indicadores">
+              <KpiCard icon={FileSpreadsheet} label="Total" value={total} color="text-primary" />
+              <KpiCard icon={AlertCircle} label="Abertas" value={abertas} color="text-amber-600" />
+              <KpiCard icon={Clock} label="Em Análise" value={emAnalise} color="text-blue-600" />
+              <KpiCard icon={CheckCircle2} label="Respondidas" value={respondidas} color="text-emerald-600" />
+              <KpiCard icon={Target} label="% SLA" value={slaData + '%'} color="text-primary" />
+              <KpiCard icon={TrendingUp} label="Tempo Médio" value={tempoMedioResposta} color="text-primary" />
+              <KpiCard icon={AlertTriangle} label="Backlog" value={backlog} color="text-amber-600" />
+              <KpiCard icon={Star} label="Satisfação" value={satisfacaoMedia} color="text-amber-500" sub="/5" />
+              <KpiCard icon={BarChart3} label="IAI" value={iai + '%'} color="text-primary" />
+            </div>
+          )}
+
+          {/* ═══ EXECUTIVO ═══ */}
+          {activeSection === 'executivo' && (
+            <div className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <Card className="border-0 shadow-sm">
+                  <CardHeader><CardTitle className="text-base text-foreground">Recebidas x Respondidas (Semanal)</CardTitle></CardHeader>
+                  <CardContent>
+                    {tendenciaSemanal.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={280}>
+                        <LineChart data={tendenciaSemanal}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                          <YAxis /><Tooltip /><Legend />
+                          <Line type="monotone" dataKey="recebidas" stroke="hsl(210, 85%, 40%)" strokeWidth={2} name="Recebidas" />
+                          <Line type="monotone" dataKey="respondidas" stroke="hsl(210, 100%, 28%)" strokeWidth={2} name="Respondidas" />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    ) : <p className="text-muted-foreground text-center py-12">Nenhum dado</p>}
+                  </CardContent>
+                </Card>
+                <Card className="border-0 shadow-sm">
+                  <CardHeader><CardTitle className="text-base text-foreground">Tipos de Demanda</CardTitle></CardHeader>
+                  <CardContent>
+                    {porTipo.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={280}>
+                        <PieChart><Pie data={porTipo} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} innerRadius={40} label>{porTipo.map((_, i) => (<Cell key={i} fill={COLORS[i % COLORS.length]} />))}</Pie><Tooltip /><Legend /></PieChart>
+                      </ResponsiveContainer>
+                    ) : <p className="text-muted-foreground text-center py-12">Nenhum dado</p>}
+                  </CardContent>
+                </Card>
+              </div>
+              <div className="grid md:grid-cols-2 gap-6">
+                <Card className="border-0 shadow-sm">
+                  <CardHeader><CardTitle className="text-base text-foreground">Top 10 Secretarias</CardTitle></CardHeader>
+                  <CardContent>
+                    {porSecretaria.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={porSecretaria} layout="vertical" margin={{ left: 10 }}><CartesianGrid strokeDasharray="3 3" /><XAxis type="number" /><YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 10 }} /><Tooltip /><Bar dataKey="value" fill="hsl(210, 100%, 28%)" radius={[0, 4, 4, 0]} /></BarChart>
+                      </ResponsiveContainer>
+                    ) : <p className="text-muted-foreground text-center py-12">Nenhum dado</p>}
+                  </CardContent>
+                </Card>
+                <Card className="border-0 shadow-sm">
+                  <CardHeader><CardTitle className="text-base text-foreground">Status por Secretaria</CardTitle></CardHeader>
+                  <CardContent>
+                    {statusPorSecretaria.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={statusPorSecretaria} layout="vertical" margin={{ left: 10 }}><CartesianGrid strokeDasharray="3 3" /><XAxis type="number" /><YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 10 }} /><Tooltip /><Legend /><Bar dataKey="Aberto" stackId="a" fill="hsl(45, 97%, 54%)" /><Bar dataKey="Em análise" stackId="a" fill="hsl(210, 85%, 40%)" /><Bar dataKey="Respondido" stackId="a" fill="hsl(210, 100%, 28%)" /></BarChart>
+                      </ResponsiveContainer>
+                    ) : <p className="text-muted-foreground text-center py-12">Nenhum dado</p>}
+                  </CardContent>
+                </Card>
+              </div>
+              <div className="grid md:grid-cols-3 gap-6">
+                <Card className="border-0 shadow-sm">
+                  <CardHeader><CardTitle className="text-base text-foreground">Tempo de Resposta (dias)</CardTitle></CardHeader>
+                  <CardContent>
+                    {tempoRespostaHist.some((b) => b.value > 0) ? (
+                      <ResponsiveContainer width="100%" height={220}>
+                        <BarChart data={tempoRespostaHist}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="name" /><YAxis /><Tooltip /><Bar dataKey="value" fill="hsl(210, 85%, 40%)" radius={[4, 4, 0, 0]} name="Qtd" /></BarChart>
+                      </ResponsiveContainer>
+                    ) : <p className="text-muted-foreground text-center py-12">Nenhum dado</p>}
+                  </CardContent>
+                </Card>
+                <Card className="border-0 shadow-sm">
+                  <CardHeader><CardTitle className="text-base text-foreground">Top 10 Assuntos</CardTitle></CardHeader>
+                  <CardContent>
+                    {porAssunto.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={220}>
+                        <BarChart data={porAssunto} layout="vertical" margin={{ left: 10 }}><CartesianGrid strokeDasharray="3 3" /><XAxis type="number" /><YAxis dataKey="name" type="category" width={90} tick={{ fontSize: 10 }} /><Tooltip /><Bar dataKey="value" fill="hsl(210, 70%, 55%)" radius={[0, 4, 4, 0]} /></BarChart>
+                      </ResponsiveContainer>
+                    ) : <p className="text-muted-foreground text-center py-12">Nenhum dado</p>}
+                  </CardContent>
+                </Card>
+                <Card className="border-0 shadow-sm">
+                  <CardHeader><CardTitle className="text-base text-foreground">Satisfação por Secretaria</CardTitle></CardHeader>
+                  <CardContent>
+                    {satisfacaoPorSecretaria.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={220}>
+                        <BarChart data={satisfacaoPorSecretaria} layout="vertical" margin={{ left: 10 }}><CartesianGrid strokeDasharray="3 3" /><XAxis type="number" domain={[0, 5]} /><YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 10 }} /><Tooltip /><Bar dataKey="value" fill="hsl(45, 97%, 54%)" radius={[0, 4, 4, 0]} name="Média" /></BarChart>
+                      </ResponsiveContainer>
+                    ) : <p className="text-muted-foreground text-center py-12">Nenhum dado</p>}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
+
+          {/* ═══ OPERACIONAL ═══ */}
+          {activeSection === 'operacional' && (
+            <OperacionalSection
+              filtered={filtered}
+              busca={busca}
+              setBusca={setBusca}
+              filtroSecretaria={filtroSecretaria}
+              setFiltroSecretaria={setFiltroSecretaria}
+              filtroStatus={filtroStatus}
+              setFiltroStatus={setFiltroStatus}
+              filtroPrioridade={filtroPrioridade}
+              setFiltroPrioridade={setFiltroPrioridade}
+              secretarias={secretarias}
+              activeOperadores={activeOperadores}
+              currentUser={currentUser!}
+              isGestao={isGestao}
+              isOperacao={isOperacao}
+              isLeitura={isLeitura}
+              onStatusChange={handleStatusChange}
+              onResponsavel={handleResponsavel}
+              onRefresh={refreshSol}
+            />
+          )}
+
+          {/* ═══ FAQ ═══ */}
+          {activeSection === 'faq' && <FaqManager />}
+
+          {/* ═══ USUÁRIOS ═══ */}
+          {activeSection === 'usuarios' && <UsersManager />}
+
+          {/* ═══ CONFIGURAÇÕES ═══ */}
+          {activeSection === 'configuracoes' && <SettingsManager />}
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default Admin;
   const { toast } = useToast();
   const [currentUser, setCurrentUser] = useState<Operador | null>(() => {
     const stored = sessionStorage.getItem('admin-auth');
