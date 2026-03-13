@@ -775,6 +775,7 @@ const Admin = () => {
               <h2 className="text-xl font-bold text-foreground tracking-tight">
                 {activeSection === 'executivo' && 'Visão Executiva'}
                 {activeSection === 'operacional' && 'Operacional'}
+                {activeSection === 'aprendizagem' && 'Trilha SIAD – Engajamento'}
                 {activeSection === 'faq' && 'Gerenciar FAQ'}
                 {activeSection === 'usuarios' && 'Gestão de Usuários'}
                 {activeSection === 'configuracoes' && 'Configurações'}
@@ -782,6 +783,7 @@ const Admin = () => {
               <p className="text-sm text-muted-foreground mt-0.5">
                 {activeSection === 'executivo' && 'Dashboard com indicadores e gráficos'}
                 {activeSection === 'operacional' && 'Triagem e gestão de solicitações'}
+                {activeSection === 'aprendizagem' && 'Métricas de participação e gamificação'}
                 {activeSection === 'faq' && 'Perguntas frequentes do portal'}
                 {activeSection === 'usuarios' && 'Controle de acessos e operadores'}
                 {activeSection === 'configuracoes' && 'Órgãos e assuntos do sistema'}
