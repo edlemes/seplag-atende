@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Building2, FileText, BarChart3, HelpCircle, MessageSquare } from 'lucide-react';
+import { Building2, FileText, BarChart3, HelpCircle, MessageSquare, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Home = () => {
@@ -65,6 +65,19 @@ const Home = () => {
             >
               <BarChart3 className="h-5 w-5" aria-hidden="true" />
               Painel Administrativo
+            </Button>
+          </div>
+
+          <div className="flex justify-center mt-2">
+            <Button
+              variant="outline"
+              size="lg"
+              className="w-full sm:min-w-[220px] text-base px-10 py-7 rounded-full border-border/60 text-foreground hover:bg-muted/60 hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-500 ease-out gap-3 font-medium"
+              onClick={() => navigate('/aprendizagem')}
+              aria-label="Acessar a trilha de aprendizagem do SIAD"
+            >
+              <BookOpen className="h-5 w-5" aria-hidden="true" />
+              Trilha SIAD
             </Button>
           </div>
 

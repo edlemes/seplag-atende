@@ -11,6 +11,7 @@ import Confirmacao from "./pages/Confirmacao";
 import Admin from "./pages/Admin";
 import Avaliacao from "./pages/Avaliacao";
 import Faq from "./pages/Faq";
+import Aprendizagem from "./pages/Aprendizagem";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/admin" element={<Admin />} />
             <Route path="/avaliacao" element={<Avaliacao />} />
             <Route path="/faq" element={<Faq />} />
+            <Route path="/aprendizagem" element={<Aprendizagem />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Layout>
