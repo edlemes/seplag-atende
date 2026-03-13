@@ -1128,7 +1128,7 @@ const Admin = () => {
               <p className="text-sm text-muted-foreground mt-0.5">
                 {activeSection === 'executivo' && 'Dashboard com indicadores e gráficos'}
                 {activeSection === 'operacional' && 'Triagem e gestão de solicitações'}
-                {activeSection === 'aprendizagem' && 'Métricas de participação e gamificação'}
+                {activeSection === 'aprendizagem' && 'Conteúdo, quizzes e métricas de engajamento'}
                 {activeSection === 'faq' && 'Perguntas frequentes do portal'}
                 {activeSection === 'usuarios' && 'Controle de acessos e operadores'}
                 {activeSection === 'configuracoes' && 'Órgãos e assuntos do sistema'}
