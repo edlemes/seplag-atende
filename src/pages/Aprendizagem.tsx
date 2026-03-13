@@ -434,8 +434,10 @@ const Aprendizagem = () => {
       toast.error('Complete o quiz para avançar.');
       return;
     }
-    setCurrent(current + 1);
-    setTransitioning(true);
+    if (current < modules.length - 1) {
+      setTransitioning(true);
+      setCurrent(current + 1);
+    }
   };
 
   const goPrev = () => { if (current > 0) setCurrent(current - 1); };
