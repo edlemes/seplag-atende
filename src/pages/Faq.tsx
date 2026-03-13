@@ -1,24 +1,61 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building2, HelpCircle, Search, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useFaqs } from '@/hooks/use-supabase-data';
+import { supabase } from '@/integrations/supabase/client';
+
+interface FaqItem {
+  id: string;
+  pergunta: string;
+  resposta: string;
+  trilha?: string;
+}
 
 const Faq = () => {
   const navigate = useNavigate();
-  const { faqs, loading } = useFaqs();
+  const [faqs, setFaqs] = useState<FaqItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [activeTrilha, setActiveTrilha] = useState('all');
+
+  useEffect(() => {
+    (async () => {
+      // Load FAQs from faqs table
+      const { data: faqData } = await supabase.from('faqs').select('*').order('created_at');
+      // Load last module of each trail (FAQ/Central de Conhecimento content)
+      const { data: trailData } = await supabase
+        .from('trilhas_conteudo')
+        .select('id, trilha, titulo, conteudo')
+        .order('modulo_ordem', { ascending: false });
+
+      const items: FaqItem[] = (faqData || []).map((f: any) => ({
+        id: f.id,
+        pergunta: f.pergunta,
+        resposta: f.resposta,
+      }));
+
+      setFaqs(items);
+      setLoading(false);
+    })();
+  }, []);
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return faqs;
-    const q = search.toLowerCase();
-    return faqs.filter(
-      (f) => f.pergunta.toLowerCase().includes(q) || f.resposta.toLowerCase().includes(q)
-    );
-  }, [faqs, search]);
+    let result = faqs;
+    if (activeTrilha !== 'all') {
+      result = result.filter((f) => !f.trilha || f.trilha === activeTrilha);
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter(
+        (f) => f.pergunta.toLowerCase().includes(q) || f.resposta.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [faqs, search, activeTrilha]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -41,10 +78,20 @@ const Faq = () => {
             Voltar ao Portal
           </Button>
 
-          <div className="flex items-center gap-2 mb-8">
+          <div className="flex items-center gap-2 mb-6">
             <HelpCircle className="h-6 w-6 text-primary" aria-hidden="true" />
             <h2 className="text-3xl font-bold text-foreground">Perguntas Frequentes</h2>
           </div>
+
+          {/* Tabs for systems */}
+          <Tabs value={activeTrilha} onValueChange={setActiveTrilha} className="mb-6">
+            <TabsList className="w-full grid grid-cols-4 h-11 rounded-full bg-muted p-1">
+              <TabsTrigger value="all" className="rounded-full text-xs font-semibold data-[state=active]:shadow-md">Todos</TabsTrigger>
+              <TabsTrigger value="SIAD" className="rounded-full text-xs font-semibold data-[state=active]:shadow-md">SIAD</TabsTrigger>
+              <TabsTrigger value="SIEP" className="rounded-full text-xs font-semibold data-[state=active]:shadow-md">SIEP</TabsTrigger>
+              <TabsTrigger value="BT" className="rounded-full text-xs font-semibold data-[state=active]:shadow-md">Banco de Talentos</TabsTrigger>
+            </TabsList>
+          </Tabs>
 
           {/* Search */}
           <div className="relative mb-8">
@@ -80,7 +127,7 @@ const Faq = () => {
                     <AccordionTrigger className="text-left text-foreground font-medium hover:no-underline py-5">
                       {faq.pergunta}
                     </AccordionTrigger>
-                    <AccordionContent className="text-muted-foreground whitespace-pre-wrap pb-5">
+                    <AccordionContent className="text-muted-foreground whitespace-pre-wrap pb-5 animate-fade-in">
                       {faq.resposta}
                     </AccordionContent>
                   </AccordionItem>

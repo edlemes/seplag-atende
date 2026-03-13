@@ -440,7 +440,7 @@ const Aprendizagem = () => {
     }
   };
 
-  const goPrev = () => { if (current > 0) setCurrent(current - 1); };
+  const goPrev = () => { if (current > 0) { setTransitioning(true); setCurrent(current - 1); } };
 
   const handleTrilhaChange = (trilha: string) => {
     setActiveTrilha(trilha);
