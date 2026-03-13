@@ -982,8 +982,22 @@ const Admin = () => {
               onRefresh={refreshSol}
             />
           )}
-                    <Select value={filtroSecretaria} onValueChange={setFiltroSecretaria}>
-                      <SelectTrigger className="w-[200px]"><SelectValue placeholder="Secretaria" /></SelectTrigger>
+
+          {/* ═══ FAQ ═══ */}
+          {activeSection === 'faq' && <FaqManager />}
+
+          {/* ═══ USUÁRIOS ═══ */}
+          {activeSection === 'usuarios' && <UsersManager />}
+
+          {/* ═══ CONFIGURAÇÕES ═══ */}
+          {activeSection === 'configuracoes' && <SettingsManager />}
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default Admin;
                       <SelectContent>
                         <SelectItem value="all">Todas Secretarias</SelectItem>
                         {secretarias.map((s) => (<SelectItem key={s} value={s}>{s.split(' – ')[0]}</SelectItem>))}
