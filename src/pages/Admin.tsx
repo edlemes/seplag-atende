@@ -1,10 +1,11 @@
-import { useState, useMemo, Fragment } from 'react';
+import { useState, useEffect, useMemo, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Building2, ArrowLeft, Download, FileSpreadsheet, BarChart3, CheckCircle2,
   AlertCircle, Clock, Star, TrendingUp, AlertTriangle, Target, Eye, Settings,
   HelpCircle, Plus, Pencil, Trash2, Save, X, Users, Shield, ShieldCheck, LogOut,
-  User, Camera, KeyRound, Menu, ChevronLeft, MessageSquare
+  User, Camera, KeyRound, Menu, ChevronLeft, MessageSquare, BookOpen, Trophy, Award, Medal
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -48,7 +49,7 @@ const SLA_COLORS = {
   'Atrasado': 'text-red-600',
 };
 
-type AdminSection = 'executivo' | 'operacional' | 'faq' | 'usuarios' | 'configuracoes';
+type AdminSection = 'executivo' | 'operacional' | 'faq' | 'usuarios' | 'configuracoes' | 'aprendizagem';
 
 // ─── KPI Card ───
 function KpiCard({ icon: Icon, label, value, color, sub }: { icon: any; label: string; value: string | number; color: string; sub?: string }) {
@@ -86,6 +87,7 @@ function AdminSidebar({
   const menuItems: { key: AdminSection; label: string; icon: any; visible: boolean }[] = [
     { key: 'executivo', label: 'Visão Executiva', icon: Eye, visible: isGestao || isOperacao },
     { key: 'operacional', label: 'Operacional', icon: BarChart3, visible: true },
+    { key: 'aprendizagem', label: 'Trilha SIAD', icon: BookOpen, visible: isGestao },
     { key: 'faq', label: 'Gerenciar FAQ', icon: HelpCircle, visible: isGestao },
     { key: 'usuarios', label: 'Usuários', icon: Users, visible: isGestao },
     { key: 'configuracoes', label: 'Configurações', icon: Settings, visible: isGestao },
@@ -290,7 +292,153 @@ function ProfileDialog({ currentUser, open, onOpenChange, onUpdate }: {
   );
 }
 
-// ─── FAQ Manager ───
+// ─── Aprendizagem Manager (Learning Analytics) ───
+function AprendizagemManager() {
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const { data: rows } = await supabase.from('trilha_progresso').select('*').order('pontuacao', { ascending: false });
+      setData(rows || []);
+      setLoading(false);
+    })();
+  }, []);
+
+  const totalServidores = data.length;
+  const concluidos = data.filter((d: any) => d.concluido).length;
+  const taxaConclusao = totalServidores > 0 ? Math.round((concluidos / totalServidores) * 100) : 0;
+  const pontuacaoMedia = totalServidores > 0 ? Math.round(data.reduce((s: number, d: any) => s + (d.pontuacao || 0), 0) / totalServidores) : 0;
+  const tempoMedio = totalServidores > 0 ? Math.round(data.reduce((s: number, d: any) => s + (d.tempo_minutos || 0), 0) / totalServidores) : 0;
+  const totalMedalhas = data.reduce((s: number, d: any) => s + (Array.isArray(d.medalhas) ? d.medalhas.length : 0), 0);
+
+  const nivelDist = data.reduce((acc: Record<string, number>, d: any) => {
+    const n = d.nivel || 'Iniciante';
+    acc[n] = (acc[n] || 0) + 1;
+    return acc;
+  }, {});
+  const nivelChartData = Object.entries(nivelDist).map(([name, value]) => ({ name, value }));
+
+  if (loading) return <div className="space-y-4">{[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}</div>;
+
+  return (
+    <div className="space-y-6">
+      {/* KPIs */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <Card className="border-0 shadow-sm"><CardContent className="pt-5 pb-4 text-center">
+          <Users className="h-5 w-5 text-primary mx-auto mb-1" />
+          <p className="text-2xl font-bold text-foreground">{totalServidores}</p>
+          <p className="text-[11px] text-muted-foreground">Servidores Ativos</p>
+        </CardContent></Card>
+        <Card className="border-0 shadow-sm"><CardContent className="pt-5 pb-4 text-center">
+          <CheckCircle2 className="h-5 w-5 text-emerald-600 mx-auto mb-1" />
+          <p className="text-2xl font-bold text-foreground">{taxaConclusao}%</p>
+          <p className="text-[11px] text-muted-foreground">Taxa Conclusão</p>
+        </CardContent></Card>
+        <Card className="border-0 shadow-sm"><CardContent className="pt-5 pb-4 text-center">
+          <Star className="h-5 w-5 text-amber-500 mx-auto mb-1" />
+          <p className="text-2xl font-bold text-foreground">{pontuacaoMedia}</p>
+          <p className="text-[11px] text-muted-foreground">Pontuação Média</p>
+        </CardContent></Card>
+        <Card className="border-0 shadow-sm"><CardContent className="pt-5 pb-4 text-center">
+          <Clock className="h-5 w-5 text-blue-600 mx-auto mb-1" />
+          <p className="text-2xl font-bold text-foreground">{tempoMedio}min</p>
+          <p className="text-[11px] text-muted-foreground">Tempo Médio</p>
+        </CardContent></Card>
+        <Card className="border-0 shadow-sm"><CardContent className="pt-5 pb-4 text-center">
+          <Award className="h-5 w-5 text-primary mx-auto mb-1" />
+          <p className="text-2xl font-bold text-foreground">{totalMedalhas}</p>
+          <p className="text-[11px] text-muted-foreground">Medalhas</p>
+        </CardContent></Card>
+        <Card className="border-0 shadow-sm"><CardContent className="pt-5 pb-4 text-center">
+          <TrendingUp className="h-5 w-5 text-emerald-600 mx-auto mb-1" />
+          <p className="text-2xl font-bold text-foreground">{concluidos}</p>
+          <p className="text-[11px] text-muted-foreground">Concluídos</p>
+        </CardContent></Card>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Distribution by level */}
+        <Card className="border-0 shadow-sm">
+          <CardHeader><CardTitle className="text-base text-foreground">Distribuição por Nível</CardTitle></CardHeader>
+          <CardContent>
+            {nivelChartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie data={nivelChartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={35} label>
+                    {nivelChartData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip /><Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : <p className="text-muted-foreground text-center py-12">Nenhum dado</p>}
+          </CardContent>
+        </Card>
+
+        {/* Ranking */}
+        <Card className="border-0 shadow-sm">
+          <CardHeader><CardTitle className="text-base text-foreground flex items-center gap-2"><Trophy className="h-4 w-4 text-amber-500" /> Top Servidores</CardTitle></CardHeader>
+          <CardContent>
+            <div className="space-y-2 max-h-[300px] overflow-y-auto">
+              {data.filter((d: any) => d.concluido).slice(0, 10).map((entry: any, i: number) => (
+                <div key={entry.id} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl ${i === 0 ? 'bg-amber-500/10' : 'hover:bg-muted/50'}`}>
+                  <span className="w-6 text-center text-sm font-bold text-muted-foreground">
+                    {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}º`}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">{entry.nome}</p>
+                    <p className="text-[10px] text-muted-foreground">{entry.nivel} · {entry.tempo_minutos || 0}min · {entry.concluido_em ? new Date(entry.concluido_em).toLocaleDateString('pt-BR') : ''}</p>
+                  </div>
+                  <div className="flex items-center gap-1 text-sm font-bold text-amber-600">
+                    <Star className="h-3.5 w-3.5" /> {entry.pontuacao}
+                  </div>
+                </div>
+              ))}
+              {data.filter((d: any) => d.concluido).length === 0 && <p className="text-muted-foreground text-center py-8 text-sm">Nenhum servidor concluiu ainda</p>}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Full table */}
+      <Card className="border-0 shadow-sm">
+        <CardHeader><CardTitle className="text-base text-foreground">Todos os Participantes</CardTitle></CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>E-mail</TableHead>
+                <TableHead>Nível</TableHead>
+                <TableHead>Pontos</TableHead>
+                <TableHead>Medalhas</TableHead>
+                <TableHead>Tempo</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Data</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.map((d: any) => (
+                <TableRow key={d.id}>
+                  <TableCell className="font-medium text-foreground">{d.nome}</TableCell>
+                  <TableCell className="text-muted-foreground text-sm">{d.email}</TableCell>
+                  <TableCell><Badge variant="outline" className="rounded-full text-[10px]">{d.nivel}</Badge></TableCell>
+                  <TableCell className="font-semibold text-amber-600">{d.pontuacao}</TableCell>
+                  <TableCell>{Array.isArray(d.medalhas) ? d.medalhas.length : 0}</TableCell>
+                  <TableCell className="text-muted-foreground">{d.tempo_minutos || 0}min</TableCell>
+                  <TableCell>{d.concluido ? <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px]">Concluído</Badge> : <Badge variant="outline" className="text-[10px]">Em progresso</Badge>}</TableCell>
+                  <TableCell className="text-muted-foreground text-sm">{d.concluido_em ? new Date(d.concluido_em).toLocaleDateString('pt-BR') : '-'}</TableCell>
+                </TableRow>
+              ))}
+              {data.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhum participante registrado</TableCell></TableRow>}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 function FaqManager() {
   const { faqs, loading, refresh } = useFaqs();
   const [novaPergunta, setNovaPergunta] = useState('');
@@ -774,6 +922,7 @@ const Admin = () => {
               <h2 className="text-xl font-bold text-foreground tracking-tight">
                 {activeSection === 'executivo' && 'Visão Executiva'}
                 {activeSection === 'operacional' && 'Operacional'}
+                {activeSection === 'aprendizagem' && 'Trilha SIAD – Engajamento'}
                 {activeSection === 'faq' && 'Gerenciar FAQ'}
                 {activeSection === 'usuarios' && 'Gestão de Usuários'}
                 {activeSection === 'configuracoes' && 'Configurações'}
@@ -781,6 +930,7 @@ const Admin = () => {
               <p className="text-sm text-muted-foreground mt-0.5">
                 {activeSection === 'executivo' && 'Dashboard com indicadores e gráficos'}
                 {activeSection === 'operacional' && 'Triagem e gestão de solicitações'}
+                {activeSection === 'aprendizagem' && 'Métricas de participação e gamificação'}
                 {activeSection === 'faq' && 'Perguntas frequentes do portal'}
                 {activeSection === 'usuarios' && 'Controle de acessos e operadores'}
                 {activeSection === 'configuracoes' && 'Órgãos e assuntos do sistema'}
@@ -824,6 +974,7 @@ const Admin = () => {
             <OperacionalSection filtered={filtered} busca={busca} setBusca={setBusca} filtroSecretaria={filtroSecretaria} setFiltroSecretaria={setFiltroSecretaria} filtroStatus={filtroStatus} setFiltroStatus={setFiltroStatus} filtroPrioridade={filtroPrioridade} setFiltroPrioridade={setFiltroPrioridade} secretarias={secretarias} activeOperadores={activeOperadores} currentUser={currentUser!} isGestao={isGestao} isOperacao={isOperacao} isLeitura={isLeitura} onStatusChange={handleStatusChange} onResponsavel={handleResponsavel} onRefresh={refreshSol} />
           )}
 
+          {activeSection === 'aprendizagem' && <AprendizagemManager />}
           {activeSection === 'faq' && <FaqManager />}
           {activeSection === 'usuarios' && <UsersManager />}
           {activeSection === 'configuracoes' && <SettingsManager />}
