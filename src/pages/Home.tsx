@@ -91,7 +91,7 @@ const Home = () => {
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
       <header className="institutional-gradient px-6 py-4 flex items-center gap-3 shadow-lg" role="banner">
-        <img src="/images/logo-seplag-alt.jpg" alt="SEPLAG" className="h-8 w-auto rounded" />
+        <img src="/images/logo-seplag.png" alt="SEPLAG" className="h-8 w-auto" />
         <div>
           <h1 className="text-lg font-bold text-primary-foreground leading-tight">Central de Atendimento às Setoriais</h1>
           <p className="text-xs text-primary-foreground/80">SEPLAG – Mato Grosso</p>
@@ -178,7 +178,7 @@ const Home = () => {
         <section className="max-w-6xl mx-auto px-4 py-12 space-y-8">
           <div className="text-center space-y-4">
             <img
-              src="/images/logo-seplag-alt.jpg"
+              src="/images/logo-seplag.png"
               alt="SEPLAG – Secretaria de Estado de Planejamento e Gestão"
               className="mx-auto h-16 sm:h-20 md:h-24 w-auto object-contain"
             />
