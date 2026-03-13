@@ -46,7 +46,7 @@ const SISTEMAS = [
     icon: Target,
     modules: 6,
     route: '/aprendizagem',
-    color: 'from-[hsl(210,85%,40%)] to-[hsl(210,100%,28%)]',
+    color: 'from-[hsl(213,80%,35%)] to-[hsl(213,100%,20%)]',
   },
   {
     id: 'SIEP',
@@ -56,7 +56,7 @@ const SISTEMAS = [
     icon: BarChart3,
     modules: 4,
     route: '/aprendizagem',
-    color: 'from-[hsl(200,70%,50%)] to-[hsl(210,85%,40%)]',
+    color: 'from-[hsl(199,89%,48%)] to-[hsl(213,80%,35%)]',
   },
   {
     id: 'BT',
@@ -66,7 +66,7 @@ const SISTEMAS = [
     icon: Users,
     modules: 4,
     route: '/aprendizagem',
-    color: 'from-[hsl(45,97%,54%)] to-[hsl(35,90%,50%)]',
+    color: 'from-[hsl(43,96%,56%)] to-[hsl(35,90%,48%)]',
   },
 ];
 
@@ -89,19 +89,20 @@ const Home = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* Header */}
-      <header className="institutional-gradient px-6 py-4 flex items-center gap-3 shadow-lg" role="banner">
-        <img src="/images/logo-seplag.png" alt="SEPLAG" className="h-8 w-auto" />
+      {/* ─── Navbar ─── */}
+      <header className="sticky top-0 z-50 bg-[hsl(213,100%,14%)]/95 backdrop-blur-xl border-b border-white/5 px-6 py-3 flex items-center gap-4" role="banner">
+        <img src="/images/logo-seplag.png" alt="SEPLAG" className="h-7 w-auto opacity-90" />
+        <div className="h-5 w-px bg-white/20" />
         <div>
-          <h1 className="text-lg font-bold text-primary-foreground leading-tight">Central de Atendimento às Setoriais</h1>
-          <p className="text-xs text-primary-foreground/80">SEPLAG – Mato Grosso</p>
+          <h1 className="text-sm font-semibold text-white/95 leading-tight tracking-tight">Central de Atendimento às Setoriais</h1>
+          <p className="text-[10px] text-white/50 font-medium">SEPLAG – Governo de Mato Grosso</p>
         </div>
-        <div className="ml-auto flex gap-2">
-          <Button variant="ghost" size="sm" className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 text-xs" onClick={() => navigate('/faq')}>
-            <HelpCircle className="h-4 w-4 mr-1" /> FAQ
+        <div className="ml-auto flex gap-1">
+          <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/10 text-xs rounded-full px-4" onClick={() => navigate('/faq')}>
+            <HelpCircle className="h-3.5 w-3.5 mr-1.5" /> FAQ
           </Button>
-          <Button variant="ghost" size="sm" className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 text-xs" onClick={() => navigate('/admin')}>
-            <BarChart3 className="h-4 w-4 mr-1" /> Admin
+          <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/10 text-xs rounded-full px-4" onClick={() => navigate('/admin')}>
+            <BarChart3 className="h-3.5 w-3.5 mr-1.5" /> Admin
           </Button>
         </div>
       </header>
@@ -117,7 +118,7 @@ const Home = () => {
               pagination={{ clickable: true }}
               autoplay={{ delay: 5000, disableOnInteraction: false }}
               loop={banners.length > 1}
-              className="w-full aspect-[21/7] md:aspect-[21/6] max-h-[400px] home-banner-swiper"
+              className="w-full aspect-[21/7] md:aspect-[21/6] max-h-[420px] home-banner-swiper"
             >
               {banners.map((banner) => (
                 <SwiperSlide key={banner.id}>
@@ -126,11 +127,11 @@ const Home = () => {
                     onClick={() => banner.link && window.open(banner.link, '_blank')}
                   >
                     <img src={banner.imagem_url} alt={banner.titulo} className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                    <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
-                      <h2 className="text-2xl md:text-4xl font-bold text-white drop-shadow-lg">{banner.titulo}</h2>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12">
+                      <h2 className="text-2xl md:text-4xl font-bold text-white drop-shadow-lg tracking-tight">{banner.titulo}</h2>
                       {banner.subtitulo && (
-                        <p className="text-sm md:text-lg text-white/90 mt-1 max-w-2xl">{banner.subtitulo}</p>
+                        <p className="text-sm md:text-lg text-white/80 mt-2 max-w-2xl font-light">{banner.subtitulo}</p>
                       )}
                     </div>
                   </div>
@@ -139,17 +140,21 @@ const Home = () => {
             </Swiper>
           </section>
         ) : (
-          <section className="institutional-gradient py-16 px-4">
-            <div className="max-w-4xl mx-auto text-center space-y-4">
-              <h2 className="text-3xl md:text-5xl font-bold text-primary-foreground tracking-tight">
-                Central de Atendimento às Setoriais
+          /* Hero fallback */
+          <section className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-[hsl(213,100%,14%)] via-[hsl(213,80%,22%)] to-[hsl(213,100%,14%)]" />
+            <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '40px 40px' }} />
+            <div className="relative max-w-4xl mx-auto text-center py-24 px-4 space-y-6">
+              <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight leading-[1.1]">
+                Central de Atendimento<br />
+                <span className="text-accent">às Setoriais</span>
               </h2>
-              <p className="text-primary-foreground/80 text-lg max-w-xl mx-auto">
+              <p className="text-white/60 text-lg md:text-xl max-w-xl mx-auto font-light leading-relaxed">
                 Sistema institucional para registro de dúvidas, sugestões e solicitações.
               </p>
               <Button
                 size="lg"
-                className="mt-4 bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-10 py-7 text-base font-semibold shadow-lg"
+                className="mt-2 bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-12 py-7 text-base font-semibold shadow-2xl shadow-accent/20 hover:shadow-accent/30 transition-all duration-300 hover:scale-105 active:scale-95"
                 onClick={() => navigate('/cadastro')}
               >
                 <MessageSquare className="h-5 w-5 mr-2" /> Abrir Chamado
@@ -159,55 +164,58 @@ const Home = () => {
         )}
 
         {/* ─── Quick Stats ─── */}
-        <div className="bg-card border-b">
-          <div className="max-w-6xl mx-auto grid grid-cols-3 gap-0">
+        <div className="border-b border-border/50">
+          <div className="max-w-5xl mx-auto grid grid-cols-3 gap-0">
             {[
               { label: 'Registro', value: 'Rápido' },
               { label: 'Resposta', value: '3 dias' },
               { label: 'Dados', value: 'Seguros' },
             ].map((item) => (
-              <div key={item.label} className="text-center py-5 border-r last:border-r-0 border-border/50">
-                <p className="text-xl md:text-2xl font-bold text-primary">{item.value}</p>
-                <p className="text-xs text-muted-foreground">{item.label}</p>
+              <div key={item.label} className="text-center py-6 border-r last:border-r-0 border-border/50">
+                <p className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">{item.value}</p>
+                <p className="text-xs text-muted-foreground font-medium mt-0.5">{item.label}</p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* ─── System Cards Grid ─── */}
-        <section className="max-w-6xl mx-auto px-4 py-12 space-y-8">
-          <div className="text-center space-y-4">
+        {/* ─── System Cards ─── */}
+        <section className="max-w-6xl mx-auto px-4 py-20 space-y-12">
+          {/* Logo + Title */}
+          <div className="text-center space-y-5">
             <img
-              src="/images/logo-seplag.png"
+              src="/images/logo-seplag-white.png"
               alt="SEPLAG – Secretaria de Estado de Planejamento e Gestão"
-              className="mx-auto h-16 sm:h-20 md:h-24 w-auto object-contain"
+              className="mx-auto h-14 sm:h-16 md:h-20 w-auto object-contain brightness-0"
             />
-            <p className="text-xs font-semibold tracking-widest text-primary uppercase">
+            <p className="text-[11px] font-semibold tracking-[0.2em] text-primary uppercase">
               Central de Atendimento às Setoriais
             </p>
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground">Capacitação Digital do Servidor</h2>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground tracking-tight leading-[1.08]">
+              Capacitação Digital<br />do Servidor
+            </h2>
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto font-light leading-relaxed">
               Aprenda sobre os sistemas estaduais de forma interativa, com quizzes, pontuação e certificado de conclusão.
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {SISTEMAS.map((sistema) => {
               const Icon = sistema.icon;
               return (
                 <Card
                   key={sistema.id}
-                  className="rounded-2xl border-0 shadow-md hover:shadow-xl transition-all duration-500 cursor-pointer group overflow-hidden"
+                  className="rounded-2xl border border-border/50 shadow-sm hover:shadow-xl transition-all duration-500 cursor-pointer group overflow-hidden bg-card hover:-translate-y-1"
                   onClick={() => navigate(sistema.route)}
                 >
                   <CardContent className="p-0">
                     <div className={`bg-gradient-to-br ${sistema.color} p-5 flex items-center gap-3`}>
-                      <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                        <Icon className="h-6 w-6 text-white" />
+                      <div className="w-11 h-11 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                        <Icon className="h-5 w-5 text-white" />
                       </div>
                       <div>
-                        <h4 className="text-base font-bold text-white">{sistema.title}</h4>
-                        <p className="text-[11px] text-white/80">{sistema.subtitle}</p>
+                        <h4 className="text-sm font-bold text-white tracking-tight">{sistema.title}</h4>
+                        <p className="text-[10px] text-white/70 font-medium">{sistema.subtitle}</p>
                       </div>
                     </div>
                     <div className="p-5 space-y-3">
@@ -225,7 +233,7 @@ const Home = () => {
                             </span>
                           )}
                         </div>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                        <ArrowRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-1 transition-all" />
                       </div>
                     </div>
                   </CardContent>
@@ -234,36 +242,36 @@ const Home = () => {
             })}
           </div>
 
+          {/* Action buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             <Button
               size="lg"
-              className="w-full sm:w-auto text-base px-10 py-7 rounded-full shadow-lg hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-500 gap-3 font-medium"
+              className="w-full sm:w-auto text-sm px-10 py-6 rounded-full shadow-lg shadow-primary/20 hover:shadow-2xl hover:shadow-primary/30 hover:scale-105 active:scale-95 transition-all duration-300 gap-2.5 font-semibold"
               onClick={() => navigate('/cadastro')}
             >
-              <MessageSquare className="h-5 w-5" /> Abrir Chamado
+              <MessageSquare className="h-4 w-4" /> Abrir Chamado
             </Button>
             <Button
               variant="outline"
               size="lg"
-              className="w-full sm:w-auto text-base px-10 py-7 rounded-full border-border/60 hover:bg-muted/60 hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-500 gap-3 font-medium"
+              className="w-full sm:w-auto text-sm px-10 py-6 rounded-full border-border hover:bg-secondary hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-300 gap-2.5 font-semibold"
               onClick={() => navigate('/faq')}
             >
-              <HelpCircle className="h-5 w-5" /> Acesso ao FAQ
+              <HelpCircle className="h-4 w-4" /> Acesso ao FAQ
             </Button>
           </div>
         </section>
 
         {/* ─── Team Section ─── */}
         {equipe.length > 0 && (
-          <section className="bg-card border-t py-12 px-4">
-            <div className="max-w-6xl mx-auto space-y-8">
-              <div className="text-center space-y-2">
-                <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-xs font-bold text-primary">
-                  <Users className="h-3.5 w-3.5" />
+          <section className="bg-secondary/50 border-t py-20 px-4">
+            <div className="max-w-6xl mx-auto space-y-10">
+              <div className="text-center space-y-3">
+                <p className="text-[11px] font-semibold tracking-[0.2em] text-primary uppercase">
                   Gestão de Áreas
-                </div>
-                <h3 className="text-2xl font-bold text-foreground">Nossa Equipe</h3>
-                <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                </p>
+                <h3 className="text-3xl font-bold text-foreground tracking-tight">Nossa Equipe</h3>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto font-light">
                   Conheça os gestores responsáveis por cada área de atuação.
                 </p>
               </div>
@@ -281,17 +289,17 @@ const Home = () => {
                   {equipe.map((m) => (
                     <SwiperSlide key={m.id}>
                       <div className="text-center space-y-3 py-4">
-                        <div className="w-24 h-24 mx-auto rounded-full overflow-hidden border-4 border-primary/20 shadow-lg">
+                        <div className="w-24 h-24 mx-auto rounded-full overflow-hidden border-2 border-border shadow-lg">
                           {m.foto_url ? (
                             <img src={m.foto_url} alt={m.nome} className="w-full h-full object-cover" />
                           ) : (
-                            <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                              <Users className="h-8 w-8 text-primary/40" />
+                            <div className="w-full h-full bg-secondary flex items-center justify-center">
+                              <Users className="h-8 w-8 text-muted-foreground/30" />
                             </div>
                           )}
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-foreground">{m.nome}</p>
+                          <p className="text-sm font-semibold text-foreground">{m.nome}</p>
                           <p className="text-xs text-primary font-medium">{m.cargo}</p>
                           <p className="text-[11px] text-muted-foreground">{m.area}</p>
                         </div>
@@ -299,10 +307,10 @@ const Home = () => {
                     </SwiperSlide>
                   ))}
                 </Swiper>
-                <button className="team-prev absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-card shadow-md border border-border flex items-center justify-center hover:bg-muted transition-colors">
+                <button className="team-prev absolute left-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-card shadow-md border border-border flex items-center justify-center hover:bg-secondary transition-colors">
                   <ChevronLeft className="h-4 w-4 text-foreground" />
                 </button>
-                <button className="team-next absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-card shadow-md border border-border flex items-center justify-center hover:bg-muted transition-colors">
+                <button className="team-next absolute right-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-card shadow-md border border-border flex items-center justify-center hover:bg-secondary transition-colors">
                   <ChevronRight className="h-4 w-4 text-foreground" />
                 </button>
               </div>
@@ -311,8 +319,11 @@ const Home = () => {
         )}
       </main>
 
-      <footer className="border-t bg-card px-6 py-4 text-center text-sm text-muted-foreground" role="contentinfo">
-        Secretaria de Planejamento e Gestão – Governo do Estado de Mato Grosso
+      {/* Footer */}
+      <footer className="border-t bg-card px-6 py-5 text-center" role="contentinfo">
+        <p className="text-xs text-muted-foreground">
+          Secretaria de Planejamento e Gestão – Governo do Estado de Mato Grosso
+        </p>
       </footer>
     </div>
   );
