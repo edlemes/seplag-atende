@@ -602,7 +602,7 @@ const Aprendizagem = () => {
               </div>
 
               {/* Split Layout: Content LEFT + Quiz RIGHT */}
-              <div className="grid lg:grid-cols-2 gap-6">
+              <div className={`grid lg:grid-cols-2 gap-6 transition-all duration-500 ease-out ${transitioning ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
                 {/* LEFT: Trail Content */}
                 <Card className="rounded-3xl shadow-sm border-0 flex flex-col">
                   <CardHeader className="pb-3">
