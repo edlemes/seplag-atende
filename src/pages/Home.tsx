@@ -68,6 +68,19 @@ const Home = () => {
             </Button>
           </div>
 
+          <div className="flex justify-center mt-2">
+            <Button
+              variant="outline"
+              size="lg"
+              className="w-full sm:min-w-[220px] text-base px-10 py-7 rounded-full border-border/60 text-foreground hover:bg-muted/60 hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-500 ease-out gap-3 font-medium"
+              onClick={() => navigate('/aprendizagem')}
+              aria-label="Acessar a trilha de aprendizagem do SIAD"
+            >
+              <BookOpen className="h-5 w-5" aria-hidden="true" />
+              Trilha SIAD
+            </Button>
+          </div>
+
           <div className="grid grid-cols-3 gap-8 pt-8 max-w-md mx-auto">
             {[
               { label: 'Registro', value: 'Rápido' },
