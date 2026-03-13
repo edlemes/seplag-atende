@@ -204,100 +204,21 @@ const Home = () => {
           </section>
         )}
 
-        {/* ─── SLA Alerts + Batch Control Panel ─── */}
-        <section className="bg-card border-b">
-          <div className="max-w-6xl mx-auto px-4 py-6 space-y-5">
-            {/* KPI Row */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="flex items-center gap-3 rounded-xl bg-background p-4 border border-border">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Clock className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{stats.abertos}</p>
-                  <p className="text-[11px] text-muted-foreground">Abertos</p>
-                </div>
+        {/* ─── Quick Stats ─── */}
+        <div className="bg-card border-b">
+          <div className="max-w-6xl mx-auto grid grid-cols-3 gap-0">
+            {[
+              { label: 'Registro', value: 'Rápido' },
+              { label: 'Resposta', value: '3 dias' },
+              { label: 'Dados', value: 'Seguros' },
+            ].map((item) => (
+              <div key={item.label} className="text-center py-5 border-r last:border-r-0 border-border/50">
+                <p className="text-xl md:text-2xl font-bold text-primary">{item.value}</p>
+                <p className="text-xs text-muted-foreground">{item.label}</p>
               </div>
-              <div className="flex items-center gap-3 rounded-xl bg-background p-4 border border-border">
-                <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center">
-                  <TrendingUp className="h-5 w-5 text-accent-foreground" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{stats.emAndamento}</p>
-                  <p className="text-[11px] text-muted-foreground">Em andamento</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 rounded-xl bg-background p-4 border border-border">
-                <div className="w-10 h-10 rounded-lg bg-[hsl(142,70%,90%)] flex items-center justify-center">
-                  <CheckCircle2 className="h-5 w-5 text-[hsl(142,70%,35%)]" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{stats.resolvidos}</p>
-                  <p className="text-[11px] text-muted-foreground">Resolvidos</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 rounded-xl bg-background p-4 border border-destructive/30">
-                <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
-                  <XCircle className="h-5 w-5 text-destructive" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-destructive">{stats.vencidos.length}</p>
-                  <p className="text-[11px] text-muted-foreground">SLA Vencido</p>
-                </div>
-              </div>
-            </div>
-
-            {/* SLA Alerts */}
-            {(stats.vencidos.length > 0 || stats.criticos.length > 0) && (
-              <div className="space-y-2">
-                <h4 className="text-xs font-bold text-destructive uppercase tracking-wider flex items-center gap-1.5">
-                  <AlertTriangle className="h-3.5 w-3.5" /> Alertas de SLA
-                </h4>
-                <div className="grid gap-2 max-h-[180px] overflow-y-auto pr-1">
-                  {stats.vencidos.map(s => (
-                    <div key={s.id} className="flex items-center gap-3 rounded-lg bg-destructive/5 border border-destructive/20 px-4 py-2.5 text-sm">
-                      <XCircle className="h-4 w-4 text-destructive shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <span className="font-semibold text-destructive">{s.protocolo}</span>
-                        <span className="text-muted-foreground mx-1.5">·</span>
-                        <span className="text-foreground truncate">{s.assunto}</span>
-                      </div>
-                      <span className="text-[10px] font-medium text-destructive bg-destructive/10 rounded-full px-2 py-0.5 shrink-0">VENCIDO</span>
-                    </div>
-                  ))}
-                  {stats.criticos.map(s => (
-                    <div key={s.id} className="flex items-center gap-3 rounded-lg bg-accent/10 border border-accent/30 px-4 py-2.5 text-sm">
-                      <AlertTriangle className="h-4 w-4 text-accent-foreground shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <span className="font-semibold text-accent-foreground">{s.protocolo}</span>
-                        <span className="text-muted-foreground mx-1.5">·</span>
-                        <span className="text-foreground truncate">{s.assunto}</span>
-                      </div>
-                      <span className="text-[10px] font-medium text-accent-foreground bg-accent/20 rounded-full px-2 py-0.5 shrink-0">&lt;2h</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Batch Control — Lotes por Secretaria */}
-            {stats.lotes.length > 0 && (
-              <div className="space-y-3">
-                <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
-                  <BarChart3 className="h-3.5 w-3.5 text-primary" /> Painel de Controle de Lotes
-                </h4>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
-                  {stats.lotes.map(([secretaria, count]) => (
-                    <div key={secretaria} className="rounded-lg bg-background border border-border p-3 text-center hover:shadow-md transition-shadow">
-                      <p className="text-lg font-bold text-primary">{count}</p>
-                      <p className="text-[10px] text-muted-foreground leading-tight truncate" title={secretaria}>{secretaria}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            ))}
           </div>
-        </section>
+        </div>
 
         {/* ─── System Cards Grid ─── */}
         <section className="max-w-6xl mx-auto px-4 py-12 space-y-8">
