@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      banners: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          imagem_url: string
+          link: string
+          ordem: number
+          subtitulo: string
+          titulo: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          imagem_url?: string
+          link?: string
+          ordem?: number
+          subtitulo?: string
+          titulo?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          imagem_url?: string
+          link?: string
+          ordem?: number
+          subtitulo?: string
+          titulo?: string
+        }
+        Relationships: []
+      }
       custom_assuntos: {
         Row: {
           created_at: string
@@ -47,6 +80,39 @@ export type Database = {
           created_at?: string
           id?: string
           nome?: string
+        }
+        Relationships: []
+      }
+      equipe: {
+        Row: {
+          area: string
+          ativo: boolean
+          cargo: string
+          created_at: string
+          foto_url: string
+          id: string
+          nome: string
+          ordem: number
+        }
+        Insert: {
+          area?: string
+          ativo?: boolean
+          cargo?: string
+          created_at?: string
+          foto_url?: string
+          id?: string
+          nome: string
+          ordem?: number
+        }
+        Update: {
+          area?: string
+          ativo?: boolean
+          cargo?: string
+          created_at?: string
+          foto_url?: string
+          id?: string
+          nome?: string
+          ordem?: number
         }
         Relationships: []
       }

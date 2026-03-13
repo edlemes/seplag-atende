@@ -170,3 +170,33 @@ html.font-size-xl {
 .whatsapp-pulse {
   animation: whatsapp-pulse 2s ease-in-out infinite;
 }
+
+/* Swiper customizations */
+.home-banner-swiper .swiper-button-next,
+.home-banner-swiper .swiper-button-prev {
+  color: white;
+  background: hsla(0, 0%, 0%, 0.3);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  backdrop-filter: blur(4px);
+}
+.home-banner-swiper .swiper-button-next::after,
+.home-banner-swiper .swiper-button-prev::after {
+  font-size: 16px;
+  font-weight: bold;
+}
+.home-banner-swiper .swiper-pagination-bullet {
+  background: white;
+  opacity: 0.5;
+}
+.home-banner-swiper .swiper-pagination-bullet-active {
+  opacity: 1;
+  background: hsl(45, 97%, 54%);
+}
+.team-swiper .swiper-pagination-bullet-active {
+  background: hsl(210, 100%, 28%);
+}
+.whatsapp-pulse {
+  animation: whatsapp-pulse 2s ease-in-out infinite;
+}

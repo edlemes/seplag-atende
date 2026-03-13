@@ -49,7 +49,7 @@ const SLA_COLORS = {
   'Atrasado': 'text-red-600',
 };
 
-type AdminSection = 'executivo' | 'operacional' | 'faq' | 'usuarios' | 'configuracoes' | 'aprendizagem';
+type AdminSection = 'executivo' | 'operacional' | 'faq' | 'usuarios' | 'configuracoes' | 'aprendizagem' | 'banners' | 'equipe';
 
 // ─── KPI Card ───
 function KpiCard({ icon: Icon, label, value, color, sub }: { icon: any; label: string; value: string | number; color: string; sub?: string }) {
@@ -88,6 +88,8 @@ function AdminSidebar({
     { key: 'executivo', label: 'Visão Executiva', icon: Eye, visible: isGestao || isOperacao },
     { key: 'operacional', label: 'Operacional', icon: BarChart3, visible: true },
     { key: 'aprendizagem', label: 'Gestão de Trilhas', icon: BookOpen, visible: isGestao },
+    { key: 'banners', label: 'Banners', icon: FileSpreadsheet, visible: isGestao },
+    { key: 'equipe', label: 'Equipe', icon: Users, visible: isGestao },
     { key: 'faq', label: 'Gerenciar FAQ', icon: HelpCircle, visible: isGestao },
     { key: 'usuarios', label: 'Usuários', icon: Users, visible: isGestao },
     { key: 'configuracoes', label: 'Configurações', icon: Settings, visible: isGestao },
@@ -1028,6 +1030,218 @@ function OperacionalSection({
   );
 }
 
+// ─── Banners Manager ───
+function BannersManager() {
+  const [banners, setBanners] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [form, setForm] = useState({ titulo: '', subtitulo: '', imagem_url: '', link: '', ordem: 0 });
+  const [adding, setAdding] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
+
+  const fetchBanners = async () => {
+    setLoading(true);
+    const { data } = await supabase.from('banners').select('*').order('ordem');
+    setBanners(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchBanners(); }, []);
+
+  const handleSave = async () => {
+    if (!form.titulo.trim() && !form.imagem_url.trim()) { toast({ title: 'Preencha título ou URL da imagem', variant: 'destructive' }); return; }
+    setSaving(true);
+    if (editing) {
+      await supabase.from('banners').update(form).eq('id', editing);
+      toast({ title: 'Banner atualizado!' });
+    } else {
+      await supabase.from('banners').insert(form);
+      toast({ title: 'Banner adicionado!' });
+    }
+    setEditing(null); setAdding(false);
+    setForm({ titulo: '', subtitulo: '', imagem_url: '', link: '', ordem: 0 });
+    fetchBanners();
+    setSaving(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    await supabase.from('banners').delete().eq('id', id);
+    toast({ title: 'Banner removido!' });
+    fetchBanners();
+  };
+
+  const handleToggle = async (id: string, ativo: boolean) => {
+    await supabase.from('banners').update({ ativo: !ativo }).eq('id', id);
+    fetchBanners();
+  };
+
+  if (loading) return <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-16 rounded-xl" />)}</div>;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <p className="text-sm text-muted-foreground">{banners.length} banner(s) cadastrado(s)</p>
+        <Button size="sm" className="gap-1 rounded-full" onClick={() => { setAdding(true); setEditing(null); setForm({ titulo: '', subtitulo: '', imagem_url: '', link: '', ordem: banners.length }); }}>
+          <Plus className="h-3.5 w-3.5" /> Adicionar
+        </Button>
+      </div>
+
+      {(adding || editing) && (
+        <Card className="border-0 shadow-sm">
+          <CardContent className="pt-5 space-y-3">
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div className="space-y-1"><Label>Título</Label><Input value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} /></div>
+              <div className="space-y-1"><Label>Subtítulo</Label><Input value={form.subtitulo} onChange={(e) => setForm({ ...form, subtitulo: e.target.value })} /></div>
+              <div className="space-y-1"><Label>URL da Imagem</Label><Input value={form.imagem_url} onChange={(e) => setForm({ ...form, imagem_url: e.target.value })} placeholder="https://..." /></div>
+              <div className="space-y-1"><Label>Link (opcional)</Label><Input value={form.link} onChange={(e) => setForm({ ...form, link: e.target.value })} placeholder="https://..." /></div>
+              <div className="space-y-1"><Label>Ordem</Label><Input type="number" value={form.ordem} onChange={(e) => setForm({ ...form, ordem: parseInt(e.target.value) || 0 })} /></div>
+            </div>
+            {form.imagem_url && <img src={form.imagem_url} alt="Preview" className="h-32 rounded-lg object-cover" />}
+            <div className="flex gap-2">
+              <Button size="sm" onClick={handleSave} disabled={saving}><Save className="h-3.5 w-3.5 mr-1" />{saving ? 'Salvando...' : 'Salvar'}</Button>
+              <Button size="sm" variant="ghost" onClick={() => { setAdding(false); setEditing(null); }}><X className="h-3.5 w-3.5 mr-1" />Cancelar</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="space-y-2">
+        {banners.map((b) => (
+          <Card key={b.id} className="border-0 shadow-sm">
+            <CardContent className="py-3 flex items-center gap-4">
+              {b.imagem_url && <img src={b.imagem_url} alt={b.titulo} className="h-14 w-24 rounded-lg object-cover shrink-0" />}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground truncate">{b.titulo || '(sem título)'}</p>
+                <p className="text-xs text-muted-foreground truncate">{b.subtitulo}</p>
+                <p className="text-[10px] text-muted-foreground">Ordem: {b.ordem} · {b.ativo ? 'Ativo' : 'Inativo'}</p>
+              </div>
+              <div className="flex gap-1 shrink-0">
+                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleToggle(b.id, b.ativo)}>
+                  {b.ativo ? <Eye className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
+                </Button>
+                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { setEditing(b.id); setAdding(false); setForm({ titulo: b.titulo, subtitulo: b.subtitulo, imagem_url: b.imagem_url, link: b.link, ordem: b.ordem }); }}>
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+                <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDelete(b.id)}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Equipe Manager ───
+function EquipeManager() {
+  const [equipe, setEquipe] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [form, setForm] = useState({ nome: '', cargo: '', area: '', foto_url: '', ordem: 0 });
+  const [adding, setAdding] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
+
+  const fetchEquipe = async () => {
+    setLoading(true);
+    const { data } = await supabase.from('equipe').select('*').order('ordem');
+    setEquipe(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchEquipe(); }, []);
+
+  const handleSave = async () => {
+    if (!form.nome.trim()) { toast({ title: 'Nome é obrigatório', variant: 'destructive' }); return; }
+    setSaving(true);
+    if (editing) {
+      await supabase.from('equipe').update(form).eq('id', editing);
+      toast({ title: 'Membro atualizado!' });
+    } else {
+      await supabase.from('equipe').insert(form);
+      toast({ title: 'Membro adicionado!' });
+    }
+    setEditing(null); setAdding(false);
+    setForm({ nome: '', cargo: '', area: '', foto_url: '', ordem: 0 });
+    fetchEquipe();
+    setSaving(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    await supabase.from('equipe').delete().eq('id', id);
+    toast({ title: 'Membro removido!' });
+    fetchEquipe();
+  };
+
+  const handleToggle = async (id: string, ativo: boolean) => {
+    await supabase.from('equipe').update({ ativo: !ativo }).eq('id', id);
+    fetchEquipe();
+  };
+
+  if (loading) return <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-16 rounded-xl" />)}</div>;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <p className="text-sm text-muted-foreground">{equipe.length} membro(s) cadastrado(s)</p>
+        <Button size="sm" className="gap-1 rounded-full" onClick={() => { setAdding(true); setEditing(null); setForm({ nome: '', cargo: '', area: '', foto_url: '', ordem: equipe.length }); }}>
+          <Plus className="h-3.5 w-3.5" /> Adicionar
+        </Button>
+      </div>
+
+      {(adding || editing) && (
+        <Card className="border-0 shadow-sm">
+          <CardContent className="pt-5 space-y-3">
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div className="space-y-1"><Label>Nome</Label><Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></div>
+              <div className="space-y-1"><Label>Cargo</Label><Input value={form.cargo} onChange={(e) => setForm({ ...form, cargo: e.target.value })} /></div>
+              <div className="space-y-1"><Label>Área de Atuação</Label><Input value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} /></div>
+              <div className="space-y-1"><Label>URL da Foto</Label><Input value={form.foto_url} onChange={(e) => setForm({ ...form, foto_url: e.target.value })} placeholder="https://..." /></div>
+              <div className="space-y-1"><Label>Ordem</Label><Input type="number" value={form.ordem} onChange={(e) => setForm({ ...form, ordem: parseInt(e.target.value) || 0 })} /></div>
+            </div>
+            {form.foto_url && <img src={form.foto_url} alt="Preview" className="h-20 w-20 rounded-full object-cover" />}
+            <div className="flex gap-2">
+              <Button size="sm" onClick={handleSave} disabled={saving}><Save className="h-3.5 w-3.5 mr-1" />{saving ? 'Salvando...' : 'Salvar'}</Button>
+              <Button size="sm" variant="ghost" onClick={() => { setAdding(false); setEditing(null); }}><X className="h-3.5 w-3.5 mr-1" />Cancelar</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="space-y-2">
+        {equipe.map((m) => (
+          <Card key={m.id} className="border-0 shadow-sm">
+            <CardContent className="py-3 flex items-center gap-4">
+              <div className="h-12 w-12 rounded-full overflow-hidden shrink-0 border-2 border-primary/20">
+                {m.foto_url ? <img src={m.foto_url} alt={m.nome} className="h-full w-full object-cover" /> : <div className="h-full w-full bg-primary/10 flex items-center justify-center"><Users className="h-5 w-5 text-primary/40" /></div>}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground truncate">{m.nome}</p>
+                <p className="text-xs text-primary font-medium">{m.cargo}</p>
+                <p className="text-[10px] text-muted-foreground">{m.area} · Ordem: {m.ordem} · {m.ativo ? 'Ativo' : 'Inativo'}</p>
+              </div>
+              <div className="flex gap-1 shrink-0">
+                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleToggle(m.id, m.ativo)}>
+                  {m.ativo ? <Eye className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
+                </Button>
+                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { setEditing(m.id); setAdding(false); setForm({ nome: m.nome, cargo: m.cargo, area: m.area, foto_url: m.foto_url, ordem: m.ordem }); }}>
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+                <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDelete(m.id)}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── MAIN ADMIN ───
 const Admin = () => {
   const navigate = useNavigate();
@@ -1121,6 +1335,8 @@ const Admin = () => {
                 {activeSection === 'executivo' && 'Visão Executiva'}
                 {activeSection === 'operacional' && 'Operacional'}
                 {activeSection === 'aprendizagem' && 'Gestão de Trilhas'}
+                {activeSection === 'banners' && 'Gerenciar Banners'}
+                {activeSection === 'equipe' && 'Gestão de Equipe'}
                 {activeSection === 'faq' && 'Gerenciar FAQ'}
                 {activeSection === 'usuarios' && 'Gestão de Usuários'}
                 {activeSection === 'configuracoes' && 'Configurações'}
@@ -1129,6 +1345,8 @@ const Admin = () => {
                 {activeSection === 'executivo' && 'Dashboard com indicadores e gráficos'}
                 {activeSection === 'operacional' && 'Triagem e gestão de solicitações'}
                 {activeSection === 'aprendizagem' && 'Conteúdo, quizzes e métricas de engajamento'}
+                {activeSection === 'banners' && 'Banners do carrossel principal da Home'}
+                {activeSection === 'equipe' && 'Fotos e dados dos gestores de área'}
                 {activeSection === 'faq' && 'Perguntas frequentes do portal'}
                 {activeSection === 'usuarios' && 'Controle de acessos e operadores'}
                 {activeSection === 'configuracoes' && 'Órgãos e assuntos do sistema'}
@@ -1173,6 +1391,8 @@ const Admin = () => {
           )}
 
           {activeSection === 'aprendizagem' && <AprendizagemManager />}
+          {activeSection === 'banners' && <BannersManager />}
+          {activeSection === 'equipe' && <EquipeManager />}
           {activeSection === 'faq' && <FaqManager />}
           {activeSection === 'usuarios' && <UsersManager />}
           {activeSection === 'configuracoes' && <SettingsManager />}
