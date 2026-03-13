@@ -183,11 +183,6 @@ const Home = () => {
         <section className="max-w-6xl mx-auto px-4 py-20 space-y-12">
           {/* Logo + Title */}
           <div className="text-center space-y-5">
-            <img
-              src="/images/logo-seplag-white.png"
-              alt="SEPLAG – Secretaria de Estado de Planejamento e Gestão"
-              className="mx-auto h-14 sm:h-16 md:h-20 w-auto object-contain brightness-0"
-            />
             <p className="text-[11px] font-semibold tracking-[0.2em] text-primary uppercase">
               Central de Atendimento às Setoriais
             </p>
