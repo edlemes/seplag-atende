@@ -302,6 +302,7 @@ const Aprendizagem = () => {
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
   const [rankingLoading, setRankingLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [earnedPoints, setEarnedPoints] = useState<Record<number, number>>({});
   const startTimeRef = useRef(Date.now());
 
   // Data from DB
@@ -360,8 +361,17 @@ const Aprendizagem = () => {
     })();
   }, [activeTrilha]);
 
+  const [transitioning, setTransitioning] = useState(false);
+
+  useEffect(() => {
+    if (transitioning) {
+      const t = setTimeout(() => setTransitioning(false), 400);
+      return () => clearTimeout(t);
+    }
+  }, [transitioning]);
+
   const totalMaxPts = modules.reduce((s, m) => s + m.pontos, 0);
-  const totalPoints = useMemo(() => Array.from(completed).reduce((sum, i) => sum + (modules[i]?.pontos || 0), 0), [completed, modules]);
+  const totalPoints = useMemo(() => Object.values(earnedPoints).reduce((sum, pts) => sum + pts, 0), [earnedPoints]);
   const progress = modules.length > 0 ? (completed.size / modules.length) * 100 : 0;
   const isComplete = modules.length > 0 && completed.size === modules.length;
   const currentLevel = getLevel(totalPoints);
@@ -391,19 +401,31 @@ const Aprendizagem = () => {
     else toast.error('Erro ao salvar progresso.');
   };
 
-  const completeStep = (idx: number) => {
+
+  const completeStep = (idx: number, quizPoints: number) => {
     if (completed.has(idx)) return;
     const next = new Set(completed);
     next.add(idx);
     setCompleted(next);
-    toast.success(`+${modules[idx]?.pontos || 0} pontos!`, { icon: <Zap className="h-4 w-4 text-amber-500" /> });
+    setEarnedPoints(prev => ({ ...prev, [idx]: quizPoints }));
+    if (quizPoints > 0) {
+      toast.success(`+${quizPoints} pontos!`, { icon: <Zap className="h-4 w-4 text-amber-500" /> });
+    } else {
+      toast.info('Módulo concluído. Nenhum ponto ganho nesta etapa.');
+    }
   };
 
   const handleQuizComplete = (acertos: number, total: number) => {
-    if (acertos >= Math.ceil(total * 0.5)) {
-      completeStep(current);
+    const mod = modules[current];
+    // Points proportional to correct answers
+    const pts = total > 0 ? Math.round((acertos / total) * (mod?.pontos || 0)) : 0;
+    completeStep(current, pts);
+    if (acertos === total) {
+      toast.success('🎉 Perfeito! Todas corretas!');
+    } else if (acertos > 0) {
+      toast.info(`Você acertou ${acertos} de ${total}. Pode avançar!`);
     } else {
-      toast.error('Acerte pelo menos 50% para avançar.');
+      toast.warning(`Nenhum acerto. Revise o conteúdo na próxima oportunidade.`);
     }
   };
 
@@ -412,10 +434,13 @@ const Aprendizagem = () => {
       toast.error('Complete o quiz para avançar.');
       return;
     }
-    if (current < modules.length - 1) setCurrent(current + 1);
+    if (current < modules.length - 1) {
+      setTransitioning(true);
+      setCurrent(current + 1);
+    }
   };
 
-  const goPrev = () => { if (current > 0) setCurrent(current - 1); };
+  const goPrev = () => { if (current > 0) { setTransitioning(true); setCurrent(current - 1); } };
 
   const handleTrilhaChange = (trilha: string) => {
     setActiveTrilha(trilha);
@@ -577,7 +602,7 @@ const Aprendizagem = () => {
               </div>
 
               {/* Split Layout: Content LEFT + Quiz RIGHT */}
-              <div className="grid lg:grid-cols-2 gap-6">
+              <div className={`grid lg:grid-cols-2 gap-6 transition-all duration-500 ease-out ${transitioning ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
                 {/* LEFT: Trail Content */}
                 <Card className="rounded-3xl shadow-sm border-0 flex flex-col">
                   <CardHeader className="pb-3">
