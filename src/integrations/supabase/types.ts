@@ -176,6 +176,39 @@ export type Database = {
         }
         Relationships: []
       }
+      trilha_progresso: {
+        Row: {
+          concluido: boolean
+          concluido_em: string | null
+          created_at: string
+          email: string
+          etapas_concluidas: Json
+          id: string
+          nome: string
+          pontuacao: number
+        }
+        Insert: {
+          concluido?: boolean
+          concluido_em?: string | null
+          created_at?: string
+          email: string
+          etapas_concluidas?: Json
+          id?: string
+          nome: string
+          pontuacao?: number
+        }
+        Update: {
+          concluido?: boolean
+          concluido_em?: string | null
+          created_at?: string
+          email?: string
+          etapas_concluidas?: Json
+          id?: string
+          nome?: string
+          pontuacao?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
