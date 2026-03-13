@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, FileText, BarChart3, HelpCircle, MessageSquare, ArrowRight, GraduationCap, Target, Users, Award, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Building2, FileText, BarChart3, HelpCircle, MessageSquare, ArrowRight, Target, Users, Award, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
@@ -91,10 +91,10 @@ const Home = () => {
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
       <header className="institutional-gradient px-6 py-4 flex items-center gap-3 shadow-lg" role="banner">
-        <Building2 className="h-8 w-8 text-primary-foreground" aria-hidden="true" />
+        <img src="/images/logo-seplag-alt.jpg" alt="SEPLAG" className="h-8 w-auto rounded" />
         <div>
-          <h1 className="text-lg font-bold text-primary-foreground leading-tight">SEPLAG</h1>
-          <p className="text-xs text-primary-foreground/80">Mato Grosso</p>
+          <h1 className="text-lg font-bold text-primary-foreground leading-tight">Central de Atendimento às Setoriais</h1>
+          <p className="text-xs text-primary-foreground/80">SEPLAG – Mato Grosso</p>
         </div>
         <div className="ml-auto flex gap-2">
           <Button variant="ghost" size="sm" className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 text-xs" onClick={() => navigate('/faq')}>
@@ -185,13 +185,18 @@ const Home = () => {
 
         {/* ─── System Cards Grid ─── */}
         <section className="max-w-6xl mx-auto px-4 py-12 space-y-8">
-          <div className="text-center space-y-2">
-            <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-xs font-bold text-primary">
-              <GraduationCap className="h-3.5 w-3.5" />
-              Sistemas & Trilhas de Aprendizagem
-            </div>
-            <h3 className="text-2xl md:text-3xl font-bold text-foreground">Capacitação Digital do Servidor</h3>
-            <p className="text-sm text-muted-foreground max-w-lg mx-auto">
+          {/* Logo + Title */}
+          <div className="text-center space-y-4">
+            <img
+              src="/images/logo-seplag-alt.jpg"
+              alt="SEPLAG – Secretaria de Estado de Planejamento e Gestão"
+              className="mx-auto h-16 sm:h-20 md:h-24 w-auto object-contain"
+            />
+            <p className="text-xs font-semibold tracking-widest text-primary uppercase">
+              Central de Atendimento às Setoriais
+            </p>
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground">Capacitação Digital do Servidor</h2>
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
               Aprenda sobre os sistemas estaduais de forma interativa, com quizzes, pontuação e certificado de conclusão.
             </p>
           </div>
