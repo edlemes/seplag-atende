@@ -178,7 +178,7 @@ const Home = () => {
         <section className="max-w-6xl mx-auto px-4 py-12 space-y-8">
           <div className="text-center space-y-4">
             <img
-              src="/images/logo-seplag-alt.jpg"
+              src="/images/logo-seplag.png"
               alt="SEPLAG – Secretaria de Estado de Planejamento e Gestão"
               className="mx-auto h-16 sm:h-20 md:h-24 w-auto object-contain"
             />
