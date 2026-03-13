@@ -1123,6 +1123,8 @@ const Admin = () => {
                 {activeSection === 'executivo' && 'Visão Executiva'}
                 {activeSection === 'operacional' && 'Operacional'}
                 {activeSection === 'aprendizagem' && 'Gestão de Trilhas'}
+                {activeSection === 'banners' && 'Gerenciar Banners'}
+                {activeSection === 'equipe' && 'Gestão de Equipe'}
                 {activeSection === 'faq' && 'Gerenciar FAQ'}
                 {activeSection === 'usuarios' && 'Gestão de Usuários'}
                 {activeSection === 'configuracoes' && 'Configurações'}
@@ -1131,6 +1133,8 @@ const Admin = () => {
                 {activeSection === 'executivo' && 'Dashboard com indicadores e gráficos'}
                 {activeSection === 'operacional' && 'Triagem e gestão de solicitações'}
                 {activeSection === 'aprendizagem' && 'Conteúdo, quizzes e métricas de engajamento'}
+                {activeSection === 'banners' && 'Banners do carrossel principal da Home'}
+                {activeSection === 'equipe' && 'Fotos e dados dos gestores de área'}
                 {activeSection === 'faq' && 'Perguntas frequentes do portal'}
                 {activeSection === 'usuarios' && 'Controle de acessos e operadores'}
                 {activeSection === 'configuracoes' && 'Órgãos e assuntos do sistema'}
