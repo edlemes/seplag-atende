@@ -1120,7 +1120,7 @@ const Admin = () => {
               <h2 className="text-xl font-bold text-foreground tracking-tight">
                 {activeSection === 'executivo' && 'Visão Executiva'}
                 {activeSection === 'operacional' && 'Operacional'}
-                {activeSection === 'aprendizagem' && 'Trilha SIAD – Engajamento'}
+                {activeSection === 'aprendizagem' && 'Gestão de Trilhas'}
                 {activeSection === 'faq' && 'Gerenciar FAQ'}
                 {activeSection === 'usuarios' && 'Gestão de Usuários'}
                 {activeSection === 'configuracoes' && 'Configurações'}
